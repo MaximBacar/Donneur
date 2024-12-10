@@ -5,6 +5,9 @@
 This project is a full all-in-one system to help homeless people get back on their feet. It allows shelters, pedestrians and homeless to all connect in order to help lives.
 
 
+![Donation Page Mockup](Doc/Assets/donnation_webpage_mockup.png "Donation Page Mockup")
+
+
 ## Features
 
 * Cashless donation solution
