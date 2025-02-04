@@ -1,11 +1,29 @@
-from flask import Flask
+from    flask               import Flask
 
-app = Flask(__name__)
+from    firebase_connector  import Database
 
 
-@app.route( '/' )
-def index():
-    return "Donneur.ca API"
+class Donneur():
+    
+    def __init__(self):
+        self.app        = Flask(__name__)
+        self.database   = Database()
+        
+        self.app.add_url_rule(  "/",          "index",    self.index    )
+        self.app.add_url_rule(  "/api/docs",  "docs",     self.docs     )
 
-if __name__ == '__main__':
-    app.run( debug = True )
+    def index(self):
+        return "Donneur.ca API"
+
+    def docs(self):
+        return "Donneur.ca API Docs"
+    
+    def create_receiver(self):
+        return "Added"
+
+    def start(self):
+        self.app.run()
+
+
+a = Donneur()
+a.start()
