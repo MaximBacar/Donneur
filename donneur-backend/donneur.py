@@ -2,8 +2,6 @@ from    flask               import Flask
 
 from    firebase_connector  import Database
 
-app = Flask(__name__)
-
 
 class Donneur():
     
@@ -19,31 +17,12 @@ class Donneur():
 
     def docs(self):
         return "Donneur.ca API Docs"
+    
+    def create_receiver(self):
+        return "Added"
 
     def start(self):
         self.app.run()
-
-def start():
-    firebase_credentials = credentials.Certificate('/Users/maximbacar/Downloads/capstone-3828a-firebase-adminsdk-fbsvc-fe22bd393f.json')
-    firebase_admin.initialize_app(credential = firebase_credentials)
-
-    app.run( debug = True )
-
-
-# @app.route( '/' )
-# def index():
-#     return "Donneur.ca API"
-
-# @app.route( '/api/docs' )
-# def docs():
-#     return "Donneur.ca API Docs"
-
-
-
-
-
-# if __name__ == '__main__':
-#     start()
 
 
 a = Donneur()

@@ -1,8 +1,10 @@
-from    firebase_admin  import credentials
-from    firebase_admin  import firestore
+from    firebase_admin          import  credentials
+from    firebase_admin          import  firestore
 import  firebase_admin
 
-from    datetime        import datetime
+from    google.cloud.firestore  import  FieldFilter
+
+from    datetime                import  datetime
 
 class Database:
 
@@ -27,7 +29,18 @@ class Database:
 
         document = self.db.collection('Receivers').document()
         document.set(data)
+    
+    def get_receiver( self, username ):
+        user_collection = self.db.collection('Receivers') 
+        user = user_collection.where(filter=FieldFilter("username", "==", username)).limit(1).stream()
+        
+        for doc in user:
+            data = doc.to_dict()
+            print(data)
 
+    
 
 db = Database()
-db.create_receiver('Bob', 'Rob', 'bob.rob')
+#db.create_receiver('Bob', 'Rob', 'bob.rob')
+
+db.get_receiver('bob.rob')
