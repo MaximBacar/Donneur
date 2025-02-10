@@ -11,7 +11,7 @@ import Checkout         from "./components/Checkout/checkout";
 
 
 const stripePromise = loadStripe("pk_test_51QmlVlHgK1fpQ7EODxvlpfxHxf4xIGyIA5HVpbtOIcXJuhtraPx7CpRmku4YwWb8JDaOmY55OwdQSa2WVwF2UvOX0067Xpcr20");
-const API_BASE_URL = "http://api.donneur.ca";
+const API_BASE_URL = "https://api.donneur.ca";
 console.log(API_BASE_URL);
 
 export default function Donation(){
