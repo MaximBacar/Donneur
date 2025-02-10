@@ -10,8 +10,9 @@ class App():
     
     def __init__(self):
         self.app        = Flask(__name__)
-        self.database   = Database()
         self.donneur    = Donneur()
+        self.database   = Database(self.donneur.firebase_credentials_path)
+        
 
         CORS(self.app, resources={r"/*": {
             "origins": "*",  # Allow all origins (for development)

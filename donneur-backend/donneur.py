@@ -14,6 +14,7 @@ class Donneur:
         load_dotenv()
         self.image_folder = os.getenv('IMAGE_FOLDER')
         self.stripe_key = os.getenv('STRIPE_KEY')
+        self.firebase_credentials_path = os.getenv('FIREBASE_CRED_PATH')
 
 
         self.__generate_folders()

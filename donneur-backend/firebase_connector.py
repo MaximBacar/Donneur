@@ -9,8 +9,8 @@ from    datetime                import  datetime
 class Database:
 
 
-    def __init__(self):
-        firebase_credentials = credentials.Certificate('/Users/maximbacar/Downloads/capstone-3828a-firebase-adminsdk-fbsvc-fe22bd393f.json')
+    def __init__(self, firebase_credentials_path):
+        firebase_credentials = credentials.Certificate(firebase_credentials_path)
         firebase_admin.initialize_app(credential = firebase_credentials)
 
         self.db = firestore.client()
