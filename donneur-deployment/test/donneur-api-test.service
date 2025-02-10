@@ -4,6 +4,7 @@ After=network.target
 [Service]
 User=root
 Group=www-data
+EnvironmentFile=/etc/donneur-test.env
 WorkingDirectory=/home/donneur_test/Donneur/donneur-backend
 ExecStart=gunicorn -w 4 -b 0.0.0.0:8004 app:donneur_app
 
