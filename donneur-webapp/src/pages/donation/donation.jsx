@@ -4,7 +4,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 
 import PaymentButton    from "./components/PaymentButton/paymentButton";
-import Profile          from "./components/Profile/Profile"; 
+import Profile          from "./components/Profile/profile"; 
 import Total            from "./components/Total/total";
 import Pad              from "./components/DigitPad/pad";
 import Checkout         from "./components/Checkout/checkout";
