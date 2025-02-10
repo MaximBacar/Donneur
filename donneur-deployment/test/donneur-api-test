@@ -12,8 +12,6 @@ server {
     listen 80;
     server_name give.donneur.ca www.donneur.ca donneur.ca;
 
-    location / {
-        include proxy_params;
-        proxy_pass http://127.0.0.1:8005;
-    }
+    root /var/www/donneur-test;
+    index index.html;
 }
