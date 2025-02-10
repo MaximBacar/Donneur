@@ -54,10 +54,6 @@ class App():
     def create_receiver(self):
         return "Added"
 
-    def start(self):
-        self.app.run( debug = True )
-
-
     def create_stripe_payment(self):
         # TODO Validate that receiver_id exists, that 0.50 <= amount < 1000.00
         data = request.get_json()
@@ -81,6 +77,5 @@ class App():
 
 
 
-app = App()
-
-app.start()
+donneur_api = App()
+donneur_app = donneur_api.app
