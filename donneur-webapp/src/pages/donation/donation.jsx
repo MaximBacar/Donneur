@@ -11,7 +11,8 @@ import Checkout         from "./components/Checkout/checkout";
 
 
 const stripePromise = loadStripe("pk_test_51QmlVlHgK1fpQ7EODxvlpfxHxf4xIGyIA5HVpbtOIcXJuhtraPx7CpRmku4YwWb8JDaOmY55OwdQSa2WVwF2UvOX0067Xpcr20");
-
+const API_BASE_URL = "http://api.donneur.ca";
+console.log(API_BASE_URL);
 
 export default function Donation(){
   
@@ -36,7 +37,7 @@ export default function Donation(){
     let totalToSend = parseFloat(total);
     if (!isNaN(totalToSend) && totalToSend > 0){
       try{
-        const response = await fetch("http://127.0.0.1:5000/create_payment", {
+        const response = await fetch(`${API_BASE_URL}/create_payment`, {
           method: 'POST',
           headers: {
             "Content-Type": "application/json",  // Tell the server we are sending JSON
