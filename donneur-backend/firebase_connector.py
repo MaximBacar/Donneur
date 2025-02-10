@@ -37,10 +37,3 @@ class Database:
         for doc in user:
             data = doc.to_dict()
             print(data)
-
-    
-
-db = Database()
-#db.create_receiver('Bob', 'Rob', 'bob.rob')
-
-db.get_receiver('bob.rob')
