@@ -67,7 +67,7 @@ export default function Donation(){
 
   return (
     <>
-      <div id="default" className="flex items-center justify-center w-screen h-screen flex-col">
+      <div id="default" className="flex items-center justify-center w-screen h-[calc(100vh-100px)] flex-col">
           < Profile                                           />
           < Total         total = {total}                     />
           < Pad           total = {total} setTotal = {  setTotal  } />
