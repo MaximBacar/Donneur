@@ -27,7 +27,7 @@ class App():
         self.app.add_url_rule(  "/create_payment",                  "create_payment",   self.create_stripe_payment, methods=["POST"])
 
         stripe.api_key = self.donneur.stripe_key
-        stripe.PaymentMethodDomain.create(domain_name="https://0e53-2607-fa49-ad41-de00-e1d8-4212-5c84-263d.ngrok-free.app")
+        stripe.PaymentMethodDomain.create(domain_name="give.donneur.ca")
         
 
     def index(self):

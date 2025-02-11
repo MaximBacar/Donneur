@@ -8,6 +8,7 @@ import Profile          from "./components/Profile/profile";
 import Total            from "./components/Total/total";
 import Pad              from "./components/DigitPad/pad";
 import Checkout         from "./components/Checkout/checkout";
+import ECheckout from "./components/Checkout/check2";
 
 
 const stripePromise = loadStripe("pk_test_51QmlVlHgK1fpQ7EODxvlpfxHxf4xIGyIA5HVpbtOIcXJuhtraPx7CpRmku4YwWb8JDaOmY55OwdQSa2WVwF2UvOX0067Xpcr20");
@@ -32,6 +33,14 @@ export default function Donation(){
   useEffect(() => {
     setOs(getOS());
   }, []);
+
+  const options = {
+    mode: 'payment',
+    amount: 1099,
+    currency: 'usd',
+    // Customizable with appearance API.
+    // appearance: {/*...*/},
+  };
 
   const handlePaymentSend = async () => {
     let totalToSend = parseFloat(total);
@@ -71,7 +80,7 @@ export default function Donation(){
       </div>)}
       {clientSecret.length > 0 && (
         <Elements options={{clientSecret, appearance, loader}} stripe={stripePromise}>
-          <Checkout/>
+          <ECheckout/>
         </Elements>
       )}
     </>

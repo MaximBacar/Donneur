@@ -28,7 +28,7 @@ export default function Checkout(){
         elements,
         confirmParams: {
           // Make sure to change this to your payment completion page
-          return_url: "https:www.google.com",
+          return_url: "https://www.google.com",
         },
       });
   
