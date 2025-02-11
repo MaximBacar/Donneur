@@ -37,15 +37,6 @@ export default function ECheckout(){
         // Your customer is redirected to your `return_url`.
         }
     };
-
-    const onClick = ({resolve}) => {
-        alert('44');
-
-        options = {}
-
-        resolve();
-    };
-
     return (
         <div id="checkout-page">
             <ExpressCheckoutElement onClick={onClick} onConfirm={onConfirm} />
