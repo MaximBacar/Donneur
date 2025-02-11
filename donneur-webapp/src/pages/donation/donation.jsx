@@ -80,7 +80,7 @@ export default function Donation(){
             />
           )}
 
-          <PaymentTab total={total} clientSecret={clientSecret} isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+          <PaymentTab total={total} stripe={stripePromise} clientSecret={clientSecret} isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
           {/* {clientSecret.length > 0 && ( 
             <Elements options={{clientSecret, appearance, loader}} stripe={stripePromise}>

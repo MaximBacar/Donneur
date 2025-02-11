@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Elements } from "@stripe/react-stripe-js";
 import ECheckout from "../Checkout/check2"
 
-export default function PaymentTab({ total, clientSecret, isOpen, onClose }){
+export default function PaymentTab({ total, stripe, clientSecret, isOpen, onClose }){
 
     const appearance = {
         theme: 'stripe',
@@ -37,13 +37,16 @@ export default function PaymentTab({ total, clientSecret, isOpen, onClose }){
                     </div>
                 </div>
 
-                <div className="w-full h-[50%] mt-[50px] bg-blue-400 flex items-center justify-center">
+                <div className="w-full h-[50%] mt-[50px] flex items-center justify-center">
                     <h1 className="text-[90px] font-bold">${total}</h1>
                 </div>
-                {clientSecret.lenght > 0 && 
-                    <Elements options={{clientSecret, appearance, loader}} stripe={stripePromise}>
+                
+                {console.log(clientSecret == "")}
+                {clientSecret != "" && 
+                    (<Elements options={{clientSecret, appearance, loader}} stripe={stripe}>
                         <ECheckout/>
-                    </Elements>
+                    </Elements>)
+                
                 }
                 
             </div>
