@@ -15,7 +15,7 @@ export default function PaymentTab({ total, stripe, clientSecret, isOpen, onClos
             animate={{ y: isOpen ? "0%" : "100%" }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            className="fixed bottom-0 left-0 h-[500px] w-full bg-white shadow-xl  rounded-t-2xl flex flex-col items-center justify-center"
+            className="fixed bottom-0 left-0 h-[80%] w-full bg-white shadow-xl  rounded-t-2xl flex flex-col items-center justify-center"
             >
             {/* <h2 className="text-xl font-semibold">Payment Menu</h2>
             <p>Securely complete your transaction here.</p>
@@ -41,7 +41,6 @@ export default function PaymentTab({ total, stripe, clientSecret, isOpen, onClos
                     <h1 className="text-[90px] font-bold">${total}</h1>
                 </div>
                 
-                {console.log(clientSecret == "")}
                 {clientSecret != "" && 
                     (<Elements options={{clientSecret, appearance, loader}} stripe={stripe}>
                         <ECheckout/>

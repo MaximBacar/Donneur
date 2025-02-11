@@ -15,9 +15,9 @@ export default function Total({total}){
     };
 
     return (
-        <div className="flex flex-col align-center justify-center w-[300px]">
-            <h1 className="text-[64px] text-center">${formatTotal(total)}</h1>
-            <h2 className="text-center">will be sent</h2>
+        <div className="flex flex-col items-center justify-between w-[300px]">
+            <h1 className="text-[90px] font-[400] m-0 p-0 leading-none text-center">${formatTotal(total)}</h1>
+            {/* <h2 className="text-center leading-none">will be sent</h2> */}
         </div>
     )
 }
