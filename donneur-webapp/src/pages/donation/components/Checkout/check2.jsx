@@ -39,7 +39,7 @@ export default function ECheckout(){
     };
     return (
         <div id="checkout-page">
-            <ExpressCheckoutElement onClick={onClick} onConfirm={onConfirm} />
+            <ExpressCheckoutElement onConfirm={onConfirm} />
             {errorMessage && <div>{errorMessage}</div>}
         </div>
     );
