@@ -29,7 +29,7 @@ export default function Pad({ total, setTotal }) {
     ];
 
     return (
-        <div className="flex flex-col w-[280px] h-[220px] justify-between text-[24px] my-[50px]">
+        <div className="flex flex-col w-[300px] h-[250px] justify-between text-[24px] my-[50px]">
             {buttons.map((row, rowIndex) => (
                 <div key={rowIndex} className="flex flex-row w-full justify-between">
                     {row.map((label) => (
