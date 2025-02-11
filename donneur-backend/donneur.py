@@ -1,29 +1,22 @@
-from    flask               import Flask
+from    dotenv      import  load_dotenv
+import  os
 
-from    firebase_connector  import Database
+class Donneur:
+    '''
+    Handle server-side logic
+    '''
 
+    def __generate_folders(self):
+        if not os.path.exists(self.image_folder):
+            os.mkdir(self.image_folder)
 
-class Donneur():
-    
     def __init__(self):
-        self.app        = Flask(__name__)
-        self.database   = Database()
-        
-        self.app.add_url_rule(  "/",          "index",    self.index    )
-        self.app.add_url_rule(  "/api/docs",  "docs",     self.docs     )
-
-    def index(self):
-        return "Donneur.ca API"
-
-    def docs(self):
-        return "Donneur.ca API Docs"
-    
-    def create_receiver(self):
-        return "Added"
-
-    def start(self):
-        self.app.run()
+        load_dotenv()
+        self.image_folder = os.getenv('IMAGE_FOLDER')
+        self.stripe_key = os.getenv('STRIPE_KEY')
+        self.firebase_credentials_path = os.getenv('FIREBASE_CRED_PATH')
 
 
-a = Donneur()
-a.start()
+        self.__generate_folders()
+
+

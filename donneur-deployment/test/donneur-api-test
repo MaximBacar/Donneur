@@ -1,0 +1,20 @@
+server {
+    listen 80;
+    server_name api.donneur.ca;
+
+    location / {
+        include proxy_params;
+        proxy_pass http://127.0.0.1:8004;
+    }
+}
+
+server {
+    listen 80;
+    server_name give.donneur.ca www.donneur.ca donneur.ca;
+
+    root /var/www/donneur-test;
+    index index.html;
+    location / {
+        try_files $uri /index.html;
+    }
+}
