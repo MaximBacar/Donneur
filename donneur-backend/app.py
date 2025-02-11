@@ -63,7 +63,7 @@ class App():
             try:
                 converted_amount = int(data['amount'] * 100)
                 intent = stripe.PaymentIntent.create(
-                    # amount                      = converted_amount,
+                    amount                      = converted_amount,
                     currency                    = 'cad',
                     payment_method_types=['card']
                     )
