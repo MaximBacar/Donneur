@@ -38,9 +38,17 @@ export default function ECheckout(){
         }
     };
 
+    const onClick = ({resolve}) => {
+        alert('44');
+
+        options = {}
+
+        resolve();
+    };
+
     return (
         <div id="checkout-page">
-            <ExpressCheckoutElement onConfirm={onConfirm} />
+            <ExpressCheckoutElement onClick={onClick} onConfirm={onConfirm} />
             {errorMessage && <div>{errorMessage}</div>}
         </div>
     );

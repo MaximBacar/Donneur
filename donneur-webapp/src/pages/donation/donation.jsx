@@ -31,16 +31,11 @@ export default function Donation(){
   const [total, setTotal] = useState('');
 
   useEffect(() => {
-    setOs(getOS());
-  }, []);
+    if (clientSecret.length == 0){
+      handlePaymentSend();
+    }
+  }, [total]);
 
-  const options = {
-    mode: 'payment',
-    amount: 1099,
-    currency: 'usd',
-    // Customizable with appearance API.
-    // appearance: {/*...*/},
-  };
 
   const handlePaymentSend = async () => {
     let totalToSend = parseFloat(total);
@@ -70,38 +65,23 @@ export default function Donation(){
         
     }
   }
+
   return (
     <>
-      {clientSecret.length == 0 && (<div id="default" className="flex items-center justify-center w-screen h-screen flex-col">
+      <div id="default" className="flex items-center justify-center w-screen h-screen flex-col">
           < Profile                                           />
           < Total         total = {total}                     />
           < Pad           total = {total} setTotal = {  setTotal  } />
-          < PaymentButton os    = {os}    onClick = { () => handlePaymentSend()}                     />
-      </div>)}
-      {clientSecret.length > 0 && (
-        <Elements options={{clientSecret, appearance, loader}} stripe={stripePromise}>
-          <ECheckout/>
-        </Elements>
-      )}
+          {/* < PaymentButton os    = {os}    onClick = { () => handlePaymentSend()}                     /> */}
+
+          {clientSecret.length > 0 && (
+            <Elements options={{clientSecret, appearance, loader}} stripe={stripePromise}>
+              <ECheckout/>
+            </Elements>
+          )}
+          
+      </div>
     </>
       
   )
 }
-
-function getOS() {
-    const userAgent = navigator.userAgent;
-
-    console.log(userAgent);
-    
-    if (userAgent.includes("Windows NT")) return "Windows";
-    if (userAgent.includes("Mac OS X")) return "macOS";
-    if (userAgent.includes("Linux")) return "Linux";
-    if (/iPhone|iPad|iPod/.test(userAgent)) return "iOS";
-    if (userAgent.includes("Android")) return "Android";
-    if (userAgent.includes("CrOS")) return "Chrome OS";
-  
-    return "Unknown OS";
-  }
-  
-  console.log(getOS());
-  
