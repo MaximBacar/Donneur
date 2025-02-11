@@ -21,6 +21,9 @@ jobs:
             # Fetch the latest code
             git pull
 
+            export NVM_DIR=~/.nvm
+            source ~/.nvm/nvm.sh
+
             # Frontend Build
             cd donneur-webapp
             npm install
