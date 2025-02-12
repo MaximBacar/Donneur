@@ -12,7 +12,7 @@ export default defineConfig({
     strictPort: true,  // Prevent random port selection
     port: 5173,  // Ensure it matches your ngrok port
     allowedHosts: [
-      "0e53-2607-fa49-ad41-de00-e1d8-4212-5c84-263d.ngrok-free.app" // Your ngrok URL
+      "9362-132-205-229-6.ngrok-free.app" // Your ngrok URL
     ],
   },
 });

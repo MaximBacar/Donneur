@@ -37,7 +37,6 @@ export default function ECheckout(){
         // Your customer is redirected to your `return_url`.
         }
     };
-
     return (
         <div id="checkout-page">
             <ExpressCheckoutElement onConfirm={onConfirm} />
