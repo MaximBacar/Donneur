@@ -25,6 +25,7 @@ class App():
         self.app.add_url_rule(  "/image/<image_id>",                "image",            self.image,                 methods=["GET"] )
         self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",  self.payment_profile,       methods=["GET"] )
         self.app.add_url_rule(  "/create_payment",                  "create_payment",   self.create_stripe_payment, methods=["POST"])
+        self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",   self.cancel_stripe_payment, methods=["POST"])
 
         stripe.api_key = self.donneur.stripe_key
         stripe.PaymentMethodDomain.create(domain_name="give.donneur.ca")
@@ -74,9 +75,22 @@ class App():
                 return "Error", 401
 
         return "Invalid", 400
-        
+    
+    def cancel_stripe_payment(self):
+        data = request.get_json()
+        if 'clientSecret' in data and data['clientSecret']:
+            try:
+                stripe.PaymentIntent.cancel(data['clientSecret'])
+                return 200
+            except Exception as error:
+                print(f"Error: {str(error)}")
+                return "Error", 401
+        return 400
 
 
 
 donneur_api = App()
 donneur_app = donneur_api.app
+
+if __name__ == "__main__":
+    donneur_app.run(debug=True)
