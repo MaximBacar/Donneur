@@ -2,7 +2,7 @@ name: Deploy TEST to VPS
 on:
   push:
     branches:
-      - database-integration
+      - maxim
 
 jobs:
   deploy:
