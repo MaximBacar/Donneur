@@ -19,7 +19,7 @@ jobs:
             cd /home/donneur_test/Donneur
 
             # Fetch the latest code
-            git pull
+            git pull origin maxim
 
             export NVM_DIR=~/.nvm
             source ~/.nvm/nvm.sh
