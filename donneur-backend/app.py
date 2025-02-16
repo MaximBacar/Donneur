@@ -56,7 +56,7 @@ class App():
                 profile_data = {
                     'id'            : profile_id,
                     'name'          : f'{data["first_name"]} {data["last_name"][0]}.',
-                    'picture_url'   : f'https://www.donneur.ca/image/{data["picture_id"]}'
+                    'picture_url'   : f'https://api.donneur.ca/image/{data["picture_id"]}'
                 }
                 return profile_data
             return 'No user', 400
