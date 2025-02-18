@@ -11,7 +11,6 @@ class App():
     def __init__(self):
         self.app        = Flask(__name__)
         self.donneur    = Donneur()
-        self.database   = Database(self.donneur.firebase_credentials_path)
         
 
         CORS(self.app, resources={r"/*": {
@@ -22,6 +21,7 @@ class App():
         
         self.app.add_url_rule(  "/",                                "index",            self.index                                  )
         self.app.add_url_rule(  "/docs",                            "docs",             self.docs                                   )
+        self.app.add_url_rule(  "/upload_image",                    "upload_image",     self.upload_image,          methods=["POST"])
         self.app.add_url_rule(  "/image/<image_id>",                "image",            self.image,                 methods=["GET"] )
         self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",  self.payment_profile,       methods=["GET"] )
         self.app.add_url_rule(  "/create_payment",                  "create_payment",   self.create_stripe_payment, methods=["POST"])
@@ -35,19 +35,31 @@ class App():
         return "Donneur.ca API"
     
     def image(self, image_id):
-        
         if image_id:
-            return f"ID : {image_id}"
+            image = self.donneur.get_image(image_id)
+            if image:
+                return send_file(image, mimetype='image/png')
         return 'Image not found', 404
+    
+    def upload_image(self):
+        if 'image' not in request.files:
+            return 400
+
+        image = request.files['image']
+        self.donneur.add_profile_picture('uzS6R6ZwE7', image)
+        return {'status':'success'}
     
     def payment_profile(self, profile_id):
         if profile_id:
-            data = {
-                'id'            : profile_id,
-                'name'          : 'Jacob B.',
-                'picture_url'   : 'https://www.donneur.ca/image/HbreJcj'
-            }
-            return data
+            data = self.donneur.database.get_receiver( profile_id )
+            if data:
+                profile_data = {
+                    'id'            : profile_id,
+                    'name'          : f'{data["first_name"]} {data["last_name"][0]}.',
+                    'picture_url'   : f'https://api.donneur.ca/image/{data["picture_id"]}'
+                }
+                return profile_data
+            return 'No user', 400
         return 'No user', 400
 
     def docs(self):
