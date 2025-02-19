@@ -57,13 +57,13 @@ export default function WithdrawalAmountScreen() {
   const handleConfirm = () => {
     console.log(`Confirming withdrawal of $${amount}`);
     // Navigate to withdrawalConfirmation.js
-    router.push('/withdrawal/withdrawalConfirmation');
+    router.push('/withdrawalConfirmation');
   };
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Optional BackHeader */}
-      <BackHeader title="" />
+      {/* <BackHeader title="" /> */}
 
       {/* Title and Subtitle */}
       <View style={styles.header}>

@@ -10,6 +10,7 @@ class Database:
 
 
     def __init__(self, firebase_credentials_path):
+        self.tables = ['receivers','organizations']
         firebase_credentials = credentials.Certificate(firebase_credentials_path)
         firebase_admin.initialize_app(firebase_credentials, {'databaseURL': 'https://capstone-3828a-default-rtdb.firebaseio.com/'})
 
@@ -24,10 +25,29 @@ class Database:
             'first_name'    : fn,
             'last_name'     : ln,
             'username'      : username,
+            'uid'           : "",
             'picture_id'    : ""
         }
 
         reference.child(id).set(data)
+
+    def create_organization (self , name, description, address, zip, city, province, max_occupancy, uid):
+        reference = db.reference('/organizations')
+        data = {
+            'name'          : name,
+            'description'   : description,
+            'address'       : {
+                'address'   : address,
+                'zip'       : zip,
+                'city'      : city,
+                'province'  : province
+            },
+            'max_occupancy' : max_occupancy,
+            'logo_id'       : "",
+            'banner_id'     : "",
+            'uid'           : uid
+        }
+        reference.push(data)
 
     def get_receiver( self, id ) -> dict:
         reference = db.reference(f'/receivers/{id}')
@@ -61,7 +81,17 @@ class Database:
 
         else:
             return False
-
-
-
         
+
+    def get_user_from_uid( self, uid ):
+        for table in self.tables:
+            reference = db.reference(f'/{table}')
+            query = reference.order_by_child('uid').equal_to(uid).get()
+
+            if query:
+                key     = next(iter(query))
+                data    = query[key]
+                data['key'] = key
+                data['role'] = table[:-1]
+                return data
+        return None

@@ -18,12 +18,12 @@ export default function UserEmailScreen() {
 
   const handleContinue = () => {
     // TODO: Validate the email or store it in global state if needed
-    router.push('/registerUser/idPicture');
+    router.push('/idPicture');
   };
 
   const handleSkip = () => {
     // Skip the email registration and move on
-    router.push('/registerUser/idPicture'); 
+    router.push('/idPicture'); 
   };
 
   return (

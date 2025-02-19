@@ -22,7 +22,7 @@ export default function BasicInfoScreen() {
 
   const handleContinue = () => {
     // TODO: Validate input or store data in global state if needed
-    router.push('/registerUser/userEmail');
+    router.push('/userEmail');
   };
 
   const handleCancel = () => {

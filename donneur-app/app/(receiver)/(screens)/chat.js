@@ -1,8 +1,8 @@
 import { collection, onSnapshot, query, addDoc, orderBy } from "firebase/firestore";
 import React, { useCallback, useLayoutEffect, useState } from "react";
 import { GiftedChat } from "react-native-gifted-chat";
-import { database } from "../../config/firebase";
-import { useAuth } from "../../context/authContext";
+import { database } from "../../../config/firebase";
+import { useAuth } from "../../../context/authContext";
 import { Text } from "react-native";
 
 export default function Chat(){

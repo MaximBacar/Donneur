@@ -32,7 +32,9 @@
     "react-native-screens": "~4.4.0",
     "react-native-vector-icons": "^10.2.0",
     "lottie-react-native": "7.1.0",
-    "react-native-webview": "13.12.5"
+    "react-native-webview": "13.12.5",
+    "expo-media-library": "~17.0.6",
+    "expo-camera": "~16.0.16"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

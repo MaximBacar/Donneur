@@ -23,7 +23,7 @@ export default function RegisterNfcCardScreen() {
   const handleFinish = () => {
     // Navigate or finalize the process
     console.log('Finish pressed');
-    router.replace('(organization)/(screens)/registerUser/registrationConfirmation'); // or wherever you want to navigate
+    router.replace('/registrationConfirmation'); // or wherever you want to navigate
   };
 
   return (

@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import IconSymbol from '../../components/ui/IconSymbol';
+import IconSymbol from '../../../components/ui/IconSymbol';
 import { WebView } from 'react-native-webview';
 
 const screenWidth = Dimensions.get('window').width;
