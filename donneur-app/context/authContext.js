@@ -6,6 +6,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
+  const [donneurID, setDonneurID] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -13,11 +14,12 @@ export const AuthProvider = ({ children }) => {
       setUser(user);
       if (user) {
         try {
-          let url = `https://api.donneur.ca/get_role?uid=${user.uid}`;
+          let url = `https://api.donneur.ca/get_user?uid=${user.uid}`;
           const response  = await fetch(url);
           const data      = await response.json();
-          console.log(data);
+          
           setRole(data.role);
+          setDonneurID(data.db_id);
         } catch (error) {
           console.error("Failed to fetch role:", error);
         }
