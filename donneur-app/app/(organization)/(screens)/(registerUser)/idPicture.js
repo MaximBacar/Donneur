@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
-
+import * as ImageManipulator from 'expo-image-manipulator';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -63,40 +63,35 @@ export default function IdPictureScreen() {
 
   const handleContinue = async () => {
 
-    console.log('handle');
-    // POST PIC HERE
     if (!photo) {
       console.error('No photo taken!');
       return;
     }
     try {
-      const body = new FormData();
+
+      const cropWidth = photo.width;  
+      const cropHeight = photo.width;
+      const cropX = (photo.width - cropWidth) / 2; // Center X
+      const cropY = (photo.height - cropHeight) / 2; // Center Y
+
+      const resizedPhoto = await ImageManipulator.manipulateAsync(photo.uri, [{ crop: { originX: cropX, originY: cropY, width: cropWidth, height: cropHeight } }], { compress: 0.1, base64:true, format: ImageManipulator.SaveFormat.JPEG});
       
-
-      console.log(`data:image/png;base64,${photo.base64}`);
     
-      // Convert base64 image to a Blob (binary format)
-      // const imgBlob = await fetch(`data:image/png;base64,${photo.base64}`).then(res => res.blob());
+      const body = JSON.stringify({
+        image_data: `data:image/jpeg;base64,${resizedPhoto.base64}`
+      });
 
-      console.log('aaa');
+      const response = await fetch('https://api.donneur.ca/upload_base64', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json' // Important: Expecting JSON
+        },
+        body:body,
+      });
 
-      // const response = await fetch('https://api.donneur.ca/upload_image', {
-      //   method: 'POST',
-      //   // body: formData,
-      //   body:body,
-      // });
+      const textResponse = await response.text();
+      console.log(textResponse);
 
-      // console.log('bbb');
-
-      // const result = await response.json();
-
-      // if (response.ok) {
-      //   console.log('Image uploaded successfully', result);
-      //   // Handle success (e.g., navigate to the next screen)
-      //   router.push('/idDocument');
-      // } else {
-      //   console.error('Error uploading image:', result);
-      // }
     } catch (error) {
       console.log(error);
     }
@@ -138,6 +133,7 @@ export default function IdPictureScreen() {
       const takePhoto = await cameraRef.current.takePictureAsync(options);
 
       setPhoto(takePhoto);
+      
     }
   };
 

@@ -9,12 +9,13 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-
+import { useUser } from './registerContext';
 const screenWidth = Dimensions.get('window').width;
 
 export default function UserEmailScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const { userData } = useUser();
 
   const handleContinue = () => {
     // TODO: Validate the email or store it in global state if needed
@@ -33,7 +34,8 @@ export default function UserEmailScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Registration</Text>
-          <Text style={styles.subtitle}>Enter your email address</Text>
+          
+          <Text style={styles.subtitle}>Enter your email address {userData}</Text>
         </View>
 
         {/* Form */}

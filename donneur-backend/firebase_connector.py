@@ -17,14 +17,15 @@ class Database:
         # self.db = firestore.client()
 
     
-    def create_receiver( self, fn : str, ln : str, username : str, id):
+    def create_receiver( self, fn : str, ln : str, dob, id):
         reference = db.reference('/receivers')
         data = {
             'balance'       : 0,
             'creation_date' : datetime.now().isoformat(),
             'first_name'    : fn,
             'last_name'     : ln,
-            'username'      : username,
+            'dob'           : dob,
+            'username'      : "",
             'uid'           : "",
             'picture_id'    : ""
         }

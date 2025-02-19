@@ -28,6 +28,7 @@ class App():
         self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",  self.payment_profile,       methods=["GET"] )
         self.app.add_url_rule(  "/create_payment",                  "create_payment",   self.create_stripe_payment, methods=["POST"])
         self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",   self.cancel_stripe_payment, methods=["POST"])
+        self.app.add_url_rule(  "/create_receiver",                 "create_receiver",  self.create_receiver,       methods=["POST"])
 
         self.app.add_url_rule(  "/get_role",                        "get_role",         self.get_role,              methods=["GET"] )
 
@@ -86,7 +87,14 @@ class App():
         return "Donneur.ca API Docs"
     
     def create_receiver(self):
-        return "Added"
+        data = request.get_json()
+
+        if 'fn' in data and 'ln' in data and 'dob' in data:
+            id = self.donneur.create_receiver(data['fn'], data['ln'], data['dob'])
+            return {'receiver_id' : id}
+
+        return 500
+        
     
     def get_role(self):
         uid = request.args.get('uid')
@@ -99,7 +107,6 @@ class App():
     def create_stripe_payment(self):
         # TODO Validate that receiver_id exists, that 0.50 <= amount < 1000.00
         data = request.get_json()
-        print(data)
         if 'amount' in data and data['amount']:
             try:
                 converted_amount = int(data['amount'] * 100)

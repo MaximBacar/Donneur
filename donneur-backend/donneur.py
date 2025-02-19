@@ -13,7 +13,7 @@ class Donneur:
     Handle server-side logic
     '''
 
-    def generate_user_id(self):
+    def __generate_user_id(self):
         ID_LENGTH = 10
         is_unique = False
 
@@ -24,8 +24,16 @@ class Donneur:
 
         return user_id
     
+    
     def __genenrate_file_id(self, id):
         return f'{id}_{str(uuid.uuid4())}.png'
+    
+
+
+    def create_receiver(self, fn, ln, dob):
+        id = self.__generate_user_id()
+        self.database.create_receiver(fn, ln, dob, id)
+        return id
     
 
     def get_image( self , image_id ):

@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useUser } from './registerContext';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -17,12 +18,39 @@ export default function BasicInfoScreen() {
 
   // Form state
   const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [dob, setDob] = useState(''); // e.g. 'June 14 1971'
+  const [lastName, setLastName]   = useState('');
+  const [dob, setDob]             = useState(''); 
 
-  const handleContinue = () => {
-    // TODO: Validate input or store data in global state if needed
-    router.push('/userEmail');
+
+  const { setUserID } = useUser();
+
+  const handleContinue = async () => {
+
+    try{
+      const body = JSON.stringify({
+        fn: firstName,
+        ln: lastName,
+        dob: dob
+      });
+
+      const response = await fetch('https://api.donneur.ca/create_receiver', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json' // Important: Expecting JSON
+        },
+        body:body,
+      });
+
+      const result = await response.json();
+      setUserID(result.receiver_id);
+
+
+
+      router.push('/userEmail');
+    }catch(error){
+      console.log(error);
+    }
+  
   };
 
   const handleCancel = () => {
