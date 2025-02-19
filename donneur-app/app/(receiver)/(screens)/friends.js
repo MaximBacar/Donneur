@@ -10,7 +10,7 @@ import {
 import { useRouter } from 'expo-router';
 
 import IconSymbol from '../../../components/ui/IconSymbol';
-import BackHeader from '../../../components/header';
+// import BackHeader from '../../../components/header';
 // MOCK DATA
 const friendsData = [
   { id: 'header-online', type: 'header', title: 'Online Friends' },
@@ -46,7 +46,7 @@ export default function FriendsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       {/* BackHeader is rendered at the top */}
-      <BackHeader title="Friends" />
+      {/* <BackHeader title="Friends" /> */}
 
       {/* Optional mock data text */}
       <Text style={styles.mockDataText}>MOCK DATA</Text>

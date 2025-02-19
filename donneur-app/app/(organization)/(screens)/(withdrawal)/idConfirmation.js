@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   SafeAreaView,
   View,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useUser } from './withdrawalContext';
 
 export default function IdConfirmationScreen() {
   const router = useRouter();
@@ -17,6 +18,34 @@ export default function IdConfirmationScreen() {
   const name = 'RIBERY FRANCK';
   const birthDate = '2002-03-24';
   const address = '1234 RUE DE LA PAIX';
+
+
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);  // For loading state
+  const [error, setError] = useState(null);      // For error handling
+
+
+  const {userID} = useUser();
+
+
+  useEffect(() => {
+    if (userID) {
+      // Fetch data from API
+      fetch(`https://api.donneur.ca/get_id/${userID}`)
+        .then((response) => response.json())
+        .then((data) => {
+          setUserData(data);  // Store fetched data
+          setLoading(false);   // Set loading to false
+        })
+        .catch((err) => {
+          setError(err.message); // Set error if the request fails
+          setLoading(false);     // Set loading to false
+        });
+    }
+  }, [userID]);  // Only fetch data if `userID` changes or is available
+
+
+  
 
   const handleConfirm = () => {
     console.log('Identity confirmed');
@@ -29,6 +58,16 @@ export default function IdConfirmationScreen() {
     // Navigate to /(tabsOrg)/dashboard
     router.push('/');
   };
+
+
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
+
+  if (error) {
+    return <Text>Error: {error}</Text>;
+  }
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -43,11 +82,11 @@ export default function IdConfirmationScreen() {
 
           {/* Identity Info */}
           <View style={styles.identityContainer}>
-            <Image source={{ uri: profilePhoto }} style={styles.profilePhoto} />
+            <Image source={{ uri: userData.picture_url }} style={styles.profilePhoto} />
             <View style={styles.infoColumn}>
-              <Text style={styles.name}>{name}</Text>
-              <Text style={styles.detail}>Date of birth: {birthDate}</Text>
-              <Text style={styles.detail}>Known address: {address}</Text>
+              <Text style={styles.name}>{userData.name}</Text>
+              <Text style={styles.detail}>Date of birth: {userData.dob}</Text>
+              <Text style={styles.detail}>{userID}</Text>
             </View>
           </View>
         </View>

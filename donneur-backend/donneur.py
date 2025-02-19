@@ -4,13 +4,16 @@ import  random
 import  string
 import  uuid
 import  os
+import  base64
+import  io
+from    PIL import Image
 
 class Donneur:
     '''
     Handle server-side logic
     '''
 
-    def generate_user_id(self):
+    def __generate_user_id(self):
         ID_LENGTH = 10
         is_unique = False
 
@@ -21,8 +24,16 @@ class Donneur:
 
         return user_id
     
+    
     def __genenrate_file_id(self, id):
         return f'{id}_{str(uuid.uuid4())}.png'
+    
+
+
+    def create_receiver(self, fn, ln, dob):
+        id = self.__generate_user_id()
+        self.database.create_receiver(fn, ln, dob, id)
+        return id
     
 
     def get_image( self , image_id ):
@@ -32,10 +43,28 @@ class Donneur:
             return image_path
         return None
     
+
+    def add_id_document( self , id , file):
+        picture_id = self.__genenrate_file_id( id )
+        try:
+            image_bytes = base64.b64decode(file)
+            image = Image.open(io.BytesIO(image_bytes))
+     
+            image.save(os.path.join(self.image_folder, picture_id), 'PNG')
+            self.database.set_document_picture( id, picture_id )
+        except:
+            pass
+    
     def add_profile_picture( self , id , file):
         picture_id = self.__genenrate_file_id( id )
         try:
-            file.save(os.path.join(self.image_folder, picture_id))
+            # file.save(os.path.join(self.image_folder, picture_id))
+            # self.database.set_profile_picture( id, picture_id )
+
+            image_bytes = base64.b64decode(file)
+            image = Image.open(io.BytesIO(image_bytes))
+     
+            image.save(os.path.join(self.image_folder, picture_id), 'PNG')
             self.database.set_profile_picture( id, picture_id )
         except:
             pass

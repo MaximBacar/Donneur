@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import BackHeader from '../../../../components/header';
+// import BackHeader from '../../../../components/header';
 
 const screenWidth = Dimensions.get('window').width;
 

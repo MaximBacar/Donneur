@@ -17,16 +17,18 @@ class Database:
         # self.db = firestore.client()
 
     
-    def create_receiver( self, fn : str, ln : str, username : str, id):
+    def create_receiver( self, fn : str, ln : str, dob, id):
         reference = db.reference('/receivers')
         data = {
             'balance'       : 0,
             'creation_date' : datetime.now().isoformat(),
             'first_name'    : fn,
             'last_name'     : ln,
-            'username'      : username,
+            'dob'           : dob,
+            'username'      : "",
             'uid'           : "",
-            'picture_id'    : ""
+            'picture_id'    : "",
+            'id_doc_id'     : ""
         }
 
         reference.child(id).set(data)
@@ -57,6 +59,11 @@ class Database:
             return data
         else:
             return None
+        
+    def get_all_organizations(self):
+        reference = db.reference('/organizations')
+        data = reference.get()
+        return data
 
     def add_balance( self, id, amount ) -> bool:
         reference = db.reference(f'/receivers/{id}')
@@ -68,6 +75,18 @@ class Database:
             reference.update({'balance' : new_balance})
 
             return True
+        else:
+            return False
+        
+
+    def set_document_picture( self, id, picture_id ):
+        reference = db.reference(f'/receivers/{id}')
+
+        data = reference.get()
+        if data:
+            reference.update({'id_doc_id' : picture_id})
+            return True
+
         else:
             return False
         
@@ -95,3 +114,4 @@ class Database:
                 data['role'] = table[:-1]
                 return data
         return None
+

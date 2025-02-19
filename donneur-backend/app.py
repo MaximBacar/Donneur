@@ -3,6 +3,7 @@ from    flask_cors          import  CORS
 from    firebase_connector  import  Database
 from    donneur             import  Donneur
 
+
 import  stripe
 
 
@@ -22,11 +23,14 @@ class App():
         self.app.add_url_rule(  "/",                                "index",            self.index                                  )
         self.app.add_url_rule(  "/docs",                            "docs",             self.docs                                   )
         self.app.add_url_rule(  "/upload_image",                    "upload_image",     self.upload_image,          methods=["POST"])
+        self.app.add_url_rule(  "/upload_base64",                   "upload_base64",    self.upload_base64,         methods=["POST"])
         self.app.add_url_rule(  "/image/<image_id>",                "image",            self.image,                 methods=["GET"] )
         self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",  self.payment_profile,       methods=["GET"] )
         self.app.add_url_rule(  "/create_payment",                  "create_payment",   self.create_stripe_payment, methods=["POST"])
         self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",   self.cancel_stripe_payment, methods=["POST"])
-
+        self.app.add_url_rule(  "/create_receiver",                 "create_receiver",  self.create_receiver,       methods=["POST"])
+        self.app.add_url_rule(  "/get_id/<profile_id>",             "get_id",           self.get_id,                methods=["GET"] )
+        self.app.add_url_rule(  "/get_shelter_locations",           "get_shelter_locations", self.get_shelter_locations, methods=["GET"])
         self.app.add_url_rule(  "/get_role",                        "get_role",         self.get_role,              methods=["GET"] )
 
         stripe.api_key = self.donneur.stripe_key
@@ -51,6 +55,32 @@ class App():
         self.donneur.add_profile_picture('uzS6R6ZwE7', image)
         return {'status':'success'}
     
+    def upload_base64(self):
+
+        # TODO error handle, if user exist
+        try:
+            data        = request.json.get('image_data')
+            image_type  = request.json.get('type')
+            id          = request.json.get('id')
+
+            if not data or (not 'data:image/png;base64,' not in data) or (not id) or (not image_type):
+                return {"error": "Invalid image data"}, 400
+            
+            image_data = data.split('base64,')[1]
+
+            if image_type == 'pp':
+                self.donneur.add_profile_picture(id, image_data)
+            elif image_type == 'doc':
+                self.donneur.add_id_document(id, image_data)
+            else:
+                return {'status' : 400}
+            
+            
+            return {'status' : 200}
+        
+        except Exception as e:
+            return {"error": str(e)}, 500
+    
     def payment_profile(self, profile_id):
         if profile_id:
             data = self.donneur.database.get_receiver( profile_id )
@@ -63,12 +93,41 @@ class App():
                 return profile_data
             return 'No user', 400
         return 'No user', 400
+    
+    def get_shelter_locations(self):
+        data = self.donneur.database.get_all_organizations()
+
+        if data:
+            return data
+        
+        return 400
+
+    def get_id(self, profile_id):
+        if profile_id:
+            data = self.donneur.database.get_receiver( profile_id )
+            if data:
+                profile_data = {
+                    'id'            : profile_id,
+                    'name'          : f'{data["first_name"].upper()} {data["last_name"].upper()}.',
+                    'picture_url'   : f'https://api.donneur.ca/image/{data["picture_id"]}',
+                    'dob'           : data['dob']
+                }
+                return profile_data
+            
+        return 'No user', 400
 
     def docs(self):
         return "Donneur.ca API Docs"
     
     def create_receiver(self):
-        return "Added"
+        data = request.get_json()
+
+        if 'fn' in data and 'ln' in data and 'dob' in data:
+            id = self.donneur.create_receiver(data['fn'], data['ln'], data['dob'])
+            return {'receiver_id' : id}
+
+        return 500
+        
     
     def get_role(self):
         uid = request.args.get('uid')
@@ -81,7 +140,6 @@ class App():
     def create_stripe_payment(self):
         # TODO Validate that receiver_id exists, that 0.50 <= amount < 1000.00
         data = request.get_json()
-        print(data)
         if 'amount' in data and data['amount']:
             try:
                 converted_amount = int(data['amount'] * 100)

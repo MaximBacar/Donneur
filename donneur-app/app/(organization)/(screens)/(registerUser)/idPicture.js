@@ -11,18 +11,20 @@ import {
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
-
+import * as ImageManipulator from 'expo-image-manipulator';
+import { useUser } from './registerContext';
 
 const screenWidth = Dimensions.get('window').width;
 
 
+
 export default function IdPictureScreen() {
-  const [facing, setFacing] = useState('back');
   const [permission, requestPermission] = useCameraPermissions();
-
-
-  const [photo, setPhoto] = useState(null);
-  const cameraRef = useRef(null);
+  const [facing, setFacing]             = useState('back');
+  const [photo, setPhoto]               = useState(null);
+  const cameraRef                       = useRef(null);
+  
+  const { userID }                      = useUser();
 
 
   const Camera = () => {
@@ -63,43 +65,37 @@ export default function IdPictureScreen() {
 
   const handleContinue = async () => {
 
-    console.log('handle');
-    // POST PIC HERE
     if (!photo) {
       console.error('No photo taken!');
       return;
     }
     try {
-      const formData = new FormData();
 
-      console.log('fff');
+      const cropWidth = photo.width;  
+      const cropHeight = photo.width;
+      const cropX = (photo.width - cropWidth) / 2; // Center X
+      const cropY = (photo.height - cropHeight) / 2; // Center Y
+
+      const resizedPhoto = await ImageManipulator.manipulateAsync(photo.uri, [{ crop: { originX: cropX, originY: cropY, width: cropWidth, height: cropHeight } }], { compress: 0.1, base64:true, format: ImageManipulator.SaveFormat.JPEG});
+      
     
-      // Convert base64 image to a Blob (binary format)
-      const imgBlob = await fetch(`data:image/jpg;base64,${photo.base64}`).then(res => res.blob());
-
-      console.log('aaa');
-
-      // formData.append('id', 'test_id'); // You can replace 'test_id' with dynamic data if needed
-      formData.append('image', imgBlob, 'photo.jpg'); // Make sure to append as 'image'
-
-      console.log('gg');
-
-      const response = await fetch('https://api.donneur.ca/upload_image', {
-        method: 'POST',
-        body: formData,
+      const body = JSON.stringify({
+        image_data:   `data:image/jpeg;base64,${resizedPhoto.base64}`,
+        type:         'pp',
+        id:  userID
       });
 
-      console.log('bbb');
+      const response = await fetch('https://api.donneur.ca/upload_base64', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json' // Important: Expecting JSON
+        },
+        body:body,
+      });
 
-      const result = await response.json();
+      const textResponse = await response.text();
+      console.log(textResponse);
 
-      if (response.ok) {
-        console.log('Image uploaded successfully', result);
-        // Handle success (e.g., navigate to the next screen)
-        router.push('/idDocument');
-      } else {
-        console.error('Error uploading image:', result);
-      }
     } catch (error) {
       console.log(error);
     }
@@ -141,6 +137,7 @@ export default function IdPictureScreen() {
       const takePhoto = await cameraRef.current.takePictureAsync(options);
 
       setPhoto(takePhoto);
+      
     }
   };
 
