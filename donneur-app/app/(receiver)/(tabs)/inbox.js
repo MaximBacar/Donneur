@@ -7,8 +7,8 @@ const Inbox = () => {
 
   const followedShelters = {
     shelters:[
-         FRdseCE570TWxDGBIj0C9DY54qn2, 
-         TmTdSxjyqCfMOKJlIXmh77ZtVqD2
+         'FRdseCE570TWxDGBIj0C9DY54qn2', 
+         'TmTdSxjyqCfMOKJlIXmh77ZtVqD2'
     ]
    }
 

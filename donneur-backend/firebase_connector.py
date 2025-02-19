@@ -26,7 +26,6 @@ class Database:
             'last_name'     : ln,
             'dob'           : dob,
             'username'      : "",
-            'uid'           : "",
             'picture_id'    : "",
             'id_doc_id'     : ""
         }
@@ -46,10 +45,10 @@ class Database:
             },
             'max_occupancy' : max_occupancy,
             'logo_id'       : "",
-            'banner_id'     : "",
-            'uid'           : uid
+            'banner_id'     : ""
         }
-        reference.push(data)
+        response = reference.push(data)
+        self.set_uid(response.key, 'organizations', uid)
 
     def get_receiver( self, id ) -> dict:
         reference = db.reference(f'/receivers/{id}')
@@ -59,6 +58,28 @@ class Database:
             return data
         else:
             return None
+        
+    def get_organization( self, id ) -> dict:
+        reference = db.reference(f'/organizations/{id}')
+        data = reference.get()
+        
+        if data:
+            return data
+        else:
+            return None
+        
+    def set_uid(self, db_id, role, uid):
+        reference = db.reference(f'/users')
+        reference.child(uid).set({
+            'db_id':db_id,
+            'role' : role
+            })
+
+
+    def get_id_from_uid(self, uid):
+        reference = db.reference(f'/users/{uid}')
+        data = reference.get()
+        return data
         
     def get_all_organizations(self):
         reference = db.reference('/organizations')
@@ -101,17 +122,17 @@ class Database:
         else:
             return False
         
-
     def get_user_from_uid( self, uid ):
-        for table in self.tables:
-            reference = db.reference(f'/{table}')
-            query = reference.order_by_child('uid').equal_to(uid).get()
+        user_id = self.get_id_from_uid(uid)
+        if user_id:
+            data = {}
+            if user_id['role'] == 'receivers':
+                data = self.get_receiver(user_id['db_id'])
+            if user_id['role'] == 'organizations':
+                data = self.get_organization(user_id['db_id'])
 
-            if query:
-                key     = next(iter(query))
-                data    = query[key]
-                data['key'] = key
-                data['role'] = table[:-1]
-                return data
-        return None
+            data['db_id'] = user_id['db_id']
+            data['role'] = user_id['role']
+            data['uid'] = uid
 
+            return data
