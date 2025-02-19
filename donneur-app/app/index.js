@@ -13,14 +13,14 @@ export default function Index() {
         return <Redirect href="/(auth)/login" />;
     } 
     if (user){
-        if (role === "organization") {
+        if (role === "organizations") {
             return <Redirect href="/(organization)" />;
         } 
-        if (role == "receiver"){
+        if (role == "receivers"){
             return <Redirect href="/(receiver)" />;
         }
 
-        if (role == "sender"){
+        if (role == "senders"){
             return <Redirect href="/(sender)" />;
         }
         
