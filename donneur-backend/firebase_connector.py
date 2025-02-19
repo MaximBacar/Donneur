@@ -136,3 +136,14 @@ class Database:
             data['uid'] = uid
 
             return data
+        
+
+    def get_uid( self, id ):
+        reference = db.reference(f'/users')
+        users = reference.get()
+
+        for user in users:
+            data = users[user]
+            if data['db_id'] == id:
+                return user
+        return None

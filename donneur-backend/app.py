@@ -33,7 +33,8 @@ class App():
         self.app.add_url_rule(  "/get_shelter_locations",           "get_shelter_locations", self.get_shelter_locations, methods=["GET"])
         self.app.add_url_rule(  "/get_role",                        "get_role",         self.get_role,              methods=["GET"] )
         self.app.add_url_rule(  "/get_user",                        "get_user",         self.get_user,              methods=["GET"] )
-        self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",        self.get_db_id,             methods=["GET"])
+        self.app.add_url_rule(  "/get_uid",                         "get_uid",          self.get_uid,               methods=["GET"])
+        self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",        self.get_db_id,             methods=["GET"] )
 
         stripe.api_key = self.donneur.stripe_key
         stripe.PaymentMethodDomain.create(domain_name="give.donneur.ca")
@@ -104,6 +105,16 @@ class App():
         
         return 400
     
+
+    def get_uid(self):
+        db_id = request.args.get('donneurID')
+        if db_id:
+            uid = self.donneur.database.get_uid(db_id)
+            if uid:
+                return {'uid':uid}
+            
+        return 400
+
     def get_db_id(self, uid):
         if uid:
             pass
