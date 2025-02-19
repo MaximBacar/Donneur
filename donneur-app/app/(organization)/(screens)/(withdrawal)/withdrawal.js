@@ -11,18 +11,19 @@ import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import BackHeader from '../../../../components/header';
 
+
 const screenWidth = Dimensions.get('window').width;
 
 export default function WithdrawalScreen() {
   const router = useRouter();
 
   const handleNavigate = () => {
-    router.push('/withdrawal/idConfirmation');
+    router.push('/idConfirmation');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <BackHeader title="" />
+      {/* <BackHeader title="" /> */}
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Withdrawal</Text>

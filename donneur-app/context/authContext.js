@@ -10,13 +10,13 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      setUser(user);
       if (user) {
         try {
           let url = `https://api.donneur.ca/get_role?uid=${user.uid}`;
-          console.log(url);
-          const response = await fetch(url);
-          console.log("hi");
-          const data = await response.json();
+          const response  = await fetch(url);
+          const data      = await response.json();
+          console.log(data);
           setRole(data.role);
         } catch (error) {
           console.error("Failed to fetch role:", error);
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
       } else {
         setRole(null);
       }
-      setUser(user);
+      // setUser(user);
       setLoading(false);
     });
 

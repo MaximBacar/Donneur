@@ -16,7 +16,7 @@ export default function IdDocumentScreen() {
 
   const handleContinue = () => {
     // Implement logic or navigation for after ID document is scanned/uploaded
-    router.push('/registerUser/registerNFC'); // Replace with your actual route
+    router.push('/registerNFC'); // Replace with your actual route
   };
 
   return (

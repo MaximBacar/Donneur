@@ -37,7 +37,18 @@ export default{
       appId: process.env.APP_ID,
       measurementId: process.env.MEASUREMENT_ID,
     },
-    "scheme": "donneurapp"
+    "scheme": "donneurapp",
+
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
+          "recordAudioAndroid": true
+        }
+      ]
+    ]
     
   }
 }

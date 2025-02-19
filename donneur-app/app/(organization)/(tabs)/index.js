@@ -9,13 +9,18 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import IconSymbol from '../../components/ui/IconSymbol';
+import IconSymbol from '../../../components/ui/IconSymbol';
 // import { LinearGradient } from 'expo-linear-gradient'; // If you want a gradient background
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function DashboardScreen() {
   const router = useRouter();
+
+
+  const widthdrawl = () => {
+
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -130,7 +135,7 @@ export default function DashboardScreen() {
             {/* Register User */}
             <TouchableOpacity
               style={styles.userToolButton}
-              onPress={() => router.push('/registerUser/basicInfo')}
+              onPress={() => router.push('/(registerUser)')}
             >
               <IconSymbol name="person.badge.plus" size={24} color="#007AFF" />
               <Text style={styles.userToolButtonText} numberOfLines={1}>
@@ -155,7 +160,7 @@ export default function DashboardScreen() {
             {/* Withdrawal */}
             <TouchableOpacity
               style={styles.userToolButton}
-              onPress={() => router.push('/withdrawal/withdrawal')}
+              onPress={() => router.push('/(screens)/(withdrawal)')}
             >
               <IconSymbol name="arrow.down.circle.fill" size={24} color="#007AFF" />
               <Text style={styles.userToolButtonText} numberOfLines={1}>

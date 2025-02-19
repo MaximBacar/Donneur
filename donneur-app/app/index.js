@@ -12,19 +12,20 @@ export default function Index() {
         console.log("Redirecting to login...");
         return <Redirect href="/(auth)/login" />;
     } 
+    if (user){
+        if (role === "organization") {
+            return <Redirect href="/(organization)" />;
+        } 
+        if (role == "receiver"){
+            return <Redirect href="/(receiver)" />;
+        }
 
-    if (role === "organization") {
-        return <Redirect href="/(organization)" />;
-    } 
-    if (role == "receiver"){
-        return <Redirect href="/(receiver)" />;
-    }
-
-    if (role == "sender"){
-        return <Redirect href="/(sender)" />;
-    }
-    
-    else {
-        return <Text>Problem Occured</Text>
+        if (role == "sender"){
+            return <Redirect href="/(sender)" />;
+        }
+        
+        else {
+            return null;
+        }
     }
 }

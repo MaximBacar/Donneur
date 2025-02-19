@@ -21,13 +21,13 @@ export default function IdConfirmationScreen() {
   const handleConfirm = () => {
     console.log('Identity confirmed');
     // Navigate to withdrawalAmount.js
-    router.push('/withdrawal/withdrawalAmount');
+    router.push('/withdrawalAmount');
   };
 
   const handleRefuse = () => {
     console.log('Transaction refused');
     // Navigate to /(tabsOrg)/dashboard
-    router.push('/(tabsOrg)/dashboard');
+    router.push('/');
   };
 
   return (
