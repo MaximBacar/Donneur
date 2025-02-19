@@ -2,12 +2,15 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, Dimensions, Alert, TouchableOpacity, Text, Animated } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { useRouter } from "expo-router";
 
 export default function ExplorePage() {
   const [location, setLocation] = useState(null);
   const [region, setRegion] = useState(null);
 
   const [shelters, setShelters] = useState([]);
+
+  const router = useRouter();
 
 
   const glowSize = useRef(new Animated.Value(50)).current;
@@ -77,16 +80,17 @@ export default function ExplorePage() {
       try {
         const response = await fetch('https://api.donneur.ca/get_shelter_locations');
         const data = await response.json();
+
   
         const shelterEntries = Object.entries(data);
         const shelterMarkers = [];
   
         for (const [id, shelter] of shelterEntries) {
           const { address } = shelter;
+          
           const fullAddress = `${address.address}, ${address.city}, ${address.province}, ${address.zip}`;
           
           const geoResults = await Location.geocodeAsync(fullAddress);
-  
           if (geoResults.length > 0) {
             shelterMarkers.push({
               id,
@@ -128,12 +132,6 @@ export default function ExplorePage() {
     }
   };
 
-
-  const geoCode = async () => {
-    const gL = await Location.geocodeAsync('550 Bd René-Lévesque E, Montréal, QC H2L 2L3');
-    console.log("LO:",gL);
-  }
-
   return (
     <View style={styles.container}>
       <MapView 
@@ -143,38 +141,44 @@ export default function ExplorePage() {
         showsUserLocation={true} // Blue dot for user location
         showsMyLocationButton={true} // Adds a location button
       >
-        {location && (
-          <Marker
-            coordinate={location}
-            title="You are here"
-            description="Your current location"
-            style={{
-              display:'flex',
-              alignItems:'center',
-              justifyContent:'center'
-            }}
-          >
-            <View style={styles.markerBox}>
-              <Animated.View
-                style={[
-                  styles.markerGlow,
-                  {
-                    width: glowSize,
-                    height: glowSize,
-                    backgroundColor: glowOpacity.interpolate({
-                      inputRange: [0.5, 1],
-                      outputRange: ["rgba(154, 255, 1, 0.5)", "rgba(154, 255, 1, 1)"],
-                    }),
-                  },
-                ]}
-              >
-                <View style={styles.marker}>
-
+        { shelters.map(shelter => (
+          
+            <Marker
+              key={shelter.id}
+              coordinate={{ latitude: shelter.latitude, longitude: shelter.longitude }}
+              title={shelter.name}
+              description={shelter.description}
+              style={{
+                display:'flex',
+                alignItems:'center',
+                justifyContent:'center'
+              }}
+              onPress={() => router.push(`../(screens)/shelter/123`)}
+            >
+              <View style={styles.marker}>
+                <View style={styles.markerBox}>
+                  <Animated.View
+                    style={[
+                      styles.markerGlow,
+                      {
+                        width: glowSize,
+                        height: glowSize,
+                        backgroundColor: glowOpacity.interpolate({
+                          inputRange: [0.5, 1],
+                          outputRange: ["rgba(154, 255, 1, 0.5)", "rgba(154, 255, 1, 1)"],
+                        }),
+                      },
+                    ]}
+                  >
+                    <View style={styles.markerInside}/>
+                  </Animated.View>
+                  
                 </View>
-              </Animated.View>
-            </View>
-          </Marker>
-        )}
+                <Text style={{'fontWeight':'600', 'transform':[{ translateY: -10 }]}}>{shelter.name}</Text>
+              </View>
+            </Marker>
+        ))}
+        
       </MapView>
 
       {/* ✅ Zoom Controls */}
@@ -204,9 +208,10 @@ const styles = StyleSheet.create({
     display:'flex',
     alignItems:'center',
     justifyContent:'center',
+    flexDirection:'column',
 
   },
-  marker:{
+  markerInside:{
     width:70,
     height:70,
     borderRadius:'50%',
@@ -219,6 +224,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     
+  },
+  marker:{
+    width:120,
+    height:130,
+    display:'flex',
+    flexDirection: 'column',
+    alignItems:'center',
+    justifyContent:'center'
   },
   zoomControls: {
     position: 'absolute',
