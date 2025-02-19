@@ -1,11 +1,53 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Dimensions, Alert, TouchableOpacity, Text } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, StyleSheet, Dimensions, Alert, TouchableOpacity, Text, Animated } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 
 export default function ExplorePage() {
   const [location, setLocation] = useState(null);
   const [region, setRegion] = useState(null);
+
+  const [shelters, setShelters] = useState([]);
+
+
+  const glowSize = useRef(new Animated.Value(50)).current;
+  const glowOpacity = useRef(new Animated.Value(0.8)).current;
+
+  useEffect(() => {
+    const animateGlow = () => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowSize, {
+            toValue: 50,
+            duration: 2000,
+            useNativeDriver: false, 
+          }),
+          Animated.timing(glowSize, {
+            toValue: 120,
+            duration: 2000,
+            useNativeDriver: false, 
+          }),
+        ])
+      ).start();
+
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowOpacity, {
+            toValue: 0.8,
+            duration: 2002,
+            useNativeDriver: false,
+          }),
+          Animated.timing(glowOpacity, {
+            toValue: 0,
+            duration: 2002,
+            useNativeDriver: false,
+          }),
+        ])
+      ).start();
+    };
+
+    animateGlow();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -29,6 +71,41 @@ export default function ExplorePage() {
     })();
   }, []);
 
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await fetch('https://api.donneur.ca/get_shelter_locations');
+        const data = await response.json();
+  
+        const shelterEntries = Object.entries(data);
+        const shelterMarkers = [];
+  
+        for (const [id, shelter] of shelterEntries) {
+          const { address } = shelter;
+          const fullAddress = `${address.address}, ${address.city}, ${address.province}, ${address.zip}`;
+          
+          const geoResults = await Location.geocodeAsync(fullAddress);
+  
+          if (geoResults.length > 0) {
+            shelterMarkers.push({
+              id,
+              name: shelter.name,
+              description: shelter.description || "No description available",
+              latitude: geoResults[0].latitude,
+              longitude: geoResults[0].longitude,
+            });
+          }
+        }
+  
+        setShelters(shelterMarkers);
+      } catch (error) {
+        console.error("Error fetching shelter locations:", error);
+      }
+    })();
+  }, []);
+  
+
   // ✅ Function to Zoom In
   const zoomIn = () => {
     if (region) {
@@ -51,6 +128,12 @@ export default function ExplorePage() {
     }
   };
 
+
+  const geoCode = async () => {
+    const gL = await Location.geocodeAsync('550 Bd René-Lévesque E, Montréal, QC H2L 2L3');
+    console.log("LO:",gL);
+  }
+
   return (
     <View style={styles.container}>
       <MapView 
@@ -65,7 +148,32 @@ export default function ExplorePage() {
             coordinate={location}
             title="You are here"
             description="Your current location"
-          />
+            style={{
+              display:'flex',
+              alignItems:'center',
+              justifyContent:'center'
+            }}
+          >
+            <View style={styles.markerBox}>
+              <Animated.View
+                style={[
+                  styles.markerGlow,
+                  {
+                    width: glowSize,
+                    height: glowSize,
+                    backgroundColor: glowOpacity.interpolate({
+                      inputRange: [0.5, 1],
+                      outputRange: ["rgba(154, 255, 1, 0.5)", "rgba(154, 255, 1, 1)"],
+                    }),
+                  },
+                ]}
+              >
+                <View style={styles.marker}>
+
+                </View>
+              </Animated.View>
+            </View>
+          </Marker>
         )}
       </MapView>
 
@@ -89,6 +197,28 @@ const styles = StyleSheet.create({
   map: {
     width: Dimensions.get('window').width,
     height: Dimensions.get('window').height,
+  },
+  markerBox:{
+    width:120,
+    height:120,
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+
+  },
+  marker:{
+    width:70,
+    height:70,
+    borderRadius:'50%',
+    backgroundColor:'#d6d6d6',
+  },
+  markerGlow:{
+    
+    borderRadius: 75, // Ensure it's always circular
+    display: 'flex',
+    alignItems: "center",
+    justifyContent: "center",
+    
   },
   zoomControls: {
     position: 'absolute',

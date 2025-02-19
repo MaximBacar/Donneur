@@ -59,6 +59,11 @@ class Database:
             return data
         else:
             return None
+        
+    def get_all_organizations(self):
+        reference = db.reference('/organizations')
+        data = reference.get()
+        return data
 
     def add_balance( self, id, amount ) -> bool:
         reference = db.reference(f'/receivers/{id}')
@@ -109,3 +114,4 @@ class Database:
                 data['role'] = table[:-1]
                 return data
         return None
+

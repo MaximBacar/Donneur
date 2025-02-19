@@ -30,7 +30,7 @@ class App():
         self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",   self.cancel_stripe_payment, methods=["POST"])
         self.app.add_url_rule(  "/create_receiver",                 "create_receiver",  self.create_receiver,       methods=["POST"])
         self.app.add_url_rule(  "/get_id/<profile_id>",             "get_id",           self.get_id,                methods=["GET"] )
-
+        self.app.add_url_rule(  "/get_shelter_locations",           "get_shelter_locations", self.get_shelter_locations, methods=["GET"])
         self.app.add_url_rule(  "/get_role",                        "get_role",         self.get_role,              methods=["GET"] )
 
         stripe.api_key = self.donneur.stripe_key
@@ -94,6 +94,14 @@ class App():
             return 'No user', 400
         return 'No user', 400
     
+    def get_shelter_locations(self):
+        data = self.donneur.database.get_all_organizations()
+
+        if data:
+            return data
+        
+        return 400
+
     def get_id(self, profile_id):
         if profile_id:
             data = self.donneur.database.get_receiver( profile_id )

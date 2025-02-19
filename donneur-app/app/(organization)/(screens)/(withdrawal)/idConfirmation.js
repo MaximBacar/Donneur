@@ -82,7 +82,7 @@ export default function IdConfirmationScreen() {
 
           {/* Identity Info */}
           <View style={styles.identityContainer}>
-            <Image source={{ uri: profilePhoto }} style={styles.profilePhoto} />
+            <Image source={{ uri: userData.picture_url }} style={styles.profilePhoto} />
             <View style={styles.infoColumn}>
               <Text style={styles.name}>{userData.name}</Text>
               <Text style={styles.detail}>Date of birth: {userData.dob}</Text>
