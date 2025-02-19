@@ -6,12 +6,12 @@ const RegisterLayout = () => {
   return (
     <UserProvider>
       <Stack options={{ headerShown: false }}>
-          <Stack.Screen name="basicInfo"  />
-          <Stack.Screen name="idDocument" />
-          <Stack.Screen name="idPicture"  />
-          <Stack.Screen name="registerNFC"/>
-          <Stack.Screen name="registrationConfirmation"/>
-          <Stack.Screen name="userEmail"/>
+          <Stack.Screen name="basicInfo"                options={{ headerShown: false }}/>
+          <Stack.Screen name="idDocument"               options={{ headerShown: false }}/>
+          <Stack.Screen name="idPicture"                options={{ headerShown: false }}/>
+          <Stack.Screen name="registerNFC"              options={{ headerShown: false }}/>
+          <Stack.Screen name="registrationConfirmation" options={{ headerShown: false }}/>
+          <Stack.Screen name="userEmail"                options={{ headerShown: false }}/>
       </Stack>
     </UserProvider>
   )

@@ -82,7 +82,7 @@ export default function IdPictureScreen() {
       const body = JSON.stringify({
         image_data:   `data:image/jpeg;base64,${resizedPhoto.base64}`,
         type:         'pp',
-        receiver_id:  userID
+        id:  userID
       });
 
       const response = await fetch('https://api.donneur.ca/upload_base64', {

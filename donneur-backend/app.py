@@ -29,6 +29,7 @@ class App():
         self.app.add_url_rule(  "/create_payment",                  "create_payment",   self.create_stripe_payment, methods=["POST"])
         self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",   self.cancel_stripe_payment, methods=["POST"])
         self.app.add_url_rule(  "/create_receiver",                 "create_receiver",  self.create_receiver,       methods=["POST"])
+        self.app.add_url_rule(  "/get_id/<profile_id>",             "get_id",           self.get_id,                methods=["GET"] )
 
         self.app.add_url_rule(  "/get_role",                        "get_role",         self.get_role,              methods=["GET"] )
 
@@ -91,6 +92,20 @@ class App():
                 }
                 return profile_data
             return 'No user', 400
+        return 'No user', 400
+    
+    def get_id(self, profile_id):
+        if profile_id:
+            data = self.donneur.database.get_receiver( profile_id )
+            if data:
+                profile_data = {
+                    'id'            : profile_id,
+                    'name'          : f'{data["first_name"].upper()} {data["last_name"].upper()}.',
+                    'picture_url'   : f'https://api.donneur.ca/image/{data["picture_id"]}',
+                    'dob'           : data['dob']
+                }
+                return profile_data
+            
         return 'No user', 400
 
     def docs(self):

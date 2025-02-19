@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import BackHeader from '../../../../components/header';
+// import BackHeader from '../../../../components/header';
 
 
 const screenWidth = Dimensions.get('window').width;
@@ -18,7 +18,7 @@ export default function WithdrawalScreen() {
   const router = useRouter();
 
   const handleNavigate = () => {
-    router.push('/idConfirmation');
+    router.push('/qrcode');
   };
 
   return (
