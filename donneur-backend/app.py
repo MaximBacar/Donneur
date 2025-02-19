@@ -55,15 +55,25 @@ class App():
         return {'status':'success'}
     
     def upload_base64(self):
-        try:
-            data = request.json.get('image_data')
 
-            if not data or (not 'data:image/png;base64,' not in data):
+        # TODO error handle, if user exist
+        try:
+            data        = request.json.get('image_data')
+            image_type  = request.json.get('type')
+            id          = request.json.get('id')
+
+            if not data or (not 'data:image/png;base64,' not in data) or (not id) or (not image_type):
                 return {"error": "Invalid image data"}, 400
             
             image_data = data.split('base64,')[1]
 
-            self.donneur.add_profile_picture('uzS6R6ZwE7', image_data)
+            if image_type == 'pp':
+                self.donneur.add_profile_picture(id, image_data)
+            elif image_type == 'doc':
+                self.donneur.add_id_document(id, image_data)
+            else:
+                return {'status' : 400}
+            
             
             return {'status' : 200}
         

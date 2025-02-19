@@ -43,6 +43,18 @@ class Donneur:
             return image_path
         return None
     
+
+    def add_id_document( self , id , file):
+        picture_id = self.__genenrate_file_id( id )
+        try:
+            image_bytes = base64.b64decode(file)
+            image = Image.open(io.BytesIO(image_bytes))
+     
+            image.save(os.path.join(self.image_folder, picture_id), 'PNG')
+            self.database.set_document_picture( id, picture_id )
+        except:
+            pass
+    
     def add_profile_picture( self , id , file):
         picture_id = self.__genenrate_file_id( id )
         try:

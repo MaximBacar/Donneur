@@ -15,7 +15,7 @@ const screenWidth = Dimensions.get('window').width;
 export default function UserEmailScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
-  const { userData } = useUser();
+  const { userID } = useUser();
 
   const handleContinue = () => {
     // TODO: Validate the email or store it in global state if needed
@@ -35,7 +35,7 @@ export default function UserEmailScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Registration</Text>
           
-          <Text style={styles.subtitle}>Enter your email address {userData}</Text>
+          <Text style={styles.subtitle}>Enter your email address {userID}</Text>
         </View>
 
         {/* Form */}

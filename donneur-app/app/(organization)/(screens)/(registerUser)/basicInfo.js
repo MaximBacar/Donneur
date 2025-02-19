@@ -42,6 +42,7 @@ export default function BasicInfoScreen() {
       });
 
       const result = await response.json();
+      console.log(result);
       setUserID(result.receiver_id);
 
 

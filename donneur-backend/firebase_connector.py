@@ -27,7 +27,8 @@ class Database:
             'dob'           : dob,
             'username'      : "",
             'uid'           : "",
-            'picture_id'    : ""
+            'picture_id'    : "",
+            'id_doc_id'     : ""
         }
 
         reference.child(id).set(data)
@@ -69,6 +70,18 @@ class Database:
             reference.update({'balance' : new_balance})
 
             return True
+        else:
+            return False
+        
+
+    def set_document_picture( self, id, picture_id ):
+        reference = db.reference(f'/receivers/{id}')
+
+        data = reference.get()
+        if data:
+            reference.update({'id_doc_id' : picture_id})
+            return True
+
         else:
             return False
         

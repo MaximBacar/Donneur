@@ -12,17 +12,19 @@ import {
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { useUser } from './registerContext';
 
 const screenWidth = Dimensions.get('window').width;
 
 
+
 export default function IdPictureScreen() {
-  const [facing, setFacing] = useState('back');
   const [permission, requestPermission] = useCameraPermissions();
-
-
-  const [photo, setPhoto] = useState(null);
-  const cameraRef = useRef(null);
+  const [facing, setFacing]             = useState('back');
+  const [photo, setPhoto]               = useState(null);
+  const cameraRef                       = useRef(null);
+  
+  const { userID }                      = useUser();
 
 
   const Camera = () => {
@@ -78,7 +80,9 @@ export default function IdPictureScreen() {
       
     
       const body = JSON.stringify({
-        image_data: `data:image/jpeg;base64,${resizedPhoto.base64}`
+        image_data:   `data:image/jpeg;base64,${resizedPhoto.base64}`,
+        type:         'pp',
+        receiver_id:  userID
       });
 
       const response = await fetch('https://api.donneur.ca/upload_base64', {
