@@ -27,6 +27,8 @@ class App():
         self.app.add_url_rule(  "/create_payment",                  "create_payment",   self.create_stripe_payment, methods=["POST"])
         self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",   self.cancel_stripe_payment, methods=["POST"])
 
+        self.app.add_url_rule(  "/get_role",                        "get_role",         self.get_role,              methods=["GET"] )
+
         stripe.api_key = self.donneur.stripe_key
         stripe.PaymentMethodDomain.create(domain_name="give.donneur.ca")
         
@@ -67,6 +69,14 @@ class App():
     
     def create_receiver(self):
         return "Added"
+    
+    def get_role(self):
+        uid = request.args.get('uid')
+        if uid:
+            user_data = self.donneur.database.get_user_from_uid(uid)
+            if user_data:
+                return {'role' : user_data['role']}
+        return 400
 
     def create_stripe_payment(self):
         # TODO Validate that receiver_id exists, that 0.50 <= amount < 1000.00
