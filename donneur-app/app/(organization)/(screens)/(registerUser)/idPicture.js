@@ -70,36 +70,33 @@ export default function IdPictureScreen() {
       return;
     }
     try {
-      const formData = new FormData();
+      const body = new FormData();
+      
 
-      console.log('fff');
+      console.log(`data:image/png;base64,${photo.base64}`);
     
       // Convert base64 image to a Blob (binary format)
-      const imgBlob = await fetch(`data:image/jpg;base64,${photo.base64}`).then(res => res.blob());
+      // const imgBlob = await fetch(`data:image/png;base64,${photo.base64}`).then(res => res.blob());
 
       console.log('aaa');
 
-      // formData.append('id', 'test_id'); // You can replace 'test_id' with dynamic data if needed
-      formData.append('image', imgBlob, 'photo.jpg'); // Make sure to append as 'image'
+      // const response = await fetch('https://api.donneur.ca/upload_image', {
+      //   method: 'POST',
+      //   // body: formData,
+      //   body:body,
+      // });
 
-      console.log('gg');
+      // console.log('bbb');
 
-      const response = await fetch('https://api.donneur.ca/upload_image', {
-        method: 'POST',
-        body: formData,
-      });
+      // const result = await response.json();
 
-      console.log('bbb');
-
-      const result = await response.json();
-
-      if (response.ok) {
-        console.log('Image uploaded successfully', result);
-        // Handle success (e.g., navigate to the next screen)
-        router.push('/idDocument');
-      } else {
-        console.error('Error uploading image:', result);
-      }
+      // if (response.ok) {
+      //   console.log('Image uploaded successfully', result);
+      //   // Handle success (e.g., navigate to the next screen)
+      //   router.push('/idDocument');
+      // } else {
+      //   console.error('Error uploading image:', result);
+      // }
     } catch (error) {
       console.log(error);
     }

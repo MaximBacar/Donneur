@@ -3,6 +3,7 @@ from    flask_cors          import  CORS
 from    firebase_connector  import  Database
 from    donneur             import  Donneur
 
+
 import  stripe
 
 
@@ -22,6 +23,7 @@ class App():
         self.app.add_url_rule(  "/",                                "index",            self.index                                  )
         self.app.add_url_rule(  "/docs",                            "docs",             self.docs                                   )
         self.app.add_url_rule(  "/upload_image",                    "upload_image",     self.upload_image,          methods=["POST"])
+        self.app.add_url_rule(  "/upload_base64",                   "upload_base64",    self.upload_base64,         methods=["POST"])
         self.app.add_url_rule(  "/image/<image_id>",                "image",            self.image,                 methods=["GET"] )
         self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",  self.payment_profile,       methods=["GET"] )
         self.app.add_url_rule(  "/create_payment",                  "create_payment",   self.create_stripe_payment, methods=["POST"])
@@ -50,6 +52,22 @@ class App():
         image = request.files['image']
         self.donneur.add_profile_picture('uzS6R6ZwE7', image)
         return {'status':'success'}
+    
+    def upload_base64(self):
+        try:
+            data = request.json.get('image_data')
+
+            if not data or (not 'data:image/png;base64,' not in data):
+                return {"error": "Invalid image data"}, 400
+            
+            image_data = data.split('base64,')[1]
+
+            self.donneur.add_profile_picture('uzS6R6ZwE7', image_data)
+            
+            return {'status' : 200}
+        
+        except Exception as e:
+            return {"error": str(e)}, 500
     
     def payment_profile(self, profile_id):
         if profile_id:

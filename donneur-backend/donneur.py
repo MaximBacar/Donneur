@@ -4,6 +4,9 @@ import  random
 import  string
 import  uuid
 import  os
+import  base64
+import  io
+from    PIL import Image
 
 class Donneur:
     '''
@@ -35,7 +38,13 @@ class Donneur:
     def add_profile_picture( self , id , file):
         picture_id = self.__genenrate_file_id( id )
         try:
-            file.save(os.path.join(self.image_folder, picture_id))
+            # file.save(os.path.join(self.image_folder, picture_id))
+            # self.database.set_profile_picture( id, picture_id )
+
+            image_bytes = base64.b64decode(file)
+            image = Image.open(io.BytesIO(image_bytes))
+     
+            image.save(os.path.join(self.image_folder, picture_id), 'PNG')
             self.database.set_profile_picture( id, picture_id )
         except:
             pass
