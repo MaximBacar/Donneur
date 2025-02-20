@@ -14,8 +14,6 @@ class Database:
         firebase_credentials = credentials.Certificate(firebase_credentials_path)
         firebase_admin.initialize_app(firebase_credentials, {'databaseURL': 'https://capstone-3828a-default-rtdb.firebaseio.com/'})
 
-        # self.db = firestore.client()
-
     
     def create_receiver( self, fn : str, ln : str, dob, id):
         reference = db.reference('/receivers')
@@ -28,7 +26,7 @@ class Database:
             'username'      : "",
             'picture_id'    : "",
             'id_doc_id'     : "",
-            'email'     : ""
+            'email'         : ""
         }
 
         reference.child(id).set(data)

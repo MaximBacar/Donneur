@@ -57,6 +57,8 @@ class Donneur:
         except:
             pass
     
+    def create_transaction( type, amount : float, receiver_id, sender_id):
+        pass
     def add_profile_picture( self , id , file):
         picture_id = self.__genenrate_file_id( id )
         try:
