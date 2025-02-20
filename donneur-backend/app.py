@@ -231,6 +231,12 @@ class App():
                 'uid': user_record.uid,
                 'password_set_date': datetime.now().isoformat()
             })
+             # Create a corresponding entry in the /users table.
+            users_ref = db.reference('/users')
+            users_ref.child(user_record.uid).set({
+                'db_id': receiver_id,
+                'role': 'receivers'
+            })
             return jsonify({'status': 'success', 'uid': user_record.uid}), 200
         except Exception as e:
             return jsonify({'error': str(e)}), 500
