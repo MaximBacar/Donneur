@@ -27,10 +27,17 @@ class Database:
             'dob'           : dob,
             'username'      : "",
             'picture_id'    : "",
-            'id_doc_id'     : ""
+            'id_doc_id'     : "",
+            'email'     : ""
         }
 
         reference.child(id).set(data)
+
+    def update_receiver_email(self, receiver_id, email):
+        """Updates the email field for an existing receiver."""
+        reference = db.reference(f'/receivers/{receiver_id}')
+        reference.update({'email': email})
+        
 
     def create_organization (self , name, description, address, zip, city, province, max_occupancy, uid):
         reference = db.reference('/organizations')
