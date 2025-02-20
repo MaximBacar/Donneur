@@ -160,8 +160,7 @@ export default function DashboardScreen() {
             <Text style={styles.walletTitle}>Donneur Wallet</Text>
             <Text style={styles.walletSubtitle}>{fullName}</Text>
             <Text style={styles.walletOther}>
-              DOB: {dob}
-              {"\n"}Member since: {memberSince}
+              DOB: {dob}{"\n"}Member since: {memberSince}
             </Text>
           </View>
           <View style={styles.walletBalanceContainer}>
@@ -213,50 +212,35 @@ export default function DashboardScreen() {
           />
         </View>
 
-        {/* Other Cards */}
-        <View style={styles.row}>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Donations & Received</Text>
-            <Text style={styles.cardValue}>16</Text>
-            <View style={styles.chartPlaceholder}>
-              <Text style={styles.chartPlaceholderText}>🥧 Pie Chart</Text>
-            </View>
+        {/* Past Transactions Button */}
+        <TouchableOpacity
+          style={styles.pastTransactionButton}
+          onPress={() => router.push("/(screens)/transactions/past")}
+        >
+          <View style={styles.friendsButtonContent}>
+            <Ionicons
+              name="bar-chart-outline"
+              size={20}
+              color="#222"
+              style={styles.friendsIcon}
+            />
+            <Text style={styles.friendsText}>Past Transactions</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color="#222"
+              style={styles.chevronIcon}
+            />
           </View>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Opportunities Near Me</Text>
-            <Text style={styles.cardValue}>4</Text>
-            <TouchableOpacity style={styles.linkButton}>
-              <Text style={styles.linkButtonText}>See more</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.row}>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Food & Sleep availabilities</Text>
-            <Text style={styles.cardValue}>11</Text>
-            <TouchableOpacity style={styles.linkButton}>
-              <Text style={styles.linkButtonText}>Open Map</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Friends online</Text>
-            <Text style={styles.cardValue}>2</Text>
-            <TouchableOpacity style={styles.linkButton}>
-              <Text style={styles.linkButtonText}>Open Messages</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Full Width Donations Card */}
-        <View style={styles.fullWidthCard}>
-          <Text style={styles.cardTitle}>Donations</Text>
-          <Text style={[styles.moneyText, { fontSize: 28 }]}>$3.42</Text>
-          <TouchableOpacity style={styles.linkButton}>
-            <Text style={styles.linkButtonText}>Details</Text>
-          </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
+         {/* Footer */}
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          © Donneur
+        </Text>
+      </View>
       </ScrollView>
+
 
       {/* QR Code Modal */}
       <Modal
@@ -417,11 +401,29 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   /* ==========================
-     FRIENDS BUTTON
+     FRIENDS BUTTON & PAST TRANSACTIONS BUTTON
      ========================== */
   friendsButton: {
     marginHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 24,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 8,
+    borderColor: "#333333",
+    backgroundColor: "#FFF",
+    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  pastTransactionButton: {
+    marginHorizontal: 16,
+    marginBottom: 24,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#333333",
@@ -459,7 +461,6 @@ const styles = StyleSheet.create({
   historyCard: {
     backgroundColor: "#fff",
     marginHorizontal: 16,
-    marginBottom: 12,
     borderRadius: 12,
   },
   row: {
@@ -565,4 +566,18 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
   },
-});
+/* ==========================
+     FOOTER
+     ========================== */
+     footer: {
+      borderTopWidth: 1,
+      borderTopColor: "#ddd",
+      paddingVertical: 12,
+      alignItems: "center",
+      backgroundColor: "#fff",
+    },
+    footerText: {
+      fontSize: 12,
+      color: "#666",
+    },
+  });
