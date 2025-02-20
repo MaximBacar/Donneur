@@ -7,16 +7,25 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
+  LayoutAnimation,
+  UIManager,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 
 // Import your Firebase config
 import { auth, database } from '../../../../config/firebase';
 // Import the custom avatar component
 import { AvatarWithLoading } from './AvatarWithLoading'; // Adjust the path as needed
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function FriendsScreen() {
   const router = useRouter();
@@ -122,13 +131,55 @@ export default function FriendsScreen() {
     }
   }
 
-  // Accept/deny handlers remain unchanged
+  // Accept handler: update the friend relationship document and animate the state update.
   const acceptRequest = async (docId) => {
-    setPendingRequests((prev) => prev.filter((req) => req.docId !== docId));
+    try {
+      const friendDocRef = doc(database, 'friends', docId);
+      await updateDoc(friendDocRef, {
+        u1_accepted: true,
+        u2_accepted: true,
+      });
+      console.log('Friend request accepted');
+
+      // Animate removal from pending list.
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
+      // Find the accepted request details from pendingRequests.
+      const acceptedRequest = pendingRequests.find((req) => req.docId === docId);
+      // Remove it from pending requests.
+      setPendingRequests((prev) => prev.filter((req) => req.docId !== docId));
+      // Optionally, add it to myFriends list with an animation.
+      if (acceptedRequest) {
+        setMyFriends((prev) => [...prev, {
+          id: acceptedRequest.friendUid,
+          name: acceptedRequest.name,
+          picture: acceptedRequest.picture,
+          note: 'See profile.',
+        }]);
+      }
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+      Alert.alert("Error", "Failed to accept friend request.");
+    }
   };
 
+  // Deny handler: update the friend relationship document and animate removal.
   const denyRequest = async (docId) => {
-    setPendingRequests((prev) => prev.filter((req) => req.docId !== docId));
+    try {
+      const friendDocRef = doc(database, 'friends', docId);
+      await updateDoc(friendDocRef, {
+        u1_accepted: false,
+        u2_accepted: false,
+      });
+      console.log('Friend request denied');
+
+      // Animate removal from pending list.
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setPendingRequests((prev) => prev.filter((req) => req.docId !== docId));
+    } catch (error) {
+      console.error('Error denying friend request:', error);
+      Alert.alert("Error", "Failed to deny friend request.");
+    }
   };
 
   if (loading) {
@@ -150,9 +201,7 @@ export default function FriendsScreen() {
           </View>
           <TouchableOpacity
             style={styles.addButton}
-            onPress={() => {
-              console.log("Add friends tapped");
-            }}
+            onPress={() => router.push("./addFriend")}
           >
             <Text style={styles.addButtonText}>Add friends</Text>
           </TouchableOpacity>
@@ -203,8 +252,15 @@ export default function FriendsScreen() {
             ))
           ) : (
             <View style={styles.noRequestsContainer}>
-              <Ionicons name="mail-unread-outline" size={40} color="#999" style={styles.noRequestsIcon} />
-              <Text style={styles.noRequestsText}>No requests at this time</Text>
+              <Ionicons
+                name="mail-unread-outline"
+                size={40}
+                color="#999"
+                style={styles.noRequestsIcon}
+              />
+              <Text style={styles.noRequestsText}>
+                No requests at this time
+              </Text>
             </View>
           )}
         </View>
@@ -362,7 +418,6 @@ const styles = StyleSheet.create({
   chevronIcon: {
     marginLeft: 8,
     color: '#222222',
-
   },
   friendAvatar: {
     width: 40,

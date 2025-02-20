@@ -42,6 +42,8 @@ export default function ReceiveScreen() {
         {/* "Your code" Label */}
         <Text style={styles.yourCodeLabel}>Your code</Text>
 
+        <Text style={styles.uidText}>User ID: {uniqueValue}</Text>
+
         {/* QR Code generated using react-native-qrcode-svg */}
         <View style={styles.qrContainer}>
           <QRCode
