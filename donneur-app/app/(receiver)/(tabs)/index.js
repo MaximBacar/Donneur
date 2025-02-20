@@ -80,13 +80,15 @@ export default function DashboardScreen() {
         {/* Row of Buttons: Receive / Withdraw */}
         <View style={styles.buttonsRow}>
           <TouchableOpacity
-            style={styles.balanceButton}
-            onPress={() => router.push("/receive/receive")}
+            style={styles.receiveButton}
+            onPress={() => router.push("/(screens)/receive/receive")}
           >
-            <Text style={styles.balanceButtonText}>Receive</Text>
+            <Ionicons name="arrow-down" size={12} color="#222" style={styles.buttonIcon} />
+            <Text style={styles.receiveButtonText}>Receive</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.balanceButton}>
-            <Text style={styles.balanceButtonText}>Withdraw</Text>
+          <TouchableOpacity style={styles.withdrawButton}>
+            <Ionicons name="arrow-up" size={12} color="#FFFFFF" style={styles.buttonIcon} />
+            <Text style={styles.withdrawButtonText}>Withdraw</Text>
           </TouchableOpacity>
         </View>
 
@@ -254,27 +256,48 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     marginTop: 12,
   },
-  balanceButton: {
-    backgroundColor: '#FFF',
-    paddingHorizontal: 48,
+  withdrawButton: {
+    backgroundColor: '#222222',
+    paddingHorizontal: 36,
     paddingVertical: 12,
     borderRadius: 32,
     marginHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#989898',
+    borderColor: '#333333',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+  },
+  receiveButton: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 36,
+    paddingVertical: 12,
+    borderRadius: 32,
+    marginHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#333333',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
   },
   buttonIcon: {
     marginRight: 6,
   },
-  balanceButtonText: {
+  withdrawButtonText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  receiveButtonText: {
     fontSize: 14,
     color: '#222222',
     fontWeight: '600',
@@ -339,7 +362,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#989898',
+    borderColor: '#333333',
     backgroundColor: '#FFF',
     padding: 12,
     flexDirection: 'row',
@@ -368,117 +391,116 @@ const styles = StyleSheet.create({
   chevronIcon: {
     marginLeft: 8,
   },
-   /* ==========================
+  /* ==========================
      HISTORY, CARDS, & OTHERS
      ========================== */
-     historyCard: {
-      backgroundColor: '#fff',
-      marginHorizontal: 16,
-      marginBottom: 12,
-      borderRadius: 12,
-    },
-    row: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginHorizontal: 8,
-      marginTop: 10,
-    },
-    card: {
-      backgroundColor: '#fff',
-      flex: 1,
-      margin: 4,
-      borderRadius: 10,
-      padding: 16,
-      alignItems: 'center',
-    },
-    fullWidthCard: {
-      backgroundColor: '#fff',
-      margin: 8,
-      borderRadius: 10,
-      padding: 16,
-      width: '100%',
-      alignItems: 'center',
-    },
-    cardTitle: { 
-      fontSize: 20, 
-      fontWeight: '600', 
-      marginBottom: 8
-    },
-    cardValue: { 
-      fontSize: 24, 
-      fontWeight: 'bold', 
-      marginBottom: 6, 
-      color: '#333' 
-    },
-    moneyText: { 
-      fontSize: 20, 
-      fontWeight: 'bold', 
-      color: '#333' 
-    },
-    linkButton: { 
-      marginTop: 4 
-    },
-    linkButtonText: { 
-      fontSize: 14, 
-      color: '#007AFF' 
-    },
-    chartPlaceholder: {
-      marginTop: 10,
-      backgroundColor: '#EEE',
-      borderRadius: 6,
-      paddingVertical: 8,
-      paddingHorizontal: 10,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    chartPlaceholderText: { 
-      fontSize: 14, 
-      color: '#999' 
-    },
-    /* ==========================
-       MODAL STYLES
-       ========================== */
-    modalContainer: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-    },
-    modalContent: {
-      backgroundColor: '#fff',
-      borderRadius: 10,
-      padding: 20,
-      width: '100%',
-      alignItems: 'center',
-    },
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: '600',
-      marginBottom: 16,
-    },
-    qrPlaceholder: {
-      width: 200,
-      height: 200,
-      borderRadius: 10,
-      backgroundColor: '#F2F2F2',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 16,
-    },
-    qrPlaceholderText: {
-      color: '#999',
-      fontSize: 16,
-    },
-    modalCloseButton: {
-      backgroundColor: '#007AFF',
-      paddingVertical: 12,
-      paddingHorizontal: 24,
-      borderRadius: 8,
-    },
-    modalCloseButtonText: {
-      color: '#fff',
-      fontSize: 16,
-    },
-  });
-  
+  historyCard: {
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 8,
+    marginTop: 10,
+  },
+  card: {
+    backgroundColor: '#fff',
+    flex: 1,
+    margin: 4,
+    borderRadius: 10,
+    padding: 16,
+    alignItems: 'center',
+  },
+  fullWidthCard: {
+    backgroundColor: '#fff',
+    margin: 8,
+    borderRadius: 10,
+    padding: 16,
+    width: '100%',
+    alignItems: 'center',
+  },
+  cardTitle: { 
+    fontSize: 20, 
+    fontWeight: '600', 
+    marginBottom: 8
+  },
+  cardValue: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    marginBottom: 6, 
+    color: '#333' 
+  },
+  moneyText: { 
+    fontSize: 20, 
+    fontWeight: 'bold', 
+    color: '#333' 
+  },
+  linkButton: { 
+    marginTop: 4 
+  },
+  linkButtonText: { 
+    fontSize: 14, 
+    color: '#007AFF' 
+  },
+  chartPlaceholder: {
+    marginTop: 10,
+    backgroundColor: '#EEE',
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chartPlaceholderText: { 
+    fontSize: 14, 
+    color: '#999' 
+  },
+  /* ==========================
+     MODAL STYLES
+     ========================== */
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  qrPlaceholder: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    backgroundColor: '#F2F2F2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  qrPlaceholderText: {
+    color: '#999',
+    fontSize: 16,
+  },
+  modalCloseButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  modalCloseButtonText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+});

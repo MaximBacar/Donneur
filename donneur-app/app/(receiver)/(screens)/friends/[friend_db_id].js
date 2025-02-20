@@ -71,7 +71,7 @@ export default function FriendProfile() {
         });
         console.log('Friend removed successfully');
         // Optionally navigate back to friends list
-        router.replace('/friends/friends');
+        router.push('/friends/friends');
       } else {
         console.error('Relationship document not found.');
       }
