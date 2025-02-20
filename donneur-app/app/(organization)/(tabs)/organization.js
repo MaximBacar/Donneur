@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import {
   View,
   Text,
@@ -8,6 +10,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
+  Alert,
 } from 'react-native';
 
 // Example placeholder for an organization
@@ -26,49 +29,78 @@ const exampleOrg = {
 
 export default function OrgProfileScreen() {
   const router = useRouter();
+  const [profilePic, setProfilePic] = useState(exampleOrg.logo);
+  const [banner, setBanner] = useState(exampleOrg.banner);
 
-  // Open in Maps (or handle location logic)
+  const pickImage = async (setImage) => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'We need access to your photos to upload an image.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+// Open in Maps (or handle location logic)
   const handleOpenInMaps = () => {
-    const org = exampleOrg;
     const query = encodeURIComponent(
-      `${org.address}, ${org.city}, ${org.province} ${org.zip}`
+      `${exampleOrg.address}, ${exampleOrg.city}, ${exampleOrg.province} ${exampleOrg.zip}`
     );
     const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
-
     Linking.openURL(url).catch((err) => {
       console.error('Failed to open maps:', err);
     });
   };
 
+
   return (
     <ScrollView style={styles.container}>
-      {/* Banner */}
-      <Image source={{ uri: exampleOrg.banner }} style={styles.banner} />
 
-      {/* Profile Picture */}
+        {/* Banner */}
+      <TouchableOpacity onPress={() => pickImage(setBanner)}>
+        <Image source={{ uri: banner }} style={styles.banner} />
+      </TouchableOpacity>
+
+       {/* Profile Picture */}
       <View style={styles.profilePicWrapper}>
-        <Image source={{ uri: exampleOrg.logo }} style={styles.profilePic} />
+        <TouchableOpacity onPress={() => pickImage(setProfilePic)}>
+          <Image source={{ uri: profilePic }} style={styles.profilePic} />
+        </TouchableOpacity>
+      </View>
+      <View>
+      <TouchableOpacity style={styles.editIcon}   onPress={() => router.push('/(editProfile)')}>
+        <Icon name="pencil" size={30} color="#000" />
+        </TouchableOpacity>
       </View>
 
-      {/* Main Content */}
+       {/* Main Content */}
       <View style={styles.content}>
         <Text style={styles.name}>{exampleOrg.name}</Text>
         <Text style={styles.description}>{exampleOrg.description}</Text>
 
+        
         {/* Occupancy Badge */}
         <View style={styles.occupancyBadge}>
-          <Text style={styles.occupancyText}>
-            Max Occupancy: {exampleOrg.maxOccupancy}
-          </Text>
+          <Text style={styles.occupancyText}>Max Occupancy: {exampleOrg.maxOccupancy}</Text>
         </View>
 
-        {/* Address Section */}
+
+
+         {/* Address Section */}
         <View style={styles.addressSection}>
           <View style={styles.addressTextContainer}>
             <Text style={styles.sectionTitle}>Address</Text>
             <Text style={styles.infoLine}>
-              {exampleOrg.address}, {exampleOrg.city}, {exampleOrg.province}{' '}
-              {exampleOrg.zip}
+              {exampleOrg.address}, {exampleOrg.city}, {exampleOrg.province} {exampleOrg.zip}
             </Text>
           </View>
           <TouchableOpacity style={styles.mapButton} onPress={handleOpenInMaps}>
@@ -76,7 +108,7 @@ export default function OrgProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Activity Section */}
+         {/* Activity Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Activity</Text>
           <Text style={styles.infoLine}>No upcoming events yet!</Text>
@@ -142,6 +174,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fff',
     fontWeight: '600',
+    backgroundColor: '#FFA500',
+    borderRadius: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
   addressSection: {
     borderWidth: 1,
@@ -179,5 +215,19 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 15,
+  },
+  editButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+   editIcon: {
+    position: 'absolute',
+    top: -10, 
+    right: 0, 
+    borderRadius: 15,
+    padding: 8,
+    elevation: 5, 
+    shadowColor: '#000', 
   },
 });
