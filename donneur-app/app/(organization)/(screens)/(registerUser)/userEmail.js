@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from './registerContext';
+
 const screenWidth = Dimensions.get('window').width;
 
 export default function UserEmailScreen() {
@@ -17,28 +18,43 @@ export default function UserEmailScreen() {
   const [email, setEmail] = useState('');
   const { userID } = useUser();
 
-  const handleContinue = () => {
-    // TODO: Validate the email or store it in global state if needed
-    router.push('/idPicture');
+  const handleContinue = async () => {
+    try {
+      const body = JSON.stringify({
+        receiver_id: userID,
+        email: email,
+      });
+      const response = await fetch('https://api.donneur.ca/update_receiver_email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: body,
+      });
+      const result = await response.json();
+      console.log(result);
+      // Proceed to next screen after updating email
+      router.push('/idPicture');
+    } catch (error) {
+      console.error('Error updating email:', error);
+    }
   };
 
   const handleSkip = () => {
-    // Skip the email registration and move on
-    router.push('/idPicture'); 
+    router.push('/idPicture');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Content container provides consistent horizontal padding */}
+      {/* Content container */}
       <View style={styles.content}>
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Registration</Text>
-          
-          <Text style={styles.subtitle}>Enter your email address {userID}</Text>
+          <Text style={styles.subtitle}>
+            Enter your email address {userID}
+          </Text>
         </View>
 
-        {/* Form */}
         <View style={styles.form}>
           <Text style={styles.label}>Email*</Text>
           <TextInput
@@ -52,12 +68,11 @@ export default function UserEmailScreen() {
         </View>
       </View>
 
-      {/* Buttons at the bottom */}
+      {/* Buttons */}
       <View style={styles.buttonsContainer}>
         <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
           <Text style={styles.continueButtonText}>Continue</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
           <Text style={styles.skipButtonText}>Skip</Text>
         </TouchableOpacity>
@@ -66,13 +81,11 @@ export default function UserEmailScreen() {
   );
 }
 
-// ================= Styles =================
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
-  // Content container with horizontal padding (similar to your other pages)
   content: {
     flex: 1,
     paddingHorizontal: 60,
