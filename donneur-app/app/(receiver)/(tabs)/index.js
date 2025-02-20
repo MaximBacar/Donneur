@@ -32,6 +32,7 @@ const chartHtml = `
       #chart {
         background: #f2f2f2;
         border-radius: 10px;
+        overflow: hidden;
       }
     </style>
   </head>

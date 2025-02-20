@@ -2,6 +2,7 @@ from    flask               import  Flask,      request,    send_file,     jsoni
 from    flask_cors          import  CORS
 from    firebase_connector  import  Database
 from    donneur             import  Donneur
+from    firebase_admin      import  auth,         db  
 
 
 import  stripe
@@ -36,6 +37,7 @@ class App():
         self.app.add_url_rule(  "/get_user",                        "get_user",         self.get_user,              methods=["GET"] )
         self.app.add_url_rule(  "/get_uid",                         "get_uid",          self.get_uid,               methods=["GET"])
         self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",        self.get_db_id,             methods=["GET"] )
+        self.app.add_url_rule(  "/set_password", "                  set_password",      self.set_password,          methods=["POST"])
 
         stripe.api_key = self.donneur.stripe_key
         stripe.PaymentMethodDomain.create(domain_name="give.donneur.ca")
@@ -197,6 +199,42 @@ class App():
                 print(f"Error: {str(error)}")
                 return "Error", 401
         return 400
+
+    def set_password(self):
+        """
+        Endpoint for when a receiver sets their password.
+        Expects JSON payload with receiver_id and password.
+        Uses the email stored in the receiver record to create the Firebase Auth user,
+        then updates the receiver record with the generated uid.
+        """
+        data = request.get_json()
+        receiver_id = data.get('receiver_id')
+        password = data.get('password')
+        if not receiver_id or not password:
+            return jsonify({'error': 'Missing receiver_id or password'}), 400
+
+        # Look up the receiver record from the Realtime Database.
+        receiver_ref = db.reference(f'/receivers/{receiver_id}')
+        receiver = receiver_ref.get()
+        if not receiver or not receiver.get('email'):
+            return jsonify({'error': 'Receiver not found or email not set'}), 400
+
+        email = receiver['email']
+        try:
+            # Create the Firebase Auth user with the stored email and provided password.
+            user_record = auth.create_user(
+                email=email,
+                password=password,
+            )
+            # Update the receiver record with the new auth uid (stored as uid)
+            receiver_ref.update({
+                'uid': user_record.uid,
+                'password_set_date': datetime.now().isoformat()
+            })
+            return jsonify({'status': 'success', 'uid': user_record.uid}), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
 
 
 
