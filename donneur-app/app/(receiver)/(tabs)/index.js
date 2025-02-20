@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,13 +8,17 @@ import {
   Dimensions,
   TouchableOpacity,
   Modal,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { WebView } from 'react-native-webview';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+  ActivityIndicator,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { WebView } from "react-native-webview";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 
-const screenWidth = Dimensions.get('window').width;
+// Import your auth context
+import { useAuth } from "../../../context/authContext";
+
+const screenWidth = Dimensions.get("window").width;
 
 // Define your chart's HTML with ApexCharts integration
 const chartHtml = `
@@ -25,7 +29,6 @@ const chartHtml = `
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
       body, html { margin: 0; padding: 0; }
-      /* Set a light gray background and rounded corners for the chart container */
       #chart {
         background: #f2f2f2;
         border-radius: 10px;
@@ -63,7 +66,51 @@ const chartHtml = `
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+
+  // New state to hold the fetched user info from the API.
+  const [userInfo, setUserInfo] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
   const [showQRCode, setShowQRCode] = useState(false);
+
+  // Fetch user data when the auth user is available.
+  useEffect(() => {
+    if (user) {
+      const fetchUserInfo = async () => {
+        try {
+          const res = await fetch(
+            `https://api.donneur.ca/get_user?uid=${user.uid}`
+          );
+          const data = await res.json();
+          setUserInfo(data);
+        } catch (error) {
+          console.error("Error fetching user info:", error);
+        } finally {
+          setLoadingUser(false);
+        }
+      };
+      fetchUserInfo();
+    }
+  }, [user]);
+
+  // While user info is loading, you can show a loader or fallback UI.
+  if (loadingUser) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#000" />
+      </SafeAreaView>
+    );
+  }
+
+  // Use the fetched data for the balance, name, and other wallet information.
+  const balance = userInfo ? userInfo.balance : 0;
+  const fullName = userInfo
+    ? `${userInfo.first_name} ${userInfo.last_name}`
+    : "";
+  const dob = userInfo ? userInfo.dob : "";
+  const memberSince = userInfo
+    ? new Date(userInfo.creation_date).toLocaleDateString()
+    : "";
 
   return (
     <SafeAreaView style={styles.container}>
@@ -73,7 +120,7 @@ export default function DashboardScreen() {
       >
         {/* Large Cash Balance Display */}
         <View style={styles.balanceContainer}>
-          <Text style={styles.balanceValue}>$0</Text>
+          <Text style={styles.balanceValue}>${balance.toFixed(2)}</Text>
           <Text style={styles.balanceLabel}>Cash balance</Text>
         </View>
 
@@ -83,11 +130,21 @@ export default function DashboardScreen() {
             style={styles.receiveButton}
             onPress={() => router.push("/(screens)/receive/receive")}
           >
-            <Ionicons name="arrow-down" size={12} color="#222" style={styles.buttonIcon} />
+            <Ionicons
+              name="arrow-down"
+              size={12}
+              color="#222"
+              style={styles.buttonIcon}
+            />
             <Text style={styles.receiveButtonText}>Receive</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.withdrawButton}>
-            <Ionicons name="arrow-up" size={12} color="#FFFFFF" style={styles.buttonIcon} />
+            <Ionicons
+              name="arrow-up"
+              size={12}
+              color="#FFFFFF"
+              style={styles.buttonIcon}
+            />
             <Text style={styles.withdrawButtonText}>Withdraw</Text>
           </TouchableOpacity>
         </View>
@@ -101,8 +158,11 @@ export default function DashboardScreen() {
         >
           <View style={styles.walletInfo}>
             <Text style={styles.walletTitle}>Donneur Wallet</Text>
-            <Text style={styles.walletSubtitle}>John</Text>
-            <Text style={styles.walletOther}>Additional info</Text>
+            <Text style={styles.walletSubtitle}>{fullName}</Text>
+            <Text style={styles.walletOther}>
+              DOB: {dob}
+              {"\n"}Member since: {memberSince}
+            </Text>
           </View>
           <View style={styles.walletBalanceContainer}>
             {/* QR Code Icon at Top Right */}
@@ -115,7 +175,7 @@ export default function DashboardScreen() {
             {/* Balance info at Bottom Right */}
             <View style={styles.balanceInfo}>
               <Text style={styles.walletBalanceLabel}>Balance</Text>
-              <Text style={styles.walletBalance}>$17.42</Text>
+              <Text style={styles.walletBalance}>${balance.toFixed(2)}</Text>
             </View>
           </View>
         </LinearGradient>
@@ -225,65 +285,69 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#FFFFFF' 
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
   },
-  scrollContainer: { 
-    paddingBottom: 20 
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  scrollContainer: {
+    paddingBottom: 20,
   },
   /* ==========================
      NEW SECTION FOR BALANCE
      ========================== */
   balanceContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 40,
     marginBottom: 20,
   },
   balanceValue: {
     fontSize: 48,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
   },
   balanceLabel: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
     marginTop: 4,
   },
   buttonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginBottom: 4,
     marginTop: 12,
   },
   withdrawButton: {
-    backgroundColor: '#222222',
+    backgroundColor: "#222222",
     paddingHorizontal: 36,
     paddingVertical: 12,
     borderRadius: 32,
     marginHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#333333',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
+    borderColor: "#333333",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 1,
   },
   receiveButton: {
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     paddingHorizontal: 36,
     paddingVertical: 12,
     borderRadius: 32,
     marginHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#333333',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
+    borderColor: "#333333",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 1,
@@ -293,15 +357,15 @@ const styles = StyleSheet.create({
   },
   withdrawButtonText: {
     fontSize: 14,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    textAlign: 'center',
+    color: "#FFFFFF",
+    fontWeight: "600",
+    textAlign: "center",
   },
   receiveButtonText: {
     fontSize: 14,
-    color: '#222222',
-    fontWeight: '600',
-    textAlign: 'center',
+    color: "#222222",
+    fontWeight: "600",
+    textAlign: "center",
   },
   /* ==========================
      WALLET CARD SECTION
@@ -311,48 +375,46 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     borderRadius: 10,
     padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   walletInfo: {
     flex: 1,
   },
   walletTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: "600",
+    color: "#fff",
     marginBottom: 4,
   },
   walletSubtitle: {
     fontSize: 16,
-    color: '#fff',
+    color: "#fff",
     marginBottom: 4,
   },
   walletOther: {
     fontSize: 14,
-    color: '#fff',
+    color: "#fff",
   },
   walletBalanceContainer: {
     width: 80,
     height: 80,
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    justifyContent: "space-between",
+    alignItems: "flex-end",
   },
-  qrIconContainer: {
-    // optional styling/padding
-  },
+  qrIconContainer: {},
   balanceInfo: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   walletBalanceLabel: {
     fontSize: 12,
-    color: '#fff',
+    color: "#fff",
   },
   walletBalance: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
   },
   /* ==========================
      FRIENDS BUTTON
@@ -362,22 +424,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#333333',
-    backgroundColor: '#FFF',
+    borderColor: "#333333",
+    backgroundColor: "#FFF",
     padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#000',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 4,
   },
   friendsButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
   },
   friendsIcon: {
     marginRight: 8,
@@ -385,8 +447,8 @@ const styles = StyleSheet.create({
   friendsText: {
     flex: 1,
     fontSize: 12,
-    color: '#222',
-    fontWeight: '600',
+    color: "#222",
+    fontWeight: "600",
   },
   chevronIcon: {
     marginLeft: 8,
@@ -395,112 +457,112 @@ const styles = StyleSheet.create({
      HISTORY, CARDS, & OTHERS
      ========================== */
   historyCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     marginHorizontal: 16,
     marginBottom: 12,
     borderRadius: 12,
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginHorizontal: 8,
     marginTop: 10,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     flex: 1,
     margin: 4,
     borderRadius: 10,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   fullWidthCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     margin: 8,
     borderRadius: 10,
     padding: 16,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
-  cardTitle: { 
-    fontSize: 20, 
-    fontWeight: '600', 
-    marginBottom: 8
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 8,
   },
-  cardValue: { 
-    fontSize: 24, 
-    fontWeight: 'bold', 
-    marginBottom: 6, 
-    color: '#333' 
+  cardValue: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 6,
+    color: "#333",
   },
-  moneyText: { 
-    fontSize: 20, 
-    fontWeight: 'bold', 
-    color: '#333' 
+  moneyText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
   },
-  linkButton: { 
-    marginTop: 4 
+  linkButton: {
+    marginTop: 4,
   },
-  linkButtonText: { 
-    fontSize: 14, 
-    color: '#007AFF' 
+  linkButtonText: {
+    fontSize: 14,
+    color: "#007AFF",
   },
   chartPlaceholder: {
     marginTop: 10,
-    backgroundColor: '#EEE',
+    backgroundColor: "#EEE",
     borderRadius: 6,
     paddingVertical: 8,
     paddingHorizontal: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
-  chartPlaceholderText: { 
-    fontSize: 14, 
-    color: '#999' 
+  chartPlaceholderText: {
+    fontSize: 14,
+    color: "#999",
   },
   /* ==========================
      MODAL STYLES
      ========================== */
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 20,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 16,
   },
   qrPlaceholder: {
     width: 200,
     height: 200,
     borderRadius: 10,
-    backgroundColor: '#F2F2F2',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F2F2F2",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
   },
   qrPlaceholderText: {
-    color: '#999',
+    color: "#999",
     fontSize: 16,
   },
   modalCloseButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
   },
   modalCloseButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
   },
 });
