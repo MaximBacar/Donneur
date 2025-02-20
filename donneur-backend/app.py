@@ -29,7 +29,7 @@ class App():
         self.app.add_url_rule(  "/create_payment",                  "create_payment",   self.create_stripe_payment, methods=["POST"])
         self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",   self.cancel_stripe_payment, methods=["POST"])
         self.app.add_url_rule(  "/create_receiver",                 "create_receiver",  self.create_receiver,       methods=["POST"])
-        self.app.add_url_rule("/update_receiver_email", "update_receiver_email", self.update_receiver_email, methods=["POST"])
+        self.app.add_url_rule(  "/update_receiver_email",           "update_receiver_email", self.update_receiver_email, methods=["POST"])
         self.app.add_url_rule(  "/get_id/<profile_id>",             "get_id",           self.get_id,                methods=["GET"] )
         self.app.add_url_rule(  "/get_shelter_locations",           "get_shelter_locations", self.get_shelter_locations, methods=["GET"])
         self.app.add_url_rule(  "/get_role",                        "get_role",         self.get_role,              methods=["GET"] )
@@ -148,10 +148,10 @@ class App():
 
     def update_receiver_email(self):
         data = request.get_json()
-            if 'receiver_id' in data and 'email' in data:
-                self.donneur.update_receiver_email(data['receiver_id'], data['email'])
-                return jsonify({'status': 'success'})
-            return jsonify({'error': 'Missing receiver_id or email'}), 400
+        if 'receiver_id' in data and 'email' in data:
+            self.donneur.update_receiver_email(data['receiver_id'], data['email'])
+            return jsonify({'status': 'success'})
+        return jsonify({'error': 'Missing receiver_id or email'}), 400
         
     def get_user(self):
         uid = request.args.get('uid')

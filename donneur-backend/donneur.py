@@ -35,7 +35,7 @@ class Donneur:
         self.database.create_receiver(fn, ln, dob, id)
         return id
         
-     def update_receiver_email(self, receiver_id, email):
+    def update_receiver_email(self, receiver_id, email):
         self.database.update_receiver_email(receiver_id, email)
 
     def get_image( self , image_id ):
