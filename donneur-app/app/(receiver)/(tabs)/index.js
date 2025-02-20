@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,12 @@ import {
   ScrollView,
   Dimensions,
   TouchableOpacity,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import IconSymbol from '../../../components/ui/IconSymbol';
 import { WebView } from 'react-native-webview';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -23,53 +25,37 @@ const chartHtml = `
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
       body, html { margin: 0; padding: 0; }
+      /* Set a light gray background and rounded corners for the chart container */
+      #chart {
+        background: #f2f2f2;
+        border-radius: 10px;
+        overflow: hidden;
+      }
     </style>
   </head>
   <body>
     <div id="chart"></div>
     <script>
       var options = {
-  series: [{
-    name: 'series1',
-    data: [31, 40, 28, 51, 42, 109, 100]
-  }],
-  chart: {
-    height: 350,
-    type: 'area',
-    toolbar: {
-      show: false
-    },
-    zoom: {
-      enabled: false  // Disables zoom on click
-    }
-  },
-  dataLabels: {
-    enabled: false
-  },
-  stroke: {
-    curve: 'smooth'
-  },
-  xaxis: {
-    type: 'datetime',
-    categories: [
-      "2018-09-19T00:00:00.000Z",
-      "2018-09-19T01:30:00.000Z",
-      "2018-09-19T02:30:00.000Z",
-      "2018-09-19T03:30:00.000Z",
-      "2018-09-19T04:30:00.000Z",
-      "2018-09-19T05:30:00.000Z",
-      "2018-09-19T06:30:00.000Z"
-    ]
-  },
-  tooltip: {
-    x: {
-      format: 'dd/MM/yy HH:mm'
-    }
-  },
-};
-var chart = new ApexCharts(document.querySelector("#chart"), options);
-chart.render();
-
+        series: [{
+          name: 'series1',
+          data: [31, 40, 28, 51, 42, 109, 100]
+        }],
+        chart: {
+          height: 350,
+          type: 'area',
+          toolbar: { show: false },
+          zoom: { enabled: false }
+        },
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth' },
+        xaxis: {
+          categories: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+        },
+        tooltip: { x: { format: 'dd/MM/yy HH:mm' } },
+      };
+      var chart = new ApexCharts(document.querySelector("#chart"), options);
+      chart.render();
     </script>
   </body>
 </html>
@@ -77,38 +63,90 @@ chart.render();
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const [showQRCode, setShowQRCode] = useState(false);
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Dashboard</Text>
-          <View style={styles.headerIcons}>
-            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/send-money')}>
-              <IconSymbol size={28} name="arrow.up.circle.fill" color="#007AFF" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('(receiver)/(screens)/friends')}>
-              <IconSymbol size={28} name="person.2.fill" color="#007AFF" />
-            </TouchableOpacity>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Large Cash Balance Display */}
+        <View style={styles.balanceContainer}>
+          <Text style={styles.balanceValue}>$0</Text>
+          <Text style={styles.balanceLabel}>Cash balance</Text>
+        </View>
+
+        {/* Row of Buttons: Receive / Withdraw */}
+        <View style={styles.buttonsRow}>
+          <TouchableOpacity
+            style={styles.balanceButton}
+            onPress={() => router.push("/receive/receive")}
+          >
+            <Text style={styles.balanceButtonText}>Receive</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.balanceButton}>
+            <Text style={styles.balanceButtonText}>Withdraw</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Wallet Card – Gradient */}
+        <LinearGradient
+          colors={["#4c669f", "#3b5998", "#192f6a"]}
+          style={[styles.walletCard, { width: screenWidth - 32 }]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
+          <View style={styles.walletInfo}>
+            <Text style={styles.walletTitle}>Donneur Wallet</Text>
+            <Text style={styles.walletSubtitle}>John</Text>
+            <Text style={styles.walletOther}>Additional info</Text>
           </View>
-        </View>
+          <View style={styles.walletBalanceContainer}>
+            {/* QR Code Icon at Top Right */}
+            <TouchableOpacity
+              onPress={() => setShowQRCode(true)}
+              style={styles.qrIconContainer}
+            >
+              <Ionicons name="qr-code" size={28} color="#fff" />
+            </TouchableOpacity>
+            {/* Balance info at Bottom Right */}
+            <View style={styles.balanceInfo}>
+              <Text style={styles.walletBalanceLabel}>Balance</Text>
+              <Text style={styles.walletBalance}>$17.42</Text>
+            </View>
+          </View>
+        </LinearGradient>
 
-        {/* Wallet Card – Full Width & Compact */}
-        <View style={styles.walletCard}>
-          <Text style={styles.cardTitle}>Wallet</Text>
-          <Text style={styles.moneyText}>$17.42</Text>
-        </View>
+        {/* Friends Button */}
+        <TouchableOpacity
+          style={styles.friendsButton}
+          onPress={() => router.push("/(screens)/friends/friends")}
+        >
+          <View style={styles.friendsButtonContent}>
+            <Ionicons
+              name="people-outline"
+              size={20}
+              color="#222"
+              style={styles.friendsIcon}
+            />
+            <Text style={styles.friendsText}>Friends: 0</Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color="#222"
+              style={styles.chevronIcon}
+            />
+          </View>
+        </TouchableOpacity>
 
-        {/* History Chart directly below the Wallet */}
+        {/* History Chart */}
         <View style={styles.historyCard}>
-          <Text style={styles.cardTitle}>History</Text>
-          <Text style={styles.moneyText}>$32.42</Text>
+          <Text style={styles.cardTitle}>Activity</Text>
           <WebView
-            originWhitelist={['*']}
+            originWhitelist={["*"]}
             source={{ html: chartHtml }}
-            style={{ width: '100%', height: 250 }}
+            style={{ width: "100%", height: 250 }}
             scrollEnabled={false}
           />
         </View>
@@ -156,8 +194,30 @@ export default function DashboardScreen() {
             <Text style={styles.linkButtonText}>Details</Text>
           </TouchableOpacity>
         </View>
-        
       </ScrollView>
+
+      {/* QR Code Modal */}
+      <Modal
+        visible={showQRCode}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowQRCode(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Your QR Code</Text>
+            <View style={styles.qrPlaceholder}>
+              <Text style={styles.qrPlaceholderText}>QR Code Placeholder</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowQRCode(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -165,100 +225,260 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#F5F5F5' 
+    backgroundColor: '#FFFFFF' 
   },
   scrollContainer: { 
     paddingBottom: 20 
   },
-  header: {
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
+  /* ==========================
+     NEW SECTION FOR BALANCE
+     ========================== */
+  balanceContainer: {
     alignItems: 'center',
-    backgroundColor: '#F5F5F5', 
-    paddingHorizontal: 20, 
-    paddingVertical: 10,
+    marginTop: 40,
+    marginBottom: 20,
   },
-  headerTitle: { 
-    fontSize: 24, 
-    fontWeight: '600' 
+  balanceValue: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#000',
   },
-  headerIcons: { 
-    flexDirection: 'row' 
+  balanceLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
   },
-  iconButton: { 
-    marginLeft: 15 
-  },
-  walletCard: {
-    backgroundColor: '#fff',
-    margin: 8,
-    borderRadius: 10,
-    padding: 16,
-    width: '100%',
-    alignItems: 'center',
-  },
-  historyCard: {
-    backgroundColor: '#fff',
-    marginHorizontal: 8,
-    marginBottom: 8,
-    borderRadius: 10,
-    padding: 16,
-  },
-  row: {
+  buttonsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginHorizontal: 8,
-    marginTop: 10,
+    justifyContent: 'center',
+    marginBottom: 4,
+    marginTop: 12,
   },
-  card: {
-    backgroundColor: '#fff',
-    flex: 1,
-    margin: 4,
-    borderRadius: 10,
-    padding: 16,
-    alignItems: 'center',
-  },
-  fullWidthCard: {
-    backgroundColor: '#fff',
-    margin: 8,
-    borderRadius: 10,
-    padding: 16,
-    width: '100%',
-    alignItems: 'center',
-  },
-  cardTitle: { 
-    fontSize: 16, 
-    fontWeight: '600', 
-    marginBottom: 4 
-  },
-  cardValue: { 
-    fontSize: 24, 
-    fontWeight: 'bold', 
-    marginBottom: 6, 
-    color: '#333' 
-  },
-  moneyText: { 
-    fontSize: 20, 
-    fontWeight: 'bold', 
-    color: '#333' 
-  },
-  linkButton: { 
-    marginTop: 4 
-  },
-  linkButtonText: { 
-    fontSize: 14, 
-    color: '#007AFF' 
-  },
-  chartPlaceholder: {
-    marginTop: 10,
-    backgroundColor: '#EEE',
-    borderRadius: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+  balanceButton: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 48,
+    paddingVertical: 12,
+    borderRadius: 32,
+    marginHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#989898',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
   },
-  chartPlaceholderText: { 
-    fontSize: 14, 
-    color: '#999' 
+  buttonIcon: {
+    marginRight: 6,
   },
-});
+  balanceButtonText: {
+    fontSize: 14,
+    color: '#222222',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  /* ==========================
+     WALLET CARD SECTION
+     ========================== */
+  walletCard: {
+    marginHorizontal: 16,
+    marginVertical: 16,
+    borderRadius: 10,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  walletInfo: {
+    flex: 1,
+  },
+  walletTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  walletSubtitle: {
+    fontSize: 16,
+    color: '#fff',
+    marginBottom: 4,
+  },
+  walletOther: {
+    fontSize: 14,
+    color: '#fff',
+  },
+  walletBalanceContainer: {
+    width: 80,
+    height: 80,
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  qrIconContainer: {
+    // optional styling/padding
+  },
+  balanceInfo: {
+    alignItems: 'flex-end',
+  },
+  walletBalanceLabel: {
+    fontSize: 12,
+    color: '#fff',
+  },
+  walletBalance: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  /* ==========================
+     FRIENDS BUTTON
+     ========================== */
+  friendsButton: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#989898',
+    backgroundColor: '#FFF',
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  friendsButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
+  friendsIcon: {
+    marginRight: 8,
+  },
+  friendsText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#222',
+    fontWeight: '600',
+  },
+  chevronIcon: {
+    marginLeft: 8,
+  },
+   /* ==========================
+     HISTORY, CARDS, & OTHERS
+     ========================== */
+     historyCard: {
+      backgroundColor: '#fff',
+      marginHorizontal: 16,
+      marginBottom: 12,
+      borderRadius: 12,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginHorizontal: 8,
+      marginTop: 10,
+    },
+    card: {
+      backgroundColor: '#fff',
+      flex: 1,
+      margin: 4,
+      borderRadius: 10,
+      padding: 16,
+      alignItems: 'center',
+    },
+    fullWidthCard: {
+      backgroundColor: '#fff',
+      margin: 8,
+      borderRadius: 10,
+      padding: 16,
+      width: '100%',
+      alignItems: 'center',
+    },
+    cardTitle: { 
+      fontSize: 20, 
+      fontWeight: '600', 
+      marginBottom: 8
+    },
+    cardValue: { 
+      fontSize: 24, 
+      fontWeight: 'bold', 
+      marginBottom: 6, 
+      color: '#333' 
+    },
+    moneyText: { 
+      fontSize: 20, 
+      fontWeight: 'bold', 
+      color: '#333' 
+    },
+    linkButton: { 
+      marginTop: 4 
+    },
+    linkButtonText: { 
+      fontSize: 14, 
+      color: '#007AFF' 
+    },
+    chartPlaceholder: {
+      marginTop: 10,
+      backgroundColor: '#EEE',
+      borderRadius: 6,
+      paddingVertical: 8,
+      paddingHorizontal: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    chartPlaceholderText: { 
+      fontSize: 14, 
+      color: '#999' 
+    },
+    /* ==========================
+       MODAL STYLES
+       ========================== */
+    modalContainer: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+    },
+    modalContent: {
+      backgroundColor: '#fff',
+      borderRadius: 10,
+      padding: 20,
+      width: '100%',
+      alignItems: 'center',
+    },
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: '600',
+      marginBottom: 16,
+    },
+    qrPlaceholder: {
+      width: 200,
+      height: 200,
+      borderRadius: 10,
+      backgroundColor: '#F2F2F2',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    qrPlaceholderText: {
+      color: '#999',
+      fontSize: 16,
+    },
+    modalCloseButton: {
+      backgroundColor: '#007AFF',
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+      borderRadius: 8,
+    },
+    modalCloseButtonText: {
+      color: '#fff',
+      fontSize: 16,
+    },
+  });
+  

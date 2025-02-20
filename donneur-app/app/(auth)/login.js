@@ -9,6 +9,7 @@ import {
   Linking,
   Platform,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -20,20 +21,24 @@ export default function Index() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [shelterAddress, setShelterAddress] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
+
+  // States for error messages.
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   // Fetch shelter locations and extract the first address.
   useEffect(() => {
     (async () => {
       try {
-        const response = await fetch("https://api.donneur.ca/get_shelter_locations");
+        const response = await fetch(
+          "https://api.donneur.ca/get_shelter_locations"
+        );
         const data = await response.json();
-        // Convert the returned object to an array of entries.
         const shelterEntries = Object.entries(data);
         if (shelterEntries.length > 0) {
-          // Use the first shelter entry.
           const firstShelter = shelterEntries[0][1];
           const addrObj = firstShelter.address;
-          // Create a full address string.
           const fullAddress = `${addrObj.address}, ${addrObj.city}, ${addrObj.province}, ${addrObj.zip}`;
           setShelterAddress(fullAddress);
         }
@@ -43,27 +48,39 @@ export default function Index() {
     })();
   }, []);
 
-  // Opens the maps app with a query for the provided address.
+  // Opens the maps app using the native maps for each platform.
   const openMapsForAddress = (address) => {
     const encodedAddress = encodeURIComponent(address);
     const url = Platform.select({
-      ios: `maps:0,0?q=${encodedAddress}`,
-      android: `geo:0,0?q=${encodedAddress}`,
+      ios: `http://maps.apple.com/?q=${encodedAddress}`,
+      android: `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`,
     });
     Linking.openURL(url);
   };
 
   const signIn = async () => {
+    // Clear previous errors.
+    setEmailError("");
+    setPasswordError("");
     try {
       const user = await signInWithEmailAndPassword(auth, email, password);
       if (user) router.replace("/");
     } catch (error) {
       console.log(error);
-      alert("Sign In Failed");
+      const errorCode = error.code;
+      if (errorCode === "auth/invalid-email") {
+        setEmailError("Invalid email address.");
+      } else if (errorCode === "auth/user-not-found") {
+        setEmailError("User not found.");
+      } else if (errorCode === "auth/wrong-password") {
+        setPasswordError("Incorrect password.");
+      } else {
+        setEmailError("Authentication error. Please try again.");
+      }
     }
   };
 
-  // Instead of registering a new user via Firebase, we now open the maps app.
+  // Instead of registering via Firebase, open maps to the shelter location.
   const signUp = () => {
     if (shelterAddress) {
       openMapsForAddress(shelterAddress);
@@ -85,7 +102,10 @@ export default function Index() {
         <View style={styles.contentContainer}>
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                emailError ? { borderColor: "red", borderWidth: 1 } : {},
+              ]}
               placeholder="Email"
               placeholderTextColor="#999"
               value={email}
@@ -93,14 +113,37 @@ export default function Index() {
               keyboardType="email-address"
               autoCapitalize="none"
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#999"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+            {emailError ? (
+              <Text style={styles.errorText}>{emailError}</Text>
+            ) : null}
+
+            {/* Password field with overlay eye icon */}
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={[
+                  styles.passwordInput,
+                  passwordError ? { borderColor: "red", borderWidth: 1 } : {},
+                ]}
+                placeholder="Password"
+                placeholderTextColor="#999"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!passwordVisible}
+              />
+              <TouchableOpacity
+                onPress={() => setPasswordVisible(!passwordVisible)}
+                style={styles.eyeIcon}
+              >
+                <Ionicons
+                  name={passwordVisible ? "eye-off" : "eye"}
+                  size={24}
+                  color="#666"
+                />
+              </TouchableOpacity>
+            </View>
+            {passwordError ? (
+              <Text style={styles.errorText}>{passwordError}</Text>
+            ) : null}
           </View>
 
           <TouchableOpacity style={styles.loginButton} onPress={signIn}>
@@ -136,7 +179,7 @@ const styles = StyleSheet.create({
     paddingTop: 124,
   },
   title: {
-    fontSize: 28,
+    fontSize: 36,
     fontWeight: "600",
     marginBottom: 4,
     textAlign: "center",
@@ -163,8 +206,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     fontSize: 16,
-    marginBottom: 12,
+    marginBottom: 8,
     color: "#000",
+  },
+  passwordContainer: {
+    width: "100%",
+    position: "relative",
+    marginBottom: 8,
+  },
+  passwordInput: {
+    backgroundColor: "#F2F2F2",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    fontSize: 16,
+    color: "#000",
+    width: "100%",
+  },
+  eyeIcon: {
+    position: "absolute",
+    right: 16,
+    top: "50%",
+    transform: [{ translateY: -12 }],
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginBottom: 8,
+    marginLeft: 4,
   },
   loginButton: {
     width: "100%",
