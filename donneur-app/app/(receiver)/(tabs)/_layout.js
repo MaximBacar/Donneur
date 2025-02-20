@@ -12,7 +12,7 @@ export default function TabLayout() {
           if (route.name === 'index') {
             iconName = 'home';
           } else if (route.name === 'inbox') {
-            iconName = 'inbox';
+            iconName = 'mail';
           } else if (route.name === 'map') {
             iconName = 'compass';
           } else if (route.name === 'profile') {
