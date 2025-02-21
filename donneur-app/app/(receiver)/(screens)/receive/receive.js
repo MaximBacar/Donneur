@@ -45,7 +45,7 @@ export default function ReceiveScreen() {
         {/* QR Code generated using react-native-qrcode-svg */}
         <View style={styles.qrContainer}>
           <QRCode
-            value={'https://give.donneur.id/'+donneurID}
+            value={'https://give.donneur.ca/'+donneurID}
             size={200}
             color="black"
             backgroundColor="white"

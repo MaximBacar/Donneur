@@ -12,15 +12,12 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Router>
       <Routes>
-        <Route path="/:id" element={<Donation />} />
-        {/* <Route path="/setPassword" element={<SetPasswordScreen />} /> */}
-
+        {console.log(isGiveDomain)}
         {isGiveDomain ? (
           <Route path="/:id" element={<Donation />} />
         ) : (
           <>
             <Route path="/setPassword" element={<ChangePassword />} />
-            <Route path="*" element={<Navigate to="/" />} />
           </>
         )}
       </Routes>

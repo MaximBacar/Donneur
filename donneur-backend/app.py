@@ -3,7 +3,6 @@ from    flask_cors          import  CORS
 from    firebase_connector  import  Database
 from    donneur             import  Donneur
 from    firebase_admin      import  auth,         db  
-import datetime
 
 
 
@@ -42,6 +41,7 @@ class App():
         self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",        self.get_db_id,             methods=["GET"] )
         self.app.add_url_rule(  "/get_balance/<id>",                "get_balance",      self.get_balance,             methods=["GET"] )
         self.app.add_url_rule(  "/set_password",                    "set_password",      self.set_password,          methods=["POST"])
+        self.app.add_url_rule(  "/is_password_link_valid",  "is_password_link_valid",   self.is_password_link_valid, methods=["GET"] )
         
 
     def index(self):
@@ -235,6 +235,17 @@ class App():
         return {'status' : 'invalid'}, 400
 
 
+    def is_password_link_valid(self):
+        id = request.args.get('id')
+        if id:
+            receiver_ref = db.reference(f'/receivers/{id}')
+            receiver = receiver_ref.get()
+            if receiver['app_account'] == False:
+                return {'validity':True}
+            return {'validity':False}
+        
+        return {'status' : 'invalid'}, 400
+
     def set_password(self):
         """
         Endpoint for when a receiver sets their password.
@@ -243,6 +254,7 @@ class App():
         then updates the receiver record with the generated uid.
         """
         data = request.get_json()
+        print(data)
         receiver_id = data.get('receiver_id')
         password = data.get('password')
         if not receiver_id or not password:
@@ -251,20 +263,22 @@ class App():
         # Look up the receiver record from the Realtime Database.
         receiver_ref = db.reference(f'/receivers/{receiver_id}')
         receiver = receiver_ref.get()
+        print(receiver)
         if not receiver or not receiver.get('email'):
             return jsonify({'error': 'Receiver not found or email not set'}), 400
 
         email = receiver['email']
+        print(email)
         try:
             # Create the Firebase Auth user with the stored email and provided password.
             user_record = auth.create_user(
                 email=email,
                 password=password,
             )
+            print(user_record)
             # Update the receiver record with the new auth uid (stored as uid)
             receiver_ref.update({
-                'uid': user_record.uid,
-                'password_set_date': datetime.now().isoformat()
+                'app_account': True,
             })
              # Create a corresponding entry in the /users table.
             users_ref = db.reference('/users')
@@ -274,6 +288,7 @@ class App():
             })
             return jsonify({'status': 'success', 'uid': user_record.uid}), 200
         except Exception as e:
+            print(e)
             return jsonify({'error': str(e)}), 500
 
 
