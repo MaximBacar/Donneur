@@ -42,6 +42,7 @@ class App():
         self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",        self.get_db_id,             methods=["GET"] )
         self.app.add_url_rule(  "/get_balance/<id>",                "get_balance",      self.get_balance,             methods=["GET"] )
         self.app.add_url_rule(  "/set_password",                    "set_password",      self.set_password,          methods=["POST"])
+        self.app.add_url_rule(  "/is_password_link_valid",  "is_password_link_valid",   self.is_password_link_valid, methods=["GET"] )
         
 
     def index(self):
@@ -235,6 +236,17 @@ class App():
         return {'status' : 'invalid'}, 400
 
 
+    def is_password_link_valid(self):
+        id = request.args.get('id')
+        if id:
+            receiver_ref = db.reference(f'/receivers/{id}')
+            receiver = receiver_ref.get()
+            if receiver['app_account'] == False:
+                return {'validity':True}
+            return {'validity':False}
+        
+        return {'status' : 'invalid'}, 400
+
     def set_password(self):
         """
         Endpoint for when a receiver sets their password.
@@ -263,6 +275,7 @@ class App():
             )
             # Update the receiver record with the new auth uid (stored as uid)
             receiver_ref.update({
+                'app_account': True,
                 'uid': user_record.uid,
                 'password_set_date': datetime.now().isoformat()
             })

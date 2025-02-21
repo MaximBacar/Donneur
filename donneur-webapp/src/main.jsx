@@ -13,14 +13,11 @@ createRoot(document.getElementById('root')).render(
     <Router>
       <Routes>
         <Route path="/:id" element={<Donation />} />
-        {/* <Route path="/setPassword" element={<SetPasswordScreen />} /> */}
-
         {isGiveDomain ? (
           <Route path="/:id" element={<Donation />} />
         ) : (
           <>
             <Route path="/setPassword" element={<ChangePassword />} />
-            <Route path="*" element={<Navigate to="/" />} />
           </>
         )}
       </Routes>

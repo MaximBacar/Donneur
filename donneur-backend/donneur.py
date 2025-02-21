@@ -55,8 +55,14 @@ class Donneur:
      
             image.save(os.path.join(self.image_folder, picture_id), 'PNG')
             self.database.set_document_picture( id, picture_id )
+
+            self.send_email(id)
+
         except:
             pass
+
+    def send_email(self):
+        pass
     
     def add_profile_picture( self , id , file):
         picture_id = self.__genenrate_file_id( id )
