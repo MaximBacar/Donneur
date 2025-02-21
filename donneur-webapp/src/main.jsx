@@ -10,7 +10,7 @@ createRoot(document.getElementById('root')).render(
     <Router>
       <Routes>
         <Route path="/:id" element={<Donation />} />
-        <Route path="/setPassword" element={<SetPasswordScreen />} />
+        {/* <Route path="/setPassword" element={<SetPasswordScreen />} /> */}
       </Routes>
     </Router>
   </StrictMode>,

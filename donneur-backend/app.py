@@ -22,15 +22,16 @@ class App():
             "allow_headers": ["Content-Type", "Authorization"]  # Allow these headers
         }})
         
-        self.app.add_url_rule(  "/",                                "index",            self.index                                  )
-        self.app.add_url_rule(  "/docs",                            "docs",             self.docs                                   )
-        self.app.add_url_rule(  "/upload_image",                    "upload_image",     self.upload_image,          methods=["POST"])
-        self.app.add_url_rule(  "/upload_base64",                   "upload_base64",    self.upload_base64,         methods=["POST"])
-        self.app.add_url_rule(  "/image/<image_id>",                "image",            self.image,                 methods=["GET"] )
-        self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",  self.payment_profile,       methods=["GET"] )
-        self.app.add_url_rule(  "/create_payment",                  "create_payment",   self.create_stripe_payment, methods=["POST"])
-        self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",   self.cancel_stripe_payment, methods=["POST"])
-        self.app.add_url_rule(  "/create_receiver",                 "create_receiver",  self.create_receiver,       methods=["POST"])
+        self.app.add_url_rule(  "/",                                "index",                self.index                                  )
+        self.app.add_url_rule(  "/docs",                            "docs",                 self.docs                                   )
+        self.app.add_url_rule(  "/upload_image",                    "upload_image",         self.upload_image,          methods=["POST"])
+        self.app.add_url_rule(  "/upload_base64",                   "upload_base64",        self.upload_base64,         methods=["POST"])
+        self.app.add_url_rule(  "/image/<image_id>",                "image",                self.image,                 methods=["GET"] )
+        self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",      self.payment_profile,       methods=["GET"] )
+        self.app.add_url_rule(  "/create_payment",                  "create_payment",       self.create_stripe_payment, methods=["POST"])
+        self.app.add_url_rule(  "/payment_succeeded"                "payment_succeeded",    self.payment_succeded, methods=["POST"])
+        self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",       self.cancel_stripe_payment, methods=["POST"])
+        self.app.add_url_rule(  "/create_receiver",                 "create_receiver",      self.create_receiver,       methods=["POST"])
         self.app.add_url_rule(  "/update_receiver_email",           "update_receiver_email", self.update_receiver_email, methods=["POST"])
         self.app.add_url_rule(  "/get_id/<profile_id>",             "get_id",           self.get_id,                methods=["GET"] )
         self.app.add_url_rule(  "/get_shelter_locations",           "get_shelter_locations", self.get_shelter_locations, methods=["GET"])
@@ -189,6 +190,11 @@ class App():
                 return "Error", 401
 
         return "Invalid", 400
+    
+    def payment_succeded(self):
+        data = request.get_json()
+        print(data)
+        return 200
     
     def cancel_stripe_payment(self):
         data = request.get_json()
