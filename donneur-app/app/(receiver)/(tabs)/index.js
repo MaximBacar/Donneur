@@ -182,7 +182,7 @@ export default function DashboardScreen() {
         {/* Friends Button */}
         <TouchableOpacity
           style={styles.friendsButton}
-          onPress={() => router.push("/(screens)/friends/friends")}
+          onPress={() => router.push("/(screens)/(friends)/friends")}
         >
           <View style={styles.friendsButtonContent}>
             <Ionicons

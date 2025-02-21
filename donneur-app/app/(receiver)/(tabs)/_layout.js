@@ -7,6 +7,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={({ route }) => ({
+        headerShown: false, // Disable the header here
         tabBarIcon: ({ color, size }) => {
           let iconName;
           if (route.name === 'index') {

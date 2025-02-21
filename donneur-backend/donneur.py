@@ -34,7 +34,9 @@ class Donneur:
         id = self.__generate_user_id()
         self.database.create_receiver(fn, ln, dob, id)
         return id
-    
+        
+    def update_receiver_email(self, receiver_id, email):
+        self.database.update_receiver_email(receiver_id, email)
 
     def get_image( self , image_id ):
         image_path = os.path.join(self.image_folder, image_id)
@@ -55,6 +57,8 @@ class Donneur:
         except:
             pass
     
+    def create_transaction( type, amount : float, receiver_id, sender_id):
+        pass
     def add_profile_picture( self , id , file):
         picture_id = self.__genenrate_file_id( id )
         try:

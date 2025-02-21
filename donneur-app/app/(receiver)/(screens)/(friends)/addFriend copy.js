@@ -32,56 +32,59 @@ export default function AddFriendScreen() {
 
   // This function is called when a QR code is scanned.
   // The encoded string from the QR code is available in the "data" property.
-//   const handleBarcodeScanned = async ({ type, data }) => {
-//     setScanned(true);
-//     console.log(`QR code scanned, data: ${data}`);
+  const handleBarcodeScanned = async ({ type, data }) => {
+    setScanned(true);
+    console.log(`QR code scanned, data: ${data}`);
 
-//     if (!user) {
-//       Alert.alert("Error", "No current user found.");
-//       setIsScanning(false);
-//       return;
-//     }
+    if (!user) {
+      Alert.alert("Error", "No current user found.");
+      setIsScanning(false);
+      return;
+    }
 
-//     try {
-//       // For example, use the scanned encoded string to create a new friend request.
-//       const docRef = await addDoc(collection(database, 'friends'), {
-//         user1: user.uid,
-//         user2: data, // This is the encoded string from your generated QR code.
-//         u1: true,
-//         u2: false,
-//       });
-//       console.log("Friend request created with ID:", docRef.id);
-//       Alert.alert("Success", "Friend request sent!");
-//       navigation.navigate('Friends');
-//     } catch (error) {
-//       console.error("Error adding friend:", error);
-//       Alert.alert("Error", "Failed to send friend request.");
-//     } finally {
-//       setIsScanning(false);
-//     }
-//   };
+    try {
+      // For example, use the scanned encoded string to create a new friend request.
+      const docRef = await addDoc(collection(database, 'friends'), {
+        user1: user.uid,
+        user2: data, // This is the encoded string from your generated QR code.
+        u1: true,
+        u2: false,
+      });
+      console.log("Friend request created with ID:", docRef.id);
+      Alert.alert("Success", "Friend request sent!");
+      navigation.navigate('Friends');
+    } catch (error) {
+      console.error("Error adding friend:", error);
+      Alert.alert("Error", "Failed to send friend request.");
+    } finally {
+      setIsScanning(false);
+    }
+  };
 
   // This function toggles the scanning mode. It also checks permissions.
-  const onPressScanQRCode = async () => {
-    router.push("/qrcode");
-    // if (hasPermission === null) {
-    //   Alert.alert('Requesting camera permission');
-    //   const { status } = await requestCameraPermissionsAsync();
-    //   setHasPermission(status === 'granted');
-    //   if (status === 'granted') {
-    //     setIsScanning(true);
-    //     setScanned(false);
-    //   }
-    //   return;
-    // }
+  // const onPressScanQRCode = async () => {
+  //   if (hasPermission === null) {
+  //     Alert.alert('Requesting camera permission');
+  //     const { status } = await requestCameraPermissionsAsync();
+  //     setHasPermission(status === 'granted');
+  //     if (status === 'granted') {
+  //       setIsScanning(true);
+  //       setScanned(false);
+  //     }
+  //     return;
+  //   }
     
-    // if (hasPermission === false) {
-    //   Alert.alert('Permission Required', 'Camera access is needed to scan QR codes');
-    //   return;
-    // }
+  //   if (hasPermission === false) {
+  //     Alert.alert('Permission Required', 'Camera access is needed to scan QR codes');
+  //     return;
+  //   }
 
-    // setIsScanning(true);
-    // setScanned(false);
+  //   setIsScanning(true);
+  //   setScanned(false);
+  // };
+
+  const onPressScanQRCode = async () => {
+    
   };
 
   // If we're in scanning mode, render the camera view.

@@ -18,7 +18,6 @@ export default{
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show you on the map.",
         "NSCameraUsageDescription": "This app requires camera access to scan QR codes."
-
       }
     },
     "android": {

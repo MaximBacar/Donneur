@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { useAuth } from '../../../../context/authContext';
 
 // Import your Firebase config
 import { auth, database } from '../../../../config/firebase';
@@ -34,16 +35,25 @@ export default function FriendsScreen() {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [myFriends, setMyFriends] = useState([]);
 
+  const { user } = useAuth();
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        loadFriends(user.uid);
-      } else {
-        setLoading(false);
-        console.log("No user is logged in. Firestore read won't work.");
-      }
-    });
-    return unsubscribe;
+    console.log("tttt");
+    console.log(user);
+    if (user) {
+      console.log(user);
+      loadFriends(user.uid);
+    }
+
+    // const unsubscribe = onAuthStateChanged(auth, (user) => {
+    //   if (user) {
+    //     loadFriends(user.uid);
+    //   } else {
+    //     setLoading(false);
+    //     console.log("No user is logged in. Firestore read won't work.");
+    //   }
+    // });
+    // return unsubscribe;
   }, []);
 
   async function loadFriends(currentUid) {
