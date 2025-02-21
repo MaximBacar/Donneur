@@ -227,9 +227,10 @@ class App():
     
 
     def get_balance(self, id):
-        response, balance = self.donneur.database.get_balance()
+        response, balance = self.donneur.database.get_balance(id)
+
         if response:
-            return {'balance', balance}, 200
+            return {'balance': balance},200
         
         return {'status' : 'invalid'}, 400
 
