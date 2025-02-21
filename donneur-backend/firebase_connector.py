@@ -37,22 +37,49 @@ class Database:
         reference.update({'email': email})
 
 
-    def created_sender():
-        pass
+    def created_sender(name, address, isAnonymous : False):
+        reference = db.reference('senders')
+        data = {
+            'name' : name,
+            'address' : address,
+            'isAnonymous' : isAnonymous
+        }
+        response = reference.push(data)
+        return response.key
         
-    def create_transcation( receiver_id, amount, currency, type, stripe_id="", sender_id = "", confirmed=False):
+    def create_transcation(self, receiver_id, amount, currency, type, stripe_id="", sender_id = "", ip="",confirmed=False):
+        print(receiver_id)
         reference = db.reference('transactions')
         data = {
             'amount'        : amount,
             'currency'      : currency,
-            'stripe_id'     : stripe_id,
             'confirmed'     : confirmed,
             'creation_date' : datetime.now().isoformat(),
             'receiver_id'   : receiver_id,
             'sender_id'     : sender_id,
-            'type'          : type
+            'type'          : type,
+            'ip'            : ip
         }
-    def confirm_transaction (self, client_secret):pass
+        if stripe_id != "":
+            reference.child(stripe_id).set(data)
+        else:
+            reference.push(data)
+    def confirm_transaction (self, stripe_id, sender_id="", payment_method = None):
+        if stripe_id:
+            reference = db.reference(f'transactions/{stripe_id}')
+            data = {
+                'sender_id':sender_id,
+                'payment_methods' : payment_method
+            }
+            reference.update(data)
+
+
+            tx_data =reference.get()
+            return tx_data['amount'], tx_data['receiver_id']
+        
+        return None
+
+
     def create_organization (self , name, description, address, zip, city, province, max_occupancy, uid):
         reference = db.reference('/organizations')
         data = {

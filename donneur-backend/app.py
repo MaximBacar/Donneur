@@ -6,7 +6,7 @@ from    firebase_admin      import  auth,         db
 import datetime
 
 
-import  stripe
+
 
 
 class App():
@@ -40,9 +40,6 @@ class App():
         self.app.add_url_rule(  "/get_uid",                         "get_uid",          self.get_uid,               methods=["GET"])
         self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",        self.get_db_id,             methods=["GET"] )
         self.app.add_url_rule(  "/set_password",                    "set_password",      self.set_password,          methods=["POST"])
-
-        stripe.api_key = self.donneur.stripe_key
-        stripe.PaymentMethodDomain.create(domain_name="give.donneur.ca")
         
 
     def index(self):
@@ -182,46 +179,29 @@ class App():
         data = request.get_json()
         # data = {'amount':2, 'receiver_id': '45geg'}
         if 'amount' in data and data['amount'] and ('receiver_id' in data):
-            try:
-                converted_amount = int(data['amount'] * 100)
-                intent = stripe.PaymentIntent.create(
-                    amount                      = converted_amount,
-                    currency                    = 'cad',
-                    payment_method_types=['card']
-                    )
-                print('Payment succesfully created')
-                
+            response = self.donneur.donation(data['amount'],data['receiver_id'])
 
-                receiver_id             = data['receiver_id']
-                stripe_transaction_id   = intent['id']
-                amount                  = data['amount']
+            if response:
+                return {'status' : 'ok'}, 200
+            
 
-
-                return {'clientSecret': intent['client_secret']}
-            except Exception as error:
-                print(f"Error: {str(error)}")
-                return "Error", 401
-
-        return "Invalid", 400
+        return {'status' : 'invalid'}, 400
     
     def payment_succeeded(self):
         data = request.get_json()
-        
-        payment_intent = data['data']['object']
-
-
-        return {"status": "success"},200
+        if 'data' in data:
+            payment_intent = data['data']['object']
+            self.donneur.confirm_donation(payment_intent)
+            return {"status": "success"},200
+        return {'status' : 'invalid'}, 400
     
     def cancel_stripe_payment(self):
         data = request.get_json()
         if 'clientSecret' in data and data['clientSecret']:
-            try:
-                stripe.PaymentIntent.cancel(data['clientSecret'])
-                return 200
-            except Exception as error:
-                print(f"Error: {str(error)}")
-                return "Error", 401
-        return 400
+            response = self.donneur.cancel_donation(data['clientSecret'])
+            if response:
+                return {"status": "success"},200
+        return {'status' : 'invalid'}, 400
     
 
     #========================
