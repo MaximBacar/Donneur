@@ -8,6 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useUser } from './withdrawalContext';
 // import BackHeader from '../../../../components/header';
 
 const screenWidth = Dimensions.get('window').width;
@@ -15,6 +16,8 @@ const screenWidth = Dimensions.get('window').width;
 export default function WithdrawalAmountScreen() {
   const router = useRouter();
   const [amount, setAmount] = useState('0.00');
+
+  const {setWithdrawAmount} = useUser()
 
   // Example current balance
   const currentBalance = '30.35';
@@ -57,6 +60,8 @@ export default function WithdrawalAmountScreen() {
   const handleConfirm = () => {
     console.log(`Confirming withdrawal of $${amount}`);
     // Navigate to withdrawalConfirmation.js
+    let amount = parseFloat(amount);
+    setWithdrawAmount(amount);
     router.push('/withdrawalConfirmation');
   };
 

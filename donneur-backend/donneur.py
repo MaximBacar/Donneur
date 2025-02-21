@@ -150,6 +150,12 @@ class Donneur:
         
         self.database.deduct_balance( sender_id, amount )
 
+    def generate_registration_email( self, id ):
+        data = self.database.get_receiver(id)
+        if data:
+            if data['email'] != "":
+                pass
+
     def __generate_folders(self):
         if not os.path.exists(self.image_folder):
             os.mkdir(self.image_folder)
