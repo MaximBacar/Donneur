@@ -60,8 +60,10 @@ export default function WithdrawalAmountScreen() {
   const handleConfirm = () => {
     console.log(`Confirming withdrawal of $${amount}`);
     // Navigate to withdrawalConfirmation.js
-    let amount = parseFloat(amount);
-    setWithdrawAmount(amount);
+    console.log('ammount', amount);
+    console.log('')
+    let amount_flt = parseFloat(amount);
+    setWithdrawAmount(amount_flt);
     router.push('/withdrawalConfirmation');
   };
 

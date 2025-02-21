@@ -16,6 +16,8 @@ export default function WithdrawalConfirmationScreen() {
 
 
   useEffect(() => {
+    console.log('userid',userID);
+    console.log('w_a',withdrawAmount);
     if (userID){
 
   
@@ -37,7 +39,7 @@ export default function WithdrawalConfirmationScreen() {
           setLoading(false);
         })
         .catch((err) => {
-          setError(err.message); // Set error if the request fails
+          console.log(err)
           setLoading(false);
         });
 

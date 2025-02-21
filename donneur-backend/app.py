@@ -219,6 +219,12 @@ class App():
 
             self.donneur.withdraw(amount=amount,organization_id=org_id,sender_id=sender_id)
 
+
+            return {"status": "success"},200
+        
+        return {'status' : 'invalid'}, 400
+
+
     def set_password(self):
         """
         Endpoint for when a receiver sets their password.
