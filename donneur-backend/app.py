@@ -29,7 +29,7 @@ class App():
         self.app.add_url_rule(  "/image/<image_id>",                "image",                self.image,                 methods=["GET"] )
         self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",      self.payment_profile,       methods=["GET"] )
         self.app.add_url_rule(  "/create_payment",                  "create_payment",       self.create_stripe_payment, methods=["POST"])
-        self.app.add_url_rule(  "/payment_succeeded"                "payment_succeeded",    self.payment_succeded, methods=["POST"])
+        self.app.add_url_rule(  "/payment_succeeded"                "payment_succeeded",    self.payment_succeeded, methods=["POST"])
         self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",       self.cancel_stripe_payment, methods=["POST"])
         self.app.add_url_rule(  "/create_receiver",                 "create_receiver",      self.create_receiver,       methods=["POST"])
         self.app.add_url_rule(  "/update_receiver_email",           "update_receiver_email", self.update_receiver_email, methods=["POST"])
@@ -191,7 +191,7 @@ class App():
 
         return "Invalid", 400
     
-    def payment_succeded(self):
+    def payment_succeeded(self):
         data = request.get_json()
         print(data)
         return 200
