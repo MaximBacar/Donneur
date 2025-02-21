@@ -134,7 +134,7 @@ export default function Inbox() {
   }, [user]); // <--- Also include user in the dependency array
 
   const openChat = (chat) => {
-    router.push('/inbox/chats/'+chat.id);
+    router.push('/(inbox)/chats/'+chat.id);
     console.log("Opening chat:", chat.id);
 
     //navigation.navigate("Chat", {
