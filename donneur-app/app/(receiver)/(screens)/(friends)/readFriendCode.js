@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native'
 import React, { useState, useEffect, useRef } from 'react';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
+import { useFriend } from './friendContext';
 // import { useUser } from './withdrawalContext'
 
 
@@ -11,9 +12,18 @@ const ReadFriendCode = () => {
   const [facing, setFacing]             = useState('back');
   const router = useRouter();
 
-  // const {setUserID} = useUser()
+  const {setNewFriendID, setNewFriendUID} = useFriend()
 
 
+  async function getUID(id){
+    try {
+      const res = await fetch(`https://api.donneur.ca/get_uid?donneurID=${id}`);
+      const data = await res.json();
+      setNewFriendUID(data.uid);
+    } catch (err) {
+      console.error('Error fetching friend data:', err);
+    }
+  }
 
 
   if (!permission) {
@@ -33,10 +43,12 @@ const ReadFriendCode = () => {
 
   
   return (
-    <CameraView style={styles.camera} facing={facing} onBarcodeScanned={({data}) => {
+    <CameraView style={styles.camera} facing={facing} onBarcodeScanned={async({data}) => {
       if (data.includes('give.donneur.ca/')){
         let id = data.split("/")[3];
-        console.log(data);
+        setNewFriendID(id);
+        await getUID(id);
+        router.push('/confirmAddFriend');
         // setUserID(id);
         // router.push('/idConfirmation');
       }

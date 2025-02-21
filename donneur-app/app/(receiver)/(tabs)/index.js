@@ -66,14 +66,38 @@ const chartHtml = `
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, donneurID } = useAuth();
 
   // New state to hold the fetched user info from the API.
   const [userInfo, setUserInfo] = useState(null);
+  const [userBalance, setBalance] = useState(0);
   const [loadingUser, setLoadingUser] = useState(true);
   const [showQRCode, setShowQRCode] = useState(false);
 
   // Fetch user data when the auth user is available.
+  useEffect(()=> {
+    if (user){
+      const fetchBalance = async () => {
+        try {
+          const res = await fetch(
+            `https://api.donneur.ca/get_balance/${donneurID}`
+          );
+          const data = await res.json();
+          setBalance(data.balance);
+        } catch (error) {
+          console.error("Error fetching user info:", error);
+        } finally {
+          setLoadingUser(false);
+        }
+      };
+      fetchBalance();
+      // Set interval to fetch every 30 seconds
+      const interval = setInterval(fetchBalance, 30000);
+
+      // Cleanup interval on component unmount
+      return () => clearInterval(interval);
+    }
+  },[])
   useEffect(() => {
     if (user) {
       const fetchUserInfo = async () => {
@@ -91,7 +115,7 @@ export default function DashboardScreen() {
       };
       fetchUserInfo();
     }
-  }, [user]);
+  }, []);
 
   // While user info is loading, you can show a loader or fallback UI.
   if (loadingUser) {
@@ -103,7 +127,6 @@ export default function DashboardScreen() {
   }
 
   // Use the fetched data for the balance, name, and other wallet information.
-  const balance = userInfo ? userInfo.balance : 0;
   const fullName = userInfo
     ? `${userInfo.first_name} ${userInfo.last_name}`
     : "";
@@ -120,7 +143,7 @@ export default function DashboardScreen() {
       >
         {/* Large Cash Balance Display */}
         <View style={styles.balanceContainer}>
-          <Text style={styles.balanceValue}>${balance.toFixed(2)}</Text>
+          <Text style={styles.balanceValue}>${userBalance.toFixed(2)}</Text>
           <Text style={styles.balanceLabel}>Cash balance</Text>
         </View>
 
@@ -174,7 +197,7 @@ export default function DashboardScreen() {
             {/* Balance info at Bottom Right */}
             <View style={styles.balanceInfo}>
               <Text style={styles.walletBalanceLabel}>Balance</Text>
-              <Text style={styles.walletBalance}>${balance.toFixed(2)}</Text>
+              <Text style={styles.walletBalance}>${userBalance.toFixed(2)}</Text>
             </View>
           </View>
         </LinearGradient>

@@ -13,7 +13,7 @@ import { useAuth } from '../../../../context/authContext'; // adjust the path as
 
 export default function ReceiveScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, donneurID } = useAuth();
 
   // Use the user's uid as the unique QR code value.
   const uniqueValue = user ? user.uid : '';
@@ -42,12 +42,10 @@ export default function ReceiveScreen() {
         {/* "Your code" Label */}
         <Text style={styles.yourCodeLabel}>Your code</Text>
 
-        <Text style={styles.uidText}>User ID: {uniqueValue}</Text>
-
         {/* QR Code generated using react-native-qrcode-svg */}
         <View style={styles.qrContainer}>
           <QRCode
-            value={uniqueValue}
+            value={'https://give.donneur.id/'+donneurID}
             size={200}
             color="black"
             backgroundColor="white"

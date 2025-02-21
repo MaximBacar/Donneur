@@ -6,7 +6,7 @@ from    firebase_admin      import  auth,         db
 import datetime
 
 
-import  stripe
+
 
 
 class App():
@@ -29,8 +29,9 @@ class App():
         self.app.add_url_rule(  "/image/<image_id>",                "image",                self.image,                 methods=["GET"] )
         self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",      self.payment_profile,       methods=["GET"] )
         self.app.add_url_rule(  "/create_payment",                  "create_payment",       self.create_stripe_payment, methods=["POST"])
-        self.app.add_url_rule(  "/payment_succeeded",                "payment_succeeded",    self.payment_succeeded,     methods=["GET","POST"])
+        self.app.add_url_rule(  "/payment_succeeded",                "payment_succeeded",    self.payment_succeeded,    methods=["POST"])
         self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",       self.cancel_stripe_payment, methods=["POST"])
+        self.app.add_url_rule(  "/withdraw",                        "withdraw",             self.withdraw,              methods=["POST"])
         self.app.add_url_rule(  "/create_receiver",                 "create_receiver",      self.create_receiver,       methods=["POST"])
         self.app.add_url_rule(  "/update_receiver_email",           "update_receiver_email", self.update_receiver_email, methods=["POST"])
         self.app.add_url_rule(  "/get_id/<profile_id>",             "get_id",               self.get_id,                methods=["GET"] )
@@ -39,10 +40,8 @@ class App():
         self.app.add_url_rule(  "/get_user",                        "get_user",         self.get_user,              methods=["GET"] )
         self.app.add_url_rule(  "/get_uid",                         "get_uid",          self.get_uid,               methods=["GET"])
         self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",        self.get_db_id,             methods=["GET"] )
+        self.app.add_url_rule(  "/get_balance/<id>",                "get_balance",      self.get_balance,             methods=["GET"] )
         self.app.add_url_rule(  "/set_password",                    "set_password",      self.set_password,          methods=["POST"])
-
-        stripe.api_key = self.donneur.stripe_key
-        stripe.PaymentMethodDomain.create(domain_name="give.donneur.ca")
         
 
     def index(self):
@@ -182,46 +181,30 @@ class App():
         data = request.get_json()
         # data = {'amount':2, 'receiver_id': '45geg'}
         if 'amount' in data and data['amount'] and ('receiver_id' in data):
-            try:
-                converted_amount = int(data['amount'] * 100)
-                intent = stripe.PaymentIntent.create(
-                    amount                      = converted_amount,
-                    currency                    = 'cad',
-                    payment_method_types=['card']
-                    )
-                print('Payment succesfully created')
-                
+            response = self.donneur.donation(data['amount'],data['receiver_id'])
 
-                receiver_id             = data['receiver_id']
-                stripe_transaction_id   = intent['id']
-                amount                  = data['amount']
+            if response:
+                return {'clientSecret': response}
+            
 
-
-                return {'clientSecret': intent['client_secret']}
-            except Exception as error:
-                print(f"Error: {str(error)}")
-                return "Error", 401
-
-        return "Invalid", 400
+        return {'status' : 'invalid'}, 400
     
     def payment_succeeded(self):
         data = request.get_json()
-        
-        payment_intent = data['data']['object']
-
-
-        return {"status": "success"},200
+        print(data)
+        if 'data' in data:
+            payment_intent = data['data']['object']
+            self.donneur.confirm_donation(payment_intent)
+            return {"status": "success"},200
+        return {'status' : 'invalid'}, 400
     
     def cancel_stripe_payment(self):
         data = request.get_json()
         if 'clientSecret' in data and data['clientSecret']:
-            try:
-                stripe.PaymentIntent.cancel(data['clientSecret'])
-                return 200
-            except Exception as error:
-                print(f"Error: {str(error)}")
-                return "Error", 401
-        return 400
+            response = self.donneur.cancel_donation(data['clientSecret'])
+            if response:
+                return {"status": "success"},200
+        return {'status' : 'invalid'}, 400
     
 
     #========================
@@ -234,6 +217,23 @@ class App():
             amount = data['amount']
             org_id = data['organization_id']
             sender_id = data['sender_id']
+
+            self.donneur.withdraw(amount=amount,organization_id=org_id,sender_id=sender_id)
+
+
+            return {"status": "success"},200
+        
+        return {'status' : 'invalid'}, 400
+    
+
+    def get_balance(self, id):
+        response, balance = self.donneur.database.get_balance(id)
+
+        if response:
+            return {'balance': balance},200
+        
+        return {'status' : 'invalid'}, 400
+
 
     def set_password(self):
         """
