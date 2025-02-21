@@ -40,7 +40,7 @@ export default function ChangePassword() {
       return;
     }
     try {
-      const response = await fetch('http://127.0.0.1:8080/set_password', {
+      const response = await fetch('https://api.donneur.ca/set_password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
