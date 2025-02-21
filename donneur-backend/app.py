@@ -1,10 +1,12 @@
-from    flask               import  Flask,      request,    send_file
+from    flask               import  Flask,      request,    send_file,     jsonify
 from    flask_cors          import  CORS
 from    firebase_connector  import  Database
 from    donneur             import  Donneur
+from    firebase_admin      import  auth,         db  
+import datetime
 
 
-import  stripe
+
 
 
 class App():
@@ -20,23 +22,26 @@ class App():
             "allow_headers": ["Content-Type", "Authorization"]  # Allow these headers
         }})
         
-        self.app.add_url_rule(  "/",                                "index",            self.index                                  )
-        self.app.add_url_rule(  "/docs",                            "docs",             self.docs                                   )
-        self.app.add_url_rule(  "/upload_image",                    "upload_image",     self.upload_image,          methods=["POST"])
-        self.app.add_url_rule(  "/upload_base64",                   "upload_base64",    self.upload_base64,         methods=["POST"])
-        self.app.add_url_rule(  "/image/<image_id>",                "image",            self.image,                 methods=["GET"] )
-        self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",  self.payment_profile,       methods=["GET"] )
-        self.app.add_url_rule(  "/create_payment",                  "create_payment",   self.create_stripe_payment, methods=["POST"])
-        self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",   self.cancel_stripe_payment, methods=["POST"])
-        self.app.add_url_rule(  "/create_receiver",                 "create_receiver",  self.create_receiver,       methods=["POST"])
-        self.app.add_url_rule(  "/get_id/<profile_id>",             "get_id",           self.get_id,                methods=["GET"] )
+        self.app.add_url_rule(  "/",                                "index",                self.index                                  )
+        self.app.add_url_rule(  "/docs",                            "docs",                 self.docs                                   )
+        self.app.add_url_rule(  "/upload_image",                    "upload_image",         self.upload_image,          methods=["POST"])
+        self.app.add_url_rule(  "/upload_base64",                   "upload_base64",        self.upload_base64,         methods=["POST"])
+        self.app.add_url_rule(  "/image/<image_id>",                "image",                self.image,                 methods=["GET"] )
+        self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",      self.payment_profile,       methods=["GET"] )
+        self.app.add_url_rule(  "/create_payment",                  "create_payment",       self.create_stripe_payment, methods=["POST"])
+        self.app.add_url_rule(  "/payment_succeeded",                "payment_succeeded",    self.payment_succeeded,    methods=["POST"])
+        self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",       self.cancel_stripe_payment, methods=["POST"])
+        self.app.add_url_rule(  "/withdraw",                        "withdraw",             self.withdraw,              methods=["POST"])
+        self.app.add_url_rule(  "/create_receiver",                 "create_receiver",      self.create_receiver,       methods=["POST"])
+        self.app.add_url_rule(  "/update_receiver_email",           "update_receiver_email", self.update_receiver_email, methods=["POST"])
+        self.app.add_url_rule(  "/get_id/<profile_id>",             "get_id",               self.get_id,                methods=["GET"] )
         self.app.add_url_rule(  "/get_shelter_locations",           "get_shelter_locations", self.get_shelter_locations, methods=["GET"])
         self.app.add_url_rule(  "/get_role",                        "get_role",         self.get_role,              methods=["GET"] )
         self.app.add_url_rule(  "/get_user",                        "get_user",         self.get_user,              methods=["GET"] )
-        self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",        self.get_db_id,             methods=["GET"])
-
-        stripe.api_key = self.donneur.stripe_key
-        stripe.PaymentMethodDomain.create(domain_name="give.donneur.ca")
+        self.app.add_url_rule(  "/get_uid",                         "get_uid",          self.get_uid,               methods=["GET"])
+        self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",        self.get_db_id,             methods=["GET"] )
+        self.app.add_url_rule(  "/get_balance/<id>",                "get_balance",      self.get_balance,             methods=["GET"] )
+        self.app.add_url_rule(  "/set_password",                    "set_password",      self.set_password,          methods=["POST"])
         
 
     def index(self):
@@ -104,6 +109,16 @@ class App():
         
         return 400
     
+
+    def get_uid(self):
+        db_id = request.args.get('donneurID')
+        if db_id:
+            uid = self.donneur.database.get_uid(db_id)
+            if uid:
+                return {'uid':uid}
+            
+        return 400
+
     def get_db_id(self, uid):
         if uid:
             pass
@@ -133,6 +148,13 @@ class App():
             return {'receiver_id' : id}
 
         return 500
+
+    def update_receiver_email(self):
+        data = request.get_json()
+        if 'receiver_id' in data and 'email' in data:
+            self.donneur.update_receiver_email(data['receiver_id'], data['email'])
+            return jsonify({'status': 'success'})
+        return jsonify({'error': 'Missing receiver_id or email'}), 400
         
     def get_user(self):
         uid = request.args.get('uid')
@@ -148,41 +170,125 @@ class App():
             if user_data:
                 return {'role' : user_data['role']}
         return 400
+    
+
+
+    #========================
+    #STRIPE
 
     def create_stripe_payment(self):
         # TODO Validate that receiver_id exists, that 0.50 <= amount < 1000.00
         data = request.get_json()
-        if 'amount' in data and data['amount']:
-            try:
-                converted_amount = int(data['amount'] * 100)
-                intent = stripe.PaymentIntent.create(
-                    amount                      = converted_amount,
-                    currency                    = 'cad',
-                    payment_method_types=['card']
-                    )
-                print('Payment succesfully created')
-                return {'clientSecret': intent['client_secret']}
-            except Exception as error:
-                print(f"Error: {str(error)}")
-                return "Error", 401
+        # data = {'amount':2, 'receiver_id': '45geg'}
+        if 'amount' in data and data['amount'] and ('receiver_id' in data):
+            response = self.donneur.donation(data['amount'],data['receiver_id'])
 
-        return "Invalid", 400
+            if response:
+                return {'clientSecret': response}
+            
+
+        return {'status' : 'invalid'}, 400
+    
+    def payment_succeeded(self):
+        data = request.get_json()
+        print(data)
+        if 'data' in data:
+            payment_intent = data['data']['object']
+            self.donneur.confirm_donation(payment_intent)
+            return {"status": "success"},200
+        return {'status' : 'invalid'}, 400
     
     def cancel_stripe_payment(self):
         data = request.get_json()
         if 'clientSecret' in data and data['clientSecret']:
-            try:
-                stripe.PaymentIntent.cancel(data['clientSecret'])
-                return 200
-            except Exception as error:
-                print(f"Error: {str(error)}")
-                return "Error", 401
-        return 400
+            response = self.donneur.cancel_donation(data['clientSecret'])
+            if response:
+                return {"status": "success"},200
+        return {'status' : 'invalid'}, 400
+    
+
+    #========================
+    #WITHDRAW
+
+    def withdraw(self):
+        data = request.get_json()
+
+        if 'amount' in data and 'organization_id' in data and 'sender_id' in data:
+            amount = data['amount']
+            org_id = data['organization_id']
+            sender_id = data['sender_id']
+
+            self.donneur.withdraw(amount=amount,organization_id=org_id,sender_id=sender_id)
+
+
+            return {"status": "success"},200
+        
+        return {'status' : 'invalid'}, 400
+    
+
+    def get_balance(self, id):
+        response, balance = self.donneur.database.get_balance(id)
+
+        if response:
+            return {'balance': balance},200
+        
+        return {'status' : 'invalid'}, 400
+
+
+    def set_password(self):
+        """
+        Endpoint for when a receiver sets their password.
+        Expects JSON payload with receiver_id and password.
+        Uses the email stored in the receiver record to create the Firebase Auth user,
+        then updates the receiver record with the generated uid.
+        """
+        data = request.get_json()
+        receiver_id = data.get('receiver_id')
+        password = data.get('password')
+        if not receiver_id or not password:
+            return jsonify({'error': 'Missing receiver_id or password'}), 400
+
+        # Look up the receiver record from the Realtime Database.
+        receiver_ref = db.reference(f'/receivers/{receiver_id}')
+        receiver = receiver_ref.get()
+        if not receiver or not receiver.get('email'):
+            return jsonify({'error': 'Receiver not found or email not set'}), 400
+
+        email = receiver['email']
+        try:
+            # Create the Firebase Auth user with the stored email and provided password.
+            user_record = auth.create_user(
+                email=email,
+                password=password,
+            )
+            # Update the receiver record with the new auth uid (stored as uid)
+            receiver_ref.update({
+                'uid': user_record.uid,
+                'password_set_date': datetime.now().isoformat()
+            })
+             # Create a corresponding entry in the /users table.
+            users_ref = db.reference('/users')
+            users_ref.child(user_record.uid).set({
+                'db_id': receiver_id,
+                'role': 'receivers'
+            })
+            return jsonify({'status': 'success', 'uid': user_record.uid}), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
 
 
 
 donneur_api = App()
 donneur_app = donneur_api.app
 
+
+# donneur_api.create_stripe_payment()
+
 if __name__ == "__main__":
-    donneur_app.run(debug=True)
+    donneur_app.run(debug=True, port=8080)
+
+
+# payment_method_id = "pm_1Qule2HgK1fpQ7EODPLRLN59"
+# payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
+# print(payment_method)

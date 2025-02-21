@@ -2,20 +2,59 @@ import React, { useState, useEffect } from 'react';
 import { SafeAreaView, View, Text, StyleSheet } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { useRouter } from 'expo-router';
+import { useUser } from './withdrawalContext';
+import { useAuth } from '../../../../context/authContext';
 
 export default function WithdrawalConfirmationScreen() {
   const router = useRouter();
   const [animationFinished, setAnimationFinished] = useState(false);
 
+
+  const {userID, withdrawAmount}    = useUser();
+  const { user, donneurID }         = useAuth();
+  const [loading, setLoading]       = useState(true);
+
+
+  useEffect(() => {
+    console.log('userid',userID);
+    console.log('w_a',withdrawAmount);
+    if (userID){
+
+  
+      const body = JSON.stringify({
+        amount:   withdrawAmount,
+        organization_id:   donneurID,
+        sender_id:  userID
+      });
+
+      fetch(`https://api.donneur.ca/withdraw`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json' // Important: Expecting JSON
+        },
+        body:body
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.log(err)
+          setLoading(false);
+        });
+
+    }
+  },[])
+
   // Once the confirmation animation finishes, wait 2 seconds then navigate to the dashboard
   useEffect(() => {
-    if (animationFinished) {
+    if (animationFinished && !loading) {
       const timer = setTimeout(() => {
         router.push('/');
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [animationFinished, router]);
+  }, [loading, animationFinished, router]);
 
   return (
     <SafeAreaView style={styles.container}>

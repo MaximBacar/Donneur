@@ -7,12 +7,13 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={({ route }) => ({
+        headerShown: false, // Disable the header here
         tabBarIcon: ({ color, size }) => {
           let iconName;
           if (route.name === 'index') {
             iconName = 'home';
           } else if (route.name === 'inbox') {
-            iconName = 'inbox';
+            iconName = 'mail';
           } else if (route.name === 'map') {
             iconName = 'compass';
           } else if (route.name === 'profile') {
