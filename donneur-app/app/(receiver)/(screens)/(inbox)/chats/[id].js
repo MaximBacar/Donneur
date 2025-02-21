@@ -18,6 +18,7 @@ import { Text } from 'react-native';
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
+  const { user } = useAuth()
 
   // 1) Get the `id` from the URL
   const { id } = useLocalSearchParams();
@@ -47,10 +48,9 @@ export default function Chat() {
       setMessages(fetchedMessages);
 
       // Mark unread messages as read if not from current user
-      // NOTE: If you're using `useAuth()`, you might do: currentUser?.uid
-      // but below references `auth.currentUser?.uid`. Adjust to your usage.
+    
       const unreadMessages = querySnapshot.docs.filter(
-        (d) => !d.data().read && d.data().user._id !== auth.currentUser?.uid
+        (d) => !d.data().read && d.data().user._id !== user.uid
       );
 
       const updatePromises = unreadMessages.map((unreadDoc) => {
@@ -98,11 +98,9 @@ export default function Chat() {
     [id]
   );
 
-  // 6) If using your custom Auth context
-  const { currentUser } = useAuth();
 
-  console.log("User object:", currentUser);
-  const userId = currentUser ? currentUser.uid : 'anonymous';
+  console.log("User object:", user);
+  const userId = user ? user.uid : 'anonymous';
 
   return (
     <GiftedChat
@@ -110,7 +108,7 @@ export default function Chat() {
       onSend={(newMsgs) => onSend(newMsgs)}
       user={{
         _id: userId,
-        name: currentUser?.displayName || 'User',
+        name: user.displayName || 'User',
       }}
     />
   );
