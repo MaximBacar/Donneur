@@ -92,7 +92,7 @@ class Donneur:
                 stripe_id   = intent['id'],
                 
             )
-            return True
+            return intent['client_secret']
         
         except Exception as error:
             print(f"Error: {str(error)}")

@@ -182,7 +182,7 @@ class App():
             response = self.donneur.donation(data['amount'],data['receiver_id'])
 
             if response:
-                return {'status' : 'ok'}, 200
+                return {'clientSecret': response}
             
 
         return {'status' : 'invalid'}, 400
