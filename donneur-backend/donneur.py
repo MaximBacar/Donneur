@@ -7,6 +7,7 @@ import  os
 import  base64
 import  io
 from    PIL import Image
+import  stripe
 
 class Donneur:
     '''
@@ -57,8 +58,6 @@ class Donneur:
         except:
             pass
     
-    def create_transaction( type, amount : float, receiver_id, sender_id):
-        pass
     def add_profile_picture( self , id , file):
         picture_id = self.__genenrate_file_id( id )
         try:
@@ -73,6 +72,40 @@ class Donneur:
         except:
             pass
 
+
+
+    def donation(self, amount : float, receiver_id : str, stripe_id):
+        self.database.create_transcation(
+            amount      = amount,
+            currency    = 'CAD',
+            type        = 'donation',
+            stripe_id   = stripe_id,
+            receiver_id = receiver_id
+        )
+    def confirm_donation(self, confirmation_data):
+        payment_intent = confirmation_data['data']['object']
+
+        stripe_id = payment_intent['id']
+
+
+    # ========== withdraw
+
+    def withdraw(self, amount : float, organization_id : str, sender_id : str):
+        
+        # Sanitize amount to be negative
+        amount = abs(amount)
+
+        self.database.create_transcation(
+            receiver_id = organization_id, 
+            sender_id   = sender_id, 
+            amount      = amount,
+            currency    = 'CAD',
+            confirmed   = True,
+            type        = 'withdraw'
+            )
+        
+        self.database.deduct_balance( sender_id, amount )
+
     def __generate_folders(self):
         if not os.path.exists(self.image_folder):
             os.mkdir(self.image_folder)
@@ -81,8 +114,10 @@ class Donneur:
         dotenv.load_dotenv()
         self.image_folder               = os.getenv('IMAGE_FOLDER')
         self.stripe_key                 = os.getenv('STRIPE_KEY')
-        
         self.firebase_credentials_path  = os.getenv('FIREBASE_CRED_PATH')
+
+        # stripe.api_key = self.stripe_key
+        # stripe.PaymentMethodDomain.create(domain_name="give.donneur.ca")
         self.database                   = Database(self.firebase_credentials_path)
 
 
