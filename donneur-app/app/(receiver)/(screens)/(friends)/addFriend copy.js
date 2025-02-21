@@ -62,25 +62,29 @@ export default function AddFriendScreen() {
   };
 
   // This function toggles the scanning mode. It also checks permissions.
-  const onPressScanQRCode = async () => {
-    if (hasPermission === null) {
-      Alert.alert('Requesting camera permission');
-      const { status } = await requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-      if (status === 'granted') {
-        setIsScanning(true);
-        setScanned(false);
-      }
-      return;
-    }
+  // const onPressScanQRCode = async () => {
+  //   if (hasPermission === null) {
+  //     Alert.alert('Requesting camera permission');
+  //     const { status } = await requestCameraPermissionsAsync();
+  //     setHasPermission(status === 'granted');
+  //     if (status === 'granted') {
+  //       setIsScanning(true);
+  //       setScanned(false);
+  //     }
+  //     return;
+  //   }
     
-    if (hasPermission === false) {
-      Alert.alert('Permission Required', 'Camera access is needed to scan QR codes');
-      return;
-    }
+  //   if (hasPermission === false) {
+  //     Alert.alert('Permission Required', 'Camera access is needed to scan QR codes');
+  //     return;
+  //   }
 
-    setIsScanning(true);
-    setScanned(false);
+  //   setIsScanning(true);
+  //   setScanned(false);
+  // };
+
+  const onPressScanQRCode = async () => {
+    
   };
 
   // If we're in scanning mode, render the camera view.
