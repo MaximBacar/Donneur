@@ -37,7 +37,7 @@ class Database:
         reference.update({'email': email})
 
 
-    def created_sender(name, address, isAnonymous : False):
+    def create_sender(self, name, address, isAnonymous : False):
         reference = db.reference('senders')
         data = {
             'name' : name,
@@ -68,6 +68,7 @@ class Database:
         if stripe_id:
             reference = db.reference(f'transactions/{stripe_id}')
             data = {
+                'confirmed' : True,
                 'sender_id':sender_id,
                 'payment_methods' : payment_method
             }

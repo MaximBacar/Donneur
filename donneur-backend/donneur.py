@@ -98,9 +98,8 @@ class Donneur:
             print(f"Error: {str(error)}")
             return False
         
-    def confirm_donation(self, confirmation_data):
-        payment_intent = confirmation_data['data']['object']
-
+    def confirm_donation(self, payment_intent):
+       
         stripe_id = payment_intent['id']
         payment_method = payment_intent['payment_method']
         sender_details = stripe.PaymentMethod.retrieve(payment_method)
@@ -114,12 +113,12 @@ class Donneur:
         name = sender_details['billing_details']['name']
 
         pm_info = {
-            'wallet'    : sender_details['wallet']['type'],
+            'wallet'    : sender_details['card']['wallet']['type'],
             'card'      : sender_details['card']['brand']
         }
 
 
-        sender_id = self.database.created_sender(name = name, address = address, isAnonymous = True)
+        sender_id = self.database.create_sender(name = name, address = address, isAnonymous = True)
 
         amount, receiver_id = self.database.confirm_transaction(stripe_id, sender_id=sender_id,payment_method=pm_info)
 

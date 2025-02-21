@@ -189,6 +189,7 @@ class App():
     
     def payment_succeeded(self):
         data = request.get_json()
+        print(data)
         if 'data' in data:
             payment_intent = data['data']['object']
             self.donneur.confirm_donation(payment_intent)
