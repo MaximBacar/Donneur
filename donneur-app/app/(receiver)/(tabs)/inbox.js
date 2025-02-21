@@ -45,7 +45,7 @@ export default function Inbox() {
           const chatList = await Promise.all(
             snapshot.docs.map(async (chatDoc) => {
               const chat = chatDoc.data();
-              const otherUserId = chat.users.find((userId) => userId !== user);
+              const otherUserId = chat.users.find((userId) => userId !== user.uid);
 
               // Directly get other user's name from the chat document (if you store it)
               const otherUserName = chat.userNames?.[otherUserId] || "Unknown User";
@@ -63,7 +63,7 @@ export default function Inbox() {
               // Ensure the blue circle only appears for the recipient
               const hasUnread =
                 !read && // Message is unread
-                lastMessageData?.user._id !== user; // Message was sent by someone else
+                lastMessageData?.user._id !== user.uid; // Message was sent by someone else
 
               // Set up a real-time listener for the last message
               const unsubscribeMessages = onSnapshot(messagesQuery, (messagesSnapshot) => {
@@ -84,7 +84,7 @@ export default function Inbox() {
                               createdAt: updatedCreatedAt,
                               read: updatedRead,
                               hasUnread:
-                                !updatedRead && message.user._id !== user, // Recalculate unread indicator
+                                !updatedRead && message.user._id !== user.uid, // Recalculate unread indicator
                             }
                           : prevChat
                       )
@@ -193,6 +193,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
+    marginTop: 40,
   },
   chatItem: {
     padding: 15,
@@ -230,3 +231,4 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
+
