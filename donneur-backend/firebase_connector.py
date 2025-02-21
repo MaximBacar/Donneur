@@ -35,8 +35,24 @@ class Database:
         """Updates the email field for an existing receiver."""
         reference = db.reference(f'/receivers/{receiver_id}')
         reference.update({'email': email})
-        
 
+
+    def created_sender():
+        pass
+        
+    def create_transcation( receiver_id, amount, currency, type, stripe_id="", sender_id = "", confirmed=False):
+        reference = db.reference('transactions')
+        data = {
+            'amount'        : amount,
+            'currency'      : currency,
+            'stripe_id'     : stripe_id,
+            'confirmed'     : confirmed,
+            'creation_date' : datetime.now().isoformat(),
+            'receiver_id'   : receiver_id,
+            'sender_id'     : sender_id,
+            'type'          : type
+        }
+    def confirm_transaction (self, client_secret):pass
     def create_organization (self , name, description, address, zip, city, province, max_occupancy, uid):
         reference = db.reference('/organizations')
         data = {
@@ -103,6 +119,10 @@ class Database:
             return True
         else:
             return False
+        
+    def deduct_balance( self, id, amount):
+        amount = -1 * amount
+        self.add_balance(id, amount)
         
 
     def set_document_picture( self, id, picture_id ):
