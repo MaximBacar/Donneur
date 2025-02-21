@@ -99,6 +99,7 @@ export default function FriendsScreen() {
       // For accepted docs, fetch user info for the "other" user
       const acceptedPromises = acceptedDocs.map(async (doc) => {
         const friendUid = doc.user1 === currentUid ? doc.user2 : doc.user1;
+
         const res = await fetch(`https://api.donneur.ca/get_user?uid=${friendUid}`);
         const userData = await res.json();
         const pictureUrl = userData.picture_id 
