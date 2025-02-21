@@ -238,7 +238,7 @@ export default function DashboardScreen() {
         {/* Past Transactions Button */}
         <TouchableOpacity
           style={styles.pastTransactionButton}
-          onPress={() => router.push("/(screens)/transactions/past")}
+          onPress={() => router.push("/(screens)/(pastTransactions)/pastTransactions")}
         >
           <View style={styles.friendsButtonContent}>
             <Ionicons
