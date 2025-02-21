@@ -12,7 +12,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Router>
       <Routes>
-        <Route path="/:id" element={<Donation />} />
+        {console.log(isGiveDomain)}
         {isGiveDomain ? (
           <Route path="/:id" element={<Donation />} />
         ) : (

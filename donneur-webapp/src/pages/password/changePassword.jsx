@@ -10,32 +10,37 @@ export default function ChangePassword() {
   const receiver_id = searchParams.get('id');
 
 
-  useEffect( async () => {
-    try {
-      const response = await fetch('https://api.donneur.ca/is_password_link_valid?id='+receiver_id, {
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        setError(result.error || 'Error setting password');
-      } else {
-        if (result.validity != true){
-          window.location.href = 'https://www.google.com';
+  useEffect( () => {
+    console.log(receiver_id);
+    async function getValidity(){
+      try {
+        const response = await fetch('https://api.donneur.ca/is_password_link_valid?id='+receiver_id, {
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          setError(result.error || 'Error setting password');
+        } else {
+          if (result.validity != true){
+            window.location.href = 'https://www.google.com';
+          }
         }
+      } catch (err) {
+        console.error(err);
+        window.location.href = 'https://www.google.com';
       }
-    } catch (err) {
-      console.error(err);
-      setError('Error setting password');
     }
+    getValidity()
   }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      // setError('Passwords do not match');
+      alert("Passwords don't match")
       return;
     }
     try {
-      const response = await fetch('https://api.donneur.ca/set_password', {
+      const response = await fetch('http://127.0.0.1:8080/set_password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -49,7 +54,8 @@ export default function ChangePassword() {
       } else {
         // Password has been set and auth account created.
         // Redirect to login or donation page as needed.
-        navigate('/login');
+        // navigate('/login');
+        window.location.href = 'https://www.google.com';
       }
     } catch (err) {
       console.error(err);
@@ -93,7 +99,7 @@ export default function ChangePassword() {
         </div>
 
         {/* Submit Button */}
-        <button className="w-full text-white bg-black h-[40px] rounded-lg">Create</button>
+        <button className="w-full text-white bg-black h-[40px] rounded-lg" onClick={handleSubmit}>Create</button>
       </div>
     </div>
   );
