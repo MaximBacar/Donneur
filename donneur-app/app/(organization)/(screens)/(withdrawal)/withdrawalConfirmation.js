@@ -24,10 +24,10 @@ export default function WithdrawalConfirmationScreen() {
       const body = JSON.stringify({
         amount:   withdrawAmount,
         organization_id:   donneurID,
-        id:  userID
+        sender_id:  userID
       });
 
-      fetch(`https://api.donneur.ca/get_id/${userID}`, {
+      fetch(`https://api.donneur.ca/withdraw`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json' // Important: Expecting JSON

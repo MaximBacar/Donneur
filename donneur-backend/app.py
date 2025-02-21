@@ -40,6 +40,7 @@ class App():
         self.app.add_url_rule(  "/get_user",                        "get_user",         self.get_user,              methods=["GET"] )
         self.app.add_url_rule(  "/get_uid",                         "get_uid",          self.get_uid,               methods=["GET"])
         self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",        self.get_db_id,             methods=["GET"] )
+        self.app.add_url_rule(  "/get_balance/<id>",                "get_balance",      self.get_balance,             methods=["GET"] )
         self.app.add_url_rule(  "/set_password",                    "set_password",      self.set_password,          methods=["POST"])
         
 
@@ -221,6 +222,14 @@ class App():
 
 
             return {"status": "success"},200
+        
+        return {'status' : 'invalid'}, 400
+    
+
+    def get_balance(self, id):
+        response, balance = self.donneur.database.get_balance()
+        if response:
+            return {'balance', balance}, 200
         
         return {'status' : 'invalid'}, 400
 

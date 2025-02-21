@@ -151,6 +151,14 @@ class Database:
     def deduct_balance( self, id, amount):
         amount = -1 * amount
         self.add_balance(id, amount)
+
+    def get_balance( self, id ):
+        reference = db.reference(f'/receivers/{id}')
+        data = reference.get()
+        if data:
+            return True, data['balance']
+        
+        return False, None
         
 
     def set_document_picture( self, id, picture_id ):
