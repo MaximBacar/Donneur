@@ -20,70 +20,11 @@ export default function AddFriendScreen() {
   const navigation = useNavigation();
 
 
-  // This function toggles the scanning mode. It also checks permissions.
-  // const onPressScanQRCode = async () => {
-  //   if (hasPermission === null) {
-  //     Alert.alert('Requesting camera permission');
-  //     const { status } = await requestCameraPermissionsAsync();
-  //     setHasPermission(status === 'granted');
-  //     if (status === 'granted') {
-  //       setIsScanning(true);
-  //       setScanned(false);
-  //     }
-  //     return;
-  //   }
-    
-  //   if (hasPermission === false) {
-  //     Alert.alert('Permission Required', 'Camera access is needed to scan QR codes');
-  //     return;
-  //   }
-
-  //   setIsScanning(true);
-  //   setScanned(false);
-  // };
 
   const onPressScanQRCode = async () => {
     router.push('/readFriendCode');
   };
 
-  // If we're in scanning mode, render the camera view.
-  // if (isScanning && hasPermission) {
-  //   return (
-  //     <View style={styles.container}>
-  //       <Camera
-  //         style={StyleSheet.absoluteFillObject}
-  //         type={CameraType.back}
-  //         onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
-  //         ratio="16:9"
-  //         barCodeScannerSettings={{
-  //           barCodeTypes: ['qr'],
-  //         }}
-  //       >
-  //         <View style={styles.overlay}>
-  //           <TouchableOpacity
-  //             style={styles.closeButton}
-  //             onPress={() => setIsScanning(false)}
-  //           >
-  //             <Ionicons name="close" size={24} color="#fff" />
-  //           </TouchableOpacity>
-            
-  //           <View style={styles.scanFrame} />
-
-  //           {scanned && (
-  //             <TouchableOpacity
-  //               style={styles.scanAgainButton}
-  //               onPress={() => setScanned(false)}
-  //             >
-  //               <Text style={styles.scanAgainText}>Tap to Scan Again</Text>
-  //             </TouchableOpacity>
-  //           )}
-  //         </View>
-  //       </Camera>
-  //     </View>
-  //   );
-  // }
-
-  // Normal view when not scanning.
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Add Friend</Text>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from './withdrawalContext';
@@ -17,10 +18,10 @@ export default function WithdrawalAmountScreen() {
   const router = useRouter();
   const [amount, setAmount] = useState('0.00');
 
-  const {setWithdrawAmount} = useUser()
+  const {userID, setWithdrawAmount} = useUser()
 
   // Example current balance
-  const currentBalance = '30.35';
+  const [availableBalance, setAvailableBalance] = useState(0);
 
   // Numeric keypad values
   const keypadValues = [
@@ -29,6 +30,23 @@ export default function WithdrawalAmountScreen() {
     ['7', '8', '9'],
     ['.', '0', 'DEL'],
   ];
+
+
+  useEffect(() => {
+    if (userID){
+
+      fetch(`https://api.donneur.ca/get_balance/${userID}`)
+        .then((response) => response.json())
+        .then((data) => {
+          setAvailableBalance(data.balance);
+        })
+        .catch((err) => {
+          console.log(err)
+          
+        });
+
+    }
+  }, [])
 
   const handleKeyPress = (key) => {
     setAmount((prevAmount) => {
@@ -63,8 +81,13 @@ export default function WithdrawalAmountScreen() {
     console.log('ammount', amount);
     console.log('')
     let amount_flt = parseFloat(amount);
-    setWithdrawAmount(amount_flt);
-    router.push('/withdrawalConfirmation');
+    if (amount_flt <= availableBalance){
+      setWithdrawAmount(amount_flt);
+      router.push('/withdrawalConfirmation');
+    }else{
+      Alert.alert("Invalid amount", "insufficient funds");
+    }
+    
   };
 
   return (
@@ -80,7 +103,7 @@ export default function WithdrawalAmountScreen() {
 
       {/* Balance and Amount */}
       <View style={styles.amountSection}>
-        <Text style={styles.balanceText}>${currentBalance}</Text>
+        <Text style={styles.balanceText}>${availableBalance.toFixed(2)}</Text>
         <Text style={styles.amountText}>${amount}</Text>
         <Text style={styles.amountLabel}>Withdrawal</Text>
       </View>
