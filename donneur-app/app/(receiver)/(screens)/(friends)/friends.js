@@ -38,7 +38,6 @@ export default function FriendsScreen() {
   const { user } = useAuth();
 
   useEffect(() => {
-    console.log("tttt");
     console.log(user);
     if (user) {
       console.log(user);

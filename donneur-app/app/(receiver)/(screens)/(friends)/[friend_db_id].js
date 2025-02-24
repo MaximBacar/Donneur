@@ -23,7 +23,6 @@ export default function FriendProfile() {
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    console.log("ddd");
     if (friend_db_id) {
       fetchUserData(friend_db_id);
     }

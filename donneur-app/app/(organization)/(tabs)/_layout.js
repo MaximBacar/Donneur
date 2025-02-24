@@ -24,6 +24,7 @@ export default function TabLayout() {
       <Tabs.Screen name="index"         options={{ title: 'Dashboard' }} />
       <Tabs.Screen name="finance"       options={{ title: 'Finance' }} />
       <Tabs.Screen name="organization"  options={{ title: 'Organization' }} />
+      <Tabs.Screen name="test"  options={{ title: 'test' }} />
     </Tabs>
   );
 }

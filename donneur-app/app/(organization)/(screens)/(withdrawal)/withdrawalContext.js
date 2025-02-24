@@ -4,9 +4,10 @@ const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
   const [userID, setUserID] = useState(null);
+  const [withdrawAmount, setWithdrawAmount] = useState(0);
 
   return (
-    <UserContext.Provider value={{ userID, setUserID }}>
+    <UserContext.Provider value={{ userID, setUserID, withdrawAmount, setWithdrawAmount }}>
       {children}
     </UserContext.Provider>
   );
