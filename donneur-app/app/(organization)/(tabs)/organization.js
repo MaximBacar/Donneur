@@ -1,36 +1,32 @@
 import React, { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ImageBackground, Linking } from "react-native";
+import { useRouter } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  Linking,
-  Alert,
-} from 'react-native';
 
-// Example placeholder for an organization
-const exampleOrg = {
+const orgData = {
   type: 'organization',
-  name: 'Example Org',
-  description: 'An organization that does X, Y, and Z!',
-  maxOccupancy: 100,
-  address: '123 Elm Street',
-  zip: 'A1A1A1',
-  city: 'Montreal',
-  province: 'QC',
-  logo: 'https://via.placeholder.com/100/09f/fff.png',
-  banner: 'https://via.placeholder.com/600x200.png',
+  name: 'CARE Montreal',
+  description: 'Shelter and food bank',
+  maxOccupancy: 400,
+  currentOccupancy: 250,
+  address: '3674 Rue Ontario E',
+  zip: 'H1W 1R9',
+  city: 'Montréal',
+  province: 'Quebec',
+  hoursOfOperation: '24/7',
+  bedsAvailable: '200/400',
+  logo: 'https://via.placeholder.com/100/4A90E2/FFFFFF.png?text=CM',
+  banner: 'https://via.placeholder.com/600x200/ACACAC.png',
+  phone: 'No phone available'
 };
 
 export default function OrgProfileScreen() {
   const router = useRouter();
-  const [profilePic, setProfilePic] = useState(exampleOrg.logo);
-  const [banner, setBanner] = useState(exampleOrg.banner);
+  const [profilePic, setProfilePic] = useState(orgData.logo);
+  const [banner, setBanner] = useState(orgData.banner);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const pickImage = async (setImage) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -50,184 +46,382 @@ export default function OrgProfileScreen() {
       setImage(result.assets[0].uri);
     }
   };
-// Open in Maps (or handle location logic)
-  const handleOpenInMaps = () => {
-    const query = encodeURIComponent(
-      `${exampleOrg.address}, ${exampleOrg.city}, ${exampleOrg.province} ${exampleOrg.zip}`
-    );
-    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
-    Linking.openURL(url).catch((err) => {
-      console.error('Failed to open maps:', err);
-    });
+
+  
+  const occupancyPercentage = (orgData.currentOccupancy / orgData.maxOccupancy) * 100;
+  const occupancyColor = occupancyPercentage > 75 ? 'red' : occupancyPercentage > 50 ? 'orange' : 'green';
+  const handleEditProfile = () => {
+    router.push('/(editProfile)');
   };
 
 
-  return (
-    <ScrollView style={styles.container}>
 
-        {/* Banner */}
-      <TouchableOpacity onPress={() => pickImage(setBanner)}>
-        <Image source={{ uri: banner }} style={styles.banner} />
+
+  return (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+       <TouchableOpacity onPress={() => pickImage(setBanner)}>
+      <ImageBackground source={{ uri: banner }} style={styles.heroImage}>
+        <View style={styles.heroOverlay}>
+          
+        </View>
+      </ImageBackground>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.editButton}  onPress={handleEditProfile}>
+        <Icon name="pencil" size={18} color="#FFFFFF" />
+        <Text style={styles.editButtonText}>Edit</Text>
       </TouchableOpacity>
 
-       {/* Profile Picture */}
-      <View style={styles.profilePicWrapper}>
-        <TouchableOpacity onPress={() => pickImage(setProfilePic)}>
-          <Image source={{ uri: profilePic }} style={styles.profilePic} />
-        </TouchableOpacity>
-      </View>
-      <View>
-      <TouchableOpacity style={styles.editIcon}   onPress={() => router.push('/(editProfile)')}>
-        <Icon name="pencil" size={30} color="#000" />
-        </TouchableOpacity>
-      </View>
+      <View style={styles.profileContainer}>
+        <View style={styles.logoContainer}>
+          <View style={styles.logo}>
+            <Text style={styles.logoText}>CM</Text>
+          </View>
+        </View>
+        <Text style={styles.shelterName}>{orgData.name}</Text>
+        <Text style={styles.shelterSubtitle}>{orgData.description}</Text>
 
-       {/* Main Content */}
-      <View style={styles.content}>
-        <Text style={styles.name}>{exampleOrg.name}</Text>
-        <Text style={styles.description}>{exampleOrg.description}</Text>
-
-        
-        {/* Occupancy Badge */}
-        <View style={styles.occupancyBadge}>
-          <Text style={styles.occupancyText}>Max Occupancy: {exampleOrg.maxOccupancy}</Text>
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <MaterialCommunityIcons name="bed" size={24} color="#4A90E2" />
+            <Text style={styles.statValue}>
+              {orgData.currentOccupancy}/{orgData.maxOccupancy}
+            </Text>
+            <Text style={styles.statLabel}>Beds Available</Text>
+          </View>
+          <View style={styles.statItem}>
+            <MaterialCommunityIcons name="clock-outline" size={24} color="#4A90E2" />
+            <Text style={styles.statValue}>{orgData.hoursOfOperation}</Text>
+            <Text style={styles.statLabel}>Open Hours</Text>
+          </View>
+           <View style={styles.statItem}>
+            <MaterialCommunityIcons name="map-marker" size={24} color="#4A90E2" />
+            <Text style={styles.statValue}>
+              { 'Montréal'}
+              </Text>
+              <Text style={styles.statLabel}>Location</Text>
+            </View>
         </View>
 
-
-
-         {/* Address Section */}
-        <View style={styles.addressSection}>
-          <View style={styles.addressTextContainer}>
-            <Text style={styles.sectionTitle}>Address</Text>
-            <Text style={styles.infoLine}>
-              {exampleOrg.address}, {exampleOrg.city}, {exampleOrg.province} {exampleOrg.zip}
-            </Text>
-          </View>
-          <TouchableOpacity style={styles.mapButton} onPress={handleOpenInMaps}>
-            <Text style={styles.mapButtonText}>Open in Maps</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Contact Information</Text>
+          <TouchableOpacity style={styles.contactItem}>
+            <MaterialCommunityIcons name="map-marker" size={24} color="#4A90E2" />
+            <Text style={styles.contactValue}>{orgData.address}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.contactItem}>
+            <MaterialCommunityIcons name="phone" size={24} color="#4A90E2" />
+            <View style={styles.contactText}>
+              <Text style={styles.contactLabel}>Phone</Text>
+              <Text style={styles.contactValue}>{ 'No phone available'}</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
           </TouchableOpacity>
         </View>
 
-         {/* Activity Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Activity</Text>
-          <Text style={styles.infoLine}>No upcoming events yet!</Text>
+          <Text style={styles.sectionTitle}>Current Occupancy</Text>
+          <View style={[styles.occupancyCircle, { backgroundColor: occupancyColor }]}>
+            <Text style={styles.occupancyPercentage}>{occupancyPercentage.toFixed(0)}%</Text>
+            <Text style={styles.occupancyLabel}>Occupied</Text>
+          </View>
+          <View style={styles.occupancyStats}>
+            <View style={styles.occupancyStat}>
+              <Text style={styles.occupancyStatValue}>{'?'}</Text>
+              <Text style={styles.occupancyStatLabel}>Current</Text>
+               </View>
+               <View style={styles.occupancyStatDivider} />
+               <View style={styles.occupancyStat}>
+                <Text style={styles.occupancyStatValue}>400</Text>
+                <Text style={styles.occupancyStatLabel}>Maximum</Text>
+                </View>
+                </View>
         </View>
       </View>
     </ScrollView>
   );
 }
 
-const BANNER_HEIGHT = 100;
-const PROFILE_PIC_SIZE = 80;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8F9FA',
   },
-  banner: {
-    width: '100%',
-    height: BANNER_HEIGHT,
-    backgroundColor: '#ccc',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    padding: 20,
   },
-  profilePicWrapper: {
-    position: 'absolute',
-    top: BANNER_HEIGHT - PROFILE_PIC_SIZE / 2,
-    left: 20,
-    borderRadius: PROFILE_PIC_SIZE / 2,
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: '#fff',
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
   },
-  profilePic: {
-    width: PROFILE_PIC_SIZE,
-    height: PROFILE_PIC_SIZE,
-    borderRadius: PROFILE_PIC_SIZE / 2,
-    backgroundColor: '#eee',
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    padding: 20,
   },
-  content: {
-    marginTop: PROFILE_PIC_SIZE / 2 + 10,
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-  },
-  name: {
-    marginTop: 10,
-    fontSize: 22,
+  errorTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
+    marginTop: 16,
+    color: '#FF6B6B',
   },
-  description: {
-    marginTop: 5,
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 15,
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 8,
+    color: '#666',
   },
-  occupancyBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#FFA500',
-    borderRadius: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginBottom: 15,
+  retryButton: {
+    marginTop: 24,
+    backgroundColor: '#4A90E2',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
   },
-  occupancyText: {
-    fontSize: 14,
-    color: '#fff',
-    fontWeight: '600',
-    backgroundColor: '#FFA500',
-    borderRadius: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+  retryButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
-  addressSection: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 4,
-    padding: 10,
-    marginBottom: 15,
+  heroImage: {
+    height: 200,
+    justifyContent: 'flex-end',
+  },
+  heroOverlay: {
+    height: '100%',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    padding: 20,
+  },
+  headerActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingTop: 40,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  addressTextContainer: {
-    flex: 1,
+  followButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#4A90E2',
   },
-  sectionTitle: {
-    fontSize: 16,
+  followingButton: {
+    backgroundColor: '#FFF',
+  },
+  followButtonText: {
+    color: '#FFF',
     fontWeight: '600',
-    marginBottom: 4,
   },
-  infoLine: {
-    fontSize: 14,
-    marginVertical: 2,
-    color: '#333',
+  followingButtonText: {
+    color: '#4A90E2',
   },
-  mapButton: {
-    backgroundColor: '#1DA1F2',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-    marginLeft: 10,
+  profileContainer: {
+    padding: 20,
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    marginTop: -24,
   },
-  mapButtonText: {
-    color: '#fff',
-    fontSize: 14,
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: -50,
   },
-  section: {
-    marginBottom: 15,
+  logo: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#4A90E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: '#FFF',
   },
-  editButtonText: {
-    color: '#fff',
-    fontSize: 16,
+  logoText: {
+    fontSize: 32,
+    color: '#FFF',
     fontWeight: 'bold',
   },
-   editIcon: {
-    position: 'absolute',
-    top: -10, 
-    right: 0, 
-    borderRadius: 15,
-    padding: 8,
-    elevation: 5, 
-    shadowColor: '#000', 
+  shelterName: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 16,
   },
+  shelterSubtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 4,
+    paddingHorizontal: 20,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 24,
+    padding: 16,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: '#DDD',
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 8,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
+  section: {
+    marginTop: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  contactText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  contactLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+  contactValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  occupancyContainer: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+  },
+  occupancyCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#4A90E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  occupancyPercentage: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  occupancyLabel: {
+    fontSize: 14,
+    color: '#FFF',
+  },
+  occupancyStats: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 16,
+  },
+  occupancyStat: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  occupancyStatValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  occupancyStatLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
+  occupancyStatDivider: {
+    width: 1,
+    backgroundColor: '#DDD',
+    marginHorizontal: 16,
+  },
+  mapContainer: {
+    height: 200,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  map: {
+    flex: 1,
+  },
+  directionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4A90E2',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
+  },
+  directionButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  infoContainer: {
+    padding: 16,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+  },
+  infoText: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#333',
+  },
+
+  editButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: '#4A90E2',
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  editButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
+    marginLeft: 5,
+  },
+
 });
