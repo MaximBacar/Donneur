@@ -14,26 +14,13 @@ class Donneur:
     Handle server-side logic
     '''
 
-    def __generate_user_id(self):
-        ID_LENGTH = 10
-        is_unique = False
-
-        while(not is_unique):
-            user_id = ''.join(random.choices(string.ascii_letters + string.digits, k=ID_LENGTH))
-            if self.database.get_receiver( user_id ) == None:
-                is_unique = True
-
-        return user_id
-    
-    
+        
     def __genenrate_file_id(self, id):
         return f'{id}_{str(uuid.uuid4())}.png'
     
 
-
     def create_receiver(self, fn, ln, dob):
-        id = self.__generate_user_id()
-        self.database.create_receiver(fn, ln, dob, id)
+        id = self.database.create_receiver(fn, ln, dob)
         return id
         
     def update_receiver_email(self, receiver_id, email):
