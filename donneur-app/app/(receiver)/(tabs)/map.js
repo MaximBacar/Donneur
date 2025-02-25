@@ -32,12 +32,12 @@ export default function ExplorePage() {
       Animated.loop(
         Animated.sequence([
           Animated.timing(glowSize, {
-            toValue: 120,
+            toValue: 50,
             duration: 2000,
             useNativeDriver: false,
           }),
           Animated.timing(glowSize, {
-            toValue: 50,
+            toValue: 120,
             duration: 2000,
             useNativeDriver: false,
           }),
@@ -47,12 +47,12 @@ export default function ExplorePage() {
       Animated.loop(
         Animated.sequence([
           Animated.timing(glowOpacity, {
-            toValue: 1,
+            toValue: 0.8,
             duration: 2002,
             useNativeDriver: false,
           }),
           Animated.timing(glowOpacity, {
-            toValue: 0.5,
+            toValue: 0,
             duration: 2002,
             useNativeDriver: false,
           }),
@@ -276,17 +276,20 @@ const styles = StyleSheet.create({
   markerInside: {
     width: 70,
     height: 70,
-    borderRadius: 35,
+    borderRadius: '50%',
     backgroundColor: "#d6d6d6",
   },
   markerGlow: {
     borderRadius: 75,
+    display: 'flex',
     alignItems: "center",
     justifyContent: "center",
   },
   marker: {
     width: 120,
     height: 130,
+    display:'flex',
+    flexDirection: 'column',
     alignItems: "center",
     justifyContent: "center",
   },
