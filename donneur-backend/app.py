@@ -21,27 +21,38 @@ class App():
             "allow_headers": ["Content-Type", "Authorization"]  # Allow these headers
         }})
         
-        self.app.add_url_rule(  "/",                                "index",                self.index                                  )
-        self.app.add_url_rule(  "/docs",                            "docs",                 self.docs                                   )
-        self.app.add_url_rule(  "/upload_image",                    "upload_image",         self.upload_image,          methods=["POST"])
-        self.app.add_url_rule(  "/upload_base64",                   "upload_base64",        self.upload_base64,         methods=["POST"])
-        self.app.add_url_rule(  "/image/<image_id>",                "image",                self.image,                 methods=["GET"] )
-        self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",      self.payment_profile,       methods=["GET"] )
-        self.app.add_url_rule(  "/create_payment",                  "create_payment",       self.create_stripe_payment, methods=["POST"])
-        self.app.add_url_rule(  "/payment_succeeded",                "payment_succeeded",    self.payment_succeeded,    methods=["POST"])
-        self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",       self.cancel_stripe_payment, methods=["POST"])
-        self.app.add_url_rule(  "/withdraw",                        "withdraw",             self.withdraw,              methods=["POST"])
-        self.app.add_url_rule(  "/create_receiver",                 "create_receiver",      self.create_receiver,       methods=["POST"])
-        self.app.add_url_rule(  "/update_receiver_email",           "update_receiver_email", self.update_receiver_email, methods=["POST"])
-        self.app.add_url_rule(  "/get_id/<profile_id>",             "get_id",               self.get_id,                methods=["GET"] )
-        self.app.add_url_rule(  "/get_shelter_locations",           "get_shelter_locations", self.get_shelter_locations, methods=["GET"])
-        self.app.add_url_rule(  "/get_role",                        "get_role",         self.get_role,              methods=["GET"] )
-        self.app.add_url_rule(  "/get_user",                        "get_user",         self.get_user,              methods=["GET"] )
-        self.app.add_url_rule(  "/get_uid",                         "get_uid",          self.get_uid,               methods=["GET"])
-        self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",        self.get_db_id,             methods=["GET"] )
-        self.app.add_url_rule(  "/get_balance/<id>",                "get_balance",      self.get_balance,             methods=["GET"] )
-        self.app.add_url_rule(  "/set_password",                    "set_password",      self.set_password,          methods=["POST"])
-        self.app.add_url_rule(  "/is_password_link_valid",  "is_password_link_valid",   self.is_password_link_valid, methods=["GET"] )
+        self.app.add_url_rule(  "/",                                "index",                    self.index                                      )
+        self.app.add_url_rule(  "/docs",                            "docs",                     self.docs                                       )
+
+        
+
+        #   PAYMENT
+        self.app.add_url_rule(  "/create_payment",                  "create_payment",           self.create_stripe_payment,     methods=["POST"])
+        self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",           self.cancel_stripe_payment,     methods=["POST"])
+        self.app.add_url_rule(  "/payment_succeeded",               "payment_succeeded",        self.payment_succeeded,         methods=["POST"])
+        self.app.add_url_rule(  "/withdraw",                        "withdraw",                 self.withdraw,                  methods=["POST"])
+        self.app.add_url_rule(  "/send",                            "send",                     self.send,                      methods=["POST"])
+        
+        #   IMAGE
+        self.app.add_url_rule(  "/upload_base64",                   "upload_base64",            self.upload_base64,             methods=["POST"])
+        self.app.add_url_rule(  "/image/<image_id>",                "image",                    self.image,                     methods=["GET"] )
+        
+        #   RECEIVER
+        self.app.add_url_rule(  "/create_receiver",                 "create_receiver",          self.create_receiver,           methods=["POST"])
+        self.app.add_url_rule(  "/update_receiver_email",           "update_receiver_email",    self.update_receiver_email,     methods=["POST"])
+        self.app.add_url_rule(  "/set_password",                    "set_password",             self.set_password,              methods=["POST"])
+        
+        
+        
+        self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",          self.payment_profile,           methods=["GET"] )
+        self.app.add_url_rule(  "/get_id/<profile_id>",             "get_id",                   self.get_id,                    methods=["GET"] )
+        self.app.add_url_rule(  "/get_shelter_locations",           "get_shelter_locations",    self.get_shelter_locations,     methods=["GET"] )
+        self.app.add_url_rule(  "/get_role",                        "get_role",                 self.get_role,                  methods=["GET"] )
+        self.app.add_url_rule(  "/get_user",                        "get_user",                 self.get_user,                  methods=["GET"] )
+        self.app.add_url_rule(  "/get_uid",                         "get_uid",                  self.get_uid,                   methods=["GET"] )
+        self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",                self.get_db_id,                 methods=["GET"] )
+        self.app.add_url_rule(  "/get_balance/<id>",                "get_balance",              self.get_balance,               methods=["GET"] )
+        self.app.add_url_rule(  "/is_password_link_valid",          "is_password_link_valid",   self.is_password_link_valid,    methods=["GET"] )
         
 
     def index(self):
@@ -53,14 +64,6 @@ class App():
             if image:
                 return send_file(image, mimetype='image/png')
         return 'Image not found', 404
-    
-    def upload_image(self):
-        if 'image' not in request.files:
-            return 400
-
-        image = request.files['image']
-        self.donneur.add_profile_picture('uzS6R6ZwE7', image)
-        return {'status':'success'}
     
     def upload_base64(self):
 
@@ -170,6 +173,12 @@ class App():
             if user_data:
                 return {'role' : user_data['role']}
         return 400
+    
+    def send(self):
+        # TODO Implement
+        receiver_id = request.args.get('receiver')
+        sender_id   = request.args.get('sender')
+        return { 'status' : 200 }
     
 
 

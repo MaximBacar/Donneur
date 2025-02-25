@@ -15,7 +15,7 @@ class Database:
         firebase_admin.initialize_app(firebase_credentials, {'databaseURL': 'https://capstone-3828a-default-rtdb.firebaseio.com/'})
 
     
-    def create_receiver( self, fn : str, ln : str, dob, id):
+    def create_receiver( self, fn : str, ln : str, dob):
         reference = db.reference('/receivers')
         data = {
             'balance'       : 0,
@@ -30,7 +30,8 @@ class Database:
             'app_account'   : False
         }
 
-        reference.child(id).set(data)
+        receiver_ref = reference.push(data)
+        return receiver_ref.key
 
     def update_receiver_email(self, receiver_id, email):
         """Updates the email field for an existing receiver."""
@@ -198,6 +199,7 @@ class Database:
             data['uid'] = uid
 
             return data
+        return None
         
 
     def get_uid( self, id ):
