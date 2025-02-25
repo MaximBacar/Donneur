@@ -26,7 +26,8 @@ class Database:
             'username'      : "",
             'picture_id'    : "",
             'id_doc_id'     : "",
-            'email'         : ""
+            'email'         : "",
+            'app_account'   : False
         }
 
         reference.child(id).set(data)
