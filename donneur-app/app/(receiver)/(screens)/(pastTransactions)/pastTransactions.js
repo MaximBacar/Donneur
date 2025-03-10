@@ -138,15 +138,29 @@ export default function PastTransactionsScreen() {
       case 'deposit':
         return category === 'bonus' 
           ? 'gift-outline'
-          : 'arrow-down-circle-outline';
+          : 'arrow-down-outline';
       case 'withdrawal':
         return category === 'bank' 
           ? 'card-outline' 
-          : 'arrow-up-circle-outline';
+          : 'arrow-up-outline';
       case 'fee':
         return 'receipt-outline';
       default:
-        return 'ellipsis-horizontal-circle-outline';
+        return 'swap-horizontal-outline';
+    }
+  };
+  
+  // Get status color based on transaction status
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed':
+        return '#34C759'; // Green
+      case 'pending':
+        return '#FF9500'; // Orange
+      case 'cancelled':
+        return '#FF3B30'; // Red
+      default:
+        return Colors.light.icon;
     }
   };
 
@@ -204,10 +218,10 @@ export default function PastTransactionsScreen() {
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryLabel}>Net Amount</Text>
                   <Text style={[
-                    styles.summaryValue, 
-                    netAmount >= 0 ? styles.positiveAmount : styles.negativeAmount
+                    styles.summaryValue,
+                    { color: netAmount >= 0 ? '#34C759' : '#FF3B30' }
                   ]}>
-                    ${Math.abs(netAmount).toFixed(2)}
+                    {netAmount >= 0 ? '+' : '-'}${Math.abs(netAmount).toFixed(2)}
                   </Text>
                 </View>
                 
@@ -289,23 +303,46 @@ export default function PastTransactionsScreen() {
                     entering={FadeInRight.delay(index * 50).duration(500)}
                   >
                     <TouchableOpacity
-                      style={styles.transactionItem}
+                      style={[
+                        styles.transactionItem,
+                        {
+                          borderLeftWidth: 4,
+                          borderLeftColor: transaction.amount >= 0 ? '#34C759' : '#FF3B30'
+                        }
+                      ]}
                       onPress={() => openModal(transaction)}
                       activeOpacity={0.7}
                     >
-                      <View style={styles.transactionIconContainer}>
+                      <View style={[
+                        styles.transactionIconContainer,
+                        { backgroundColor: Colors.light.tint + '15' } // 15% opacity of tint color
+                      ]}>
                         <Ionicons 
                           name={getTransactionTypeIcon(transaction.type, transaction.category)} 
                           size={24} 
-                          color={transaction.amount >= 0 ? 
-                            Colors.light.tint : Colors.light.text} 
+                          color={Colors.light.tint} 
                         />
                       </View>
                       
                       <View style={styles.transactionInfo}>
-                        <Text style={styles.transactionDesc} numberOfLines={1}>
-                          {transaction.description}
-                        </Text>
+                        <View style={styles.transactionTitleRow}>
+                          <Text style={styles.transactionDesc} numberOfLines={1}>
+                            {transaction.description}
+                          </Text>
+                          {transaction.status !== 'completed' && (
+                            <View style={[
+                              styles.statusBadge,
+                              { backgroundColor: getStatusColor(transaction.status) + '20' } // 20% opacity
+                            ]}>
+                              <Text style={[
+                                styles.statusText,
+                                { color: getStatusColor(transaction.status) }
+                              ]}>
+                                {transaction.status}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
                         <Text style={styles.transactionDate}>
                           {transaction.date} • {transaction.timestamp}
                         </Text>
@@ -315,7 +352,7 @@ export default function PastTransactionsScreen() {
                         styles.transactionAmount,
                         transaction.amount >= 0 ? styles.positiveAmount : styles.negativeAmount
                       ]}>
-                        {transaction.amount >= 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
+                        {transaction.amount >= 0 ? '+' : '-'}${Math.abs(transaction.amount).toFixed(2)}
                       </Text>
                     </TouchableOpacity>
                   </Animated.View>
@@ -358,8 +395,7 @@ export default function PastTransactionsScreen() {
                   {/* Transaction Icon */}
                   <View style={[
                     styles.modalTransactionIcon,
-                    selectedTransaction.amount >= 0 ? 
-                      styles.modalTransactionIconPositive : styles.modalTransactionIconNegative
+                    { backgroundColor: Colors.light.tint }
                   ]}>
                     <Ionicons 
                       name={getTransactionTypeIcon(
@@ -376,14 +412,21 @@ export default function PastTransactionsScreen() {
                     styles.modalAmount,
                     selectedTransaction.amount >= 0 ? styles.positiveAmount : styles.negativeAmount
                   ]}>
-                    {selectedTransaction.amount >= 0 ? '+' : ''}
+                    {selectedTransaction.amount >= 0 ? '+' : '-'}
                     ${Math.abs(selectedTransaction.amount).toFixed(2)}
                   </Text>
                   
-                  <Text style={styles.modalStatus}>
-                    {selectedTransaction.status.charAt(0).toUpperCase() + 
-                     selectedTransaction.status.slice(1)}
-                  </Text>
+                  {selectedTransaction.status !== 'completed' && (
+                    <View style={[
+                      styles.modalStatusBadge,
+                      { backgroundColor: getStatusColor(selectedTransaction.status) }
+                    ]}>
+                      <Text style={styles.modalStatusText}>
+                        {selectedTransaction.status.charAt(0).toUpperCase() + 
+                         selectedTransaction.status.slice(1)}
+                      </Text>
+                    </View>
+                  )}
                   
                   {/* Details Rows */}
                   <View style={styles.modalDetailsContainer}>
@@ -599,14 +642,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    marginBottom: 10,
+    marginBottom: 12,
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowRadius: 3,
     elevation: 1,
     borderWidth: 1,
     borderColor: '#F2F2F2',
@@ -615,7 +658,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#F6F8FA',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -623,11 +665,29 @@ const styles = StyleSheet.create({
   transactionInfo: {
     flex: 1,
   },
+  transactionTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   transactionDesc: {
     fontSize: 15,
     fontWeight: '600',
     color: Colors.light.text,
-    marginBottom: 4,
+    flex: 1,
+    marginRight: 8,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   transactionDate: {
     fontSize: 13,
@@ -637,6 +697,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'right',
+    marginLeft: 8,
   },
   positiveAmount: {
     color: '#34C759', // Apple system green
@@ -697,21 +758,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  modalTransactionIconPositive: {
-    backgroundColor: '#34C759',
-  },
-  modalTransactionIconNegative: {
-    backgroundColor: '#FF3B30',
-  },
   modalAmount: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 12,
   },
-  modalStatus: {
-    fontSize: 14,
-    color: Colors.light.icon,
+  modalStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     marginBottom: 24,
+  },
+  modalStatusText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   modalDetailsContainer: {
     width: '100%',
