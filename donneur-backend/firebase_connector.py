@@ -214,38 +214,38 @@ class Database:
 
 
     def get_transactions(self, receiver_id):
-    if not receiver_id:
-        return []
+        if not receiver_id:
+            return []
         
-    reference = db.reference('/transactions')
-    transactions = []
+        reference = db.reference('/transactions')
+        transactions = []
     
-    # Query 1: Get transactions where receiver_id is the recipient
-    receiver_query = reference.order_by_child('receiver_id').equal_to(receiver_id)
-    receiver_txs = receiver_query.get()
-    if receiver_txs:
-        for tx_id, tx_data in receiver_txs.items():
-            if tx_data.get('confirmed', False):
-                tx_data['id'] = tx_id
-                tx_data['transaction_type'] = 'received'
-                transactions.append(tx_data)
+        # Query 1: Get transactions where receiver_id is the recipient
+        receiver_query = reference.order_by_child('receiver_id').equal_to(receiver_id)
+        receiver_txs = receiver_query.get()
+        if receiver_txs:
+            for tx_id, tx_data in receiver_txs.items():
+                if tx_data.get('confirmed', False):
+                    tx_data['id'] = tx_id
+                    tx_data['transaction_type'] = 'received'
+                    transactions.append(tx_data)
     
-    # Query 2: Get transactions where receiver_id is the sender
-    sender_query = reference.order_by_child('sender_id').equal_to(receiver_id)
-    sender_txs = sender_query.get()
-    if sender_txs:
-        for tx_id, tx_data in sender_txs.items():
-            if tx_data.get('confirmed', False):
-                tx_data['id'] = tx_id
-                tx_data['transaction_type'] = 'sent'
-                transactions.append(tx_data)
+        # Query 2: Get transactions where receiver_id is the sender
+        sender_query = reference.order_by_child('sender_id').equal_to(receiver_id)
+        sender_txs = sender_query.get()
+        if sender_txs:
+            for tx_id, tx_data in sender_txs.items():
+                if tx_data.get('confirmed', False):
+                    tx_data['id'] = tx_id
+                    tx_data['transaction_type'] = 'sent'
+                    transactions.append(tx_data)
     
-    # Sort transactions by creation date (newest first)
-    transactions.sort(
-        key=lambda x: datetime.fromisoformat(x.get('creation_date', '2000-01-01')), 
-        reverse=True
-    )
+        # Sort transactions by creation date (newest first)
+        transactions.sort(
+            key=lambda x: datetime.fromisoformat(x.get('creation_date', '2000-01-01')), 
+            reverse=True
+        )
     
-    return transactions
+        return transactions
 
     

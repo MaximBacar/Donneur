@@ -301,15 +301,16 @@ class App():
             print(e)
             return jsonify({'error': str(e)}), 500
 
+
     def get_transactions(self):
-    receiver_id = request.args.get('receiver_id')
+        receiver_id = request.args.get('receiver_id')
     
-    if not receiver_id:
-        return jsonify({'error': 'receiver_id must be provided'}), 400
+        if not receiver_id:
+            return jsonify({'error': 'receiver_id must be provided'}), 400
     
-    transactions = self.donneur.database.get_transactions(receiver_id)
+        transactions = self.donneur.database.get_transactions(receiver_id)
     
-    return jsonify({'transactions': transactions})
+        return jsonify({'transactions': transactions})
 
 
 
