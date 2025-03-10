@@ -19,13 +19,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 // Import UI components and constants
 import IconSymbol from "../../../components/ui/IconSymbol";
 import { Colors } from "../../../constants/colors";
 
-// Import your auth context
+// Import your auth context and Firebase config
 import { useAuth } from "../../../context/authContext";
+import { database } from '../../../config/firebase';
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -59,7 +61,7 @@ const chartHtml = `
           data: [31, 40, 28, 51, 42, 109, 100]
         }],
         chart: {
-          height: 320,
+          height: 370,
           type: 'area',
           toolbar: { show: false },
           zoom: { enabled: false },
@@ -170,13 +172,58 @@ export default function DashboardScreen() {
   const [loadingUser, setLoadingUser] = useState(true);
   const [showQRCode, setShowQRCode] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [friendsCount, setFriendsCount] = useState(0);
 
   // Handle refresh functionality
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchUserInfo(), fetchBalance()]);
+    await Promise.all([fetchUserInfo(), fetchBalance(), fetchFriendsCount()]);
     setRefreshing(false);
   }, [user, donneurID]);
+  
+  // Fetch friends count directly from Firebase
+  const fetchFriendsCount = async () => {
+    if (!user) return;
+    
+    try {
+      const friendsRef = collection(database, 'friends');
+      const q1 = query(friendsRef, where('user1', '==', user.uid));
+      const q2 = query(friendsRef, where('user2', '==', user.uid));
+      
+      // Execute both queries in parallel for better performance
+      const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+      
+      let allDocs = [];
+      
+      // Collect documents from both queries
+      snap1.forEach((doc) => {
+        allDocs.push({ id: doc.id, ...doc.data() });
+      });
+      
+      snap2.forEach((doc) => {
+        allDocs.push({ id: doc.id, ...doc.data() });
+      });
+      
+      // Remove duplicates in case there are any
+      const uniqueDocs = [
+        ...new Map(allDocs.map((item) => [item.id, item])).values(),
+      ];
+      
+      // Count only fully accepted friend relationships
+      const acceptedCount = uniqueDocs.filter(doc => {
+        if (doc.user1 === user.uid) {
+          return doc.u1_accepted && doc.u2_accepted;
+        } else {
+          return doc.u1_accepted && doc.u2_accepted;
+        }
+      }).length;
+      
+      setFriendsCount(acceptedCount);
+    } catch (error) {
+      console.error("Error fetching friends count:", error);
+      setFriendsCount(0);
+    }
+  };
 
   // Fetch user balance
   const fetchBalance = async () => {
@@ -219,6 +266,7 @@ export default function DashboardScreen() {
     if (user) {
       fetchBalance();
       fetchUserInfo();
+      fetchFriendsCount();
       
       // Set interval to fetch balance every 30 seconds
       const interval = setInterval(fetchBalance, 30000);
@@ -318,11 +366,11 @@ export default function DashboardScreen() {
               <Text style={styles.walletSubtitle}>{fullName}</Text>
               <View style={styles.walletDetails}>
                 <View style={styles.walletDetailRow}>
-                  <Text style={styles.walletDetailLabel}>DOB:</Text>
+                  <Text style={[styles.walletDetailLabel, { width: 100 }]}>DOB:</Text>
                   <Text style={styles.walletDetailValue}>{dob}</Text>
                 </View>
                 <View style={styles.walletDetailRow}>
-                  <Text style={styles.walletDetailLabel}>Member since:</Text>
+                  <Text style={[styles.walletDetailLabel, { width: 100 }]}>Member since:</Text>
                   <Text style={styles.walletDetailValue}>{memberSince}</Text>
                 </View>
               </View>
@@ -368,7 +416,7 @@ export default function DashboardScreen() {
               </View>
               <View style={styles.actionTextContainer}>
                 <Text style={styles.actionTitle}>Friends</Text>
-                <Text style={styles.actionSubtitle}>0 friends</Text>
+                <Text style={styles.actionSubtitle}>{friendsCount} friends</Text>
               </View>
               <Ionicons
                 name="chevron-forward"
@@ -492,7 +540,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   scrollContainer: {
-    paddingBottom: 32,
+    paddingBottom: 16,
   },
   
   // Balance Display Styles
@@ -608,12 +656,13 @@ const styles = StyleSheet.create({
   walletDetailRow: {
     flexDirection: "row",
     marginBottom: 4,
+    alignItems: "center", // Ensure vertical alignment
   },
   walletDetailLabel: {
     fontSize: 14,
     color: "#fff",
     opacity: 0.8,
-    width: 100,
+    marginRight: 8, // Using margin instead of fixed width for consistent spacing
   },
   walletDetailValue: {
     fontSize: 14,
@@ -722,12 +771,12 @@ const styles = StyleSheet.create({
   },
   chartWebView: {
     width: "100%", 
-    height: 320,
+    height: 280, // Reduced from 320 to remove excess space
     borderRadius: 12,
     overflow: "hidden",
   },
   chartLoadingContainer: {
-    height: 320,
+    height: 280, // Reduced to match WebView height
     justifyContent: "center",
     alignItems: "center",
   },
@@ -804,9 +853,9 @@ const styles = StyleSheet.create({
   
   // Footer
   footer: {
-    paddingVertical: 16,
+    paddingVertical: 12,
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 0,
   },
   footerText: {
     fontSize: 12,
