@@ -21,99 +21,88 @@ import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimat
 // Import UI components and constants
 import IconSymbol from "../../../../components/ui/IconSymbol";
 import { Colors } from "../../../../constants/colors";
+import { useAuth } from "../../../../context/authContext";
 
 const screenWidth = Dimensions.get('window').width;
 
-// Mock data for past transactions
-const transactionsData = [
-  {
-    id: 1,
-    description: 'Payment received from John Doe',
-    date: 'Mar 10, 2023',
-    timestamp: '10:34 AM',
-    amount: 150.00,
-    type: 'deposit',
-    status: 'completed',
-    category: 'transfer',
-    reference: 'TXN238491',
-  },
-  {
-    id: 2,
-    description: 'Refund issued to Jane Smith',
-    date: 'Mar 8, 2023',
-    timestamp: '3:21 PM',
-    amount: -25.00,
-    type: 'withdrawal',
-    status: 'completed',
-    category: 'refund',
-    reference: 'REF719283',
-  },
-  {
-    id: 3,
-    description: 'Payment received from Carlos Diaz',
-    date: 'Mar 5, 2023',
-    timestamp: '11:15 AM',
-    amount: 200.00,
-    type: 'deposit',
-    status: 'completed',
-    category: 'transfer',
-    reference: 'TXN382914',
-  },
-  {
-    id: 4,
-    description: 'Service fee charged',
-    date: 'Mar 3, 2023',
-    timestamp: '12:00 AM',
-    amount: -10.00,
-    type: 'fee',
-    status: 'completed',
-    category: 'service',
-    reference: 'FEE394851',
-  },
-  {
-    id: 5,
-    description: 'Payment received from Emily Johnson',
-    date: 'Mar 1, 2023',
-    timestamp: '2:45 PM',
-    amount: 80.00,
-    type: 'deposit',
-    status: 'completed',
-    category: 'transfer',
-    reference: 'TXN482919',
-  },
-  {
-    id: 6,
-    description: 'Withdrawal to bank account',
-    date: 'Feb 28, 2023',
-    timestamp: '4:30 PM',
-    amount: -75.00,
-    type: 'withdrawal',
-    status: 'completed',
-    category: 'bank',
-    reference: 'WTH293847',
-  },
-  {
-    id: 7,
-    description: 'Bonus received',
-    date: 'Feb 25, 2023',
-    timestamp: '9:00 AM',
-    amount: 25.00,
-    type: 'deposit',
-    status: 'completed',
-    category: 'bonus',
-    reference: 'BNS485721',
-  },
-];
+// Empty transactions array to be filled by API
+const transactionsData = [];
 
 export default function PastTransactionsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user, donneurID } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [transactions, setTransactions] = useState(transactionsData);
   const [filterType, setFilterType] = useState('all');
+
+  // Function to fetch transactions from API
+  const fetchTransactions = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Step 1: Get receiver ID if not already available in context
+      let receiverId = donneurID;
+      if (!receiverId && user) {
+        const userResponse = await fetch(`https://api.donneur.ca/get_user?uid=${user.uid}`);
+        if (!userResponse.ok) throw new Error('Failed to fetch user data');
+        const userData = await userResponse.json();
+        receiverId = userData.db_id;
+      }
+      
+      if (!receiverId) {
+        console.error('No receiver ID available');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Step 2: Fetch transactions using the receiver ID
+      const transactionsResponse = await fetch(`https://api.donneur.ca/get_transactions?receiver_id=${receiverId}`);
+      if (!transactionsResponse.ok) throw new Error('Failed to fetch transactions');
+      const data = await transactionsResponse.json();
+      
+      // Format the transactions for display
+      const formattedTransactions = data.transactions.map(transaction => {
+        // Convert date string to more readable format
+        const date = new Date(transaction.creation_date);
+        const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const formattedTime = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+        
+        // Determine transaction type and description
+        const isReceived = transaction.transaction_type === 'received';
+        const description = isReceived 
+          ? `Payment received from ${transaction.sender_id}`
+          : `Payment sent to ${transaction.receiver_id}`;
+          
+        return {
+          id: transaction.id,
+          description: description,
+          date: formattedDate,
+          timestamp: formattedTime,
+          amount: isReceived ? transaction.amount : -transaction.amount,
+          type: isReceived ? 'deposit' : 'withdrawal',
+          status: transaction.confirmed ? 'completed' : 'pending',
+          category: transaction.type || 'transfer',
+          reference: transaction.id,
+          raw: transaction // Store the raw data for reference
+        };
+      });
+      
+      setTransactions(formattedTransactions);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchTransactions();
+  }, [donneurID, user]);
 
   // Calculate the total values
   const totalTransactions = transactions.length;
@@ -129,11 +118,9 @@ export default function PastTransactionsScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Simulate a network request
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // You would fetch data here in a real app
+    await fetchTransactions();
     setRefreshing(false);
-  }, []);
+  }, [donneurID, user]);
 
   const openModal = (transaction) => {
     setSelectedTransaction(transaction);
@@ -194,140 +181,149 @@ export default function PastTransactionsScreen() {
           />
         }
       >
-        {/* Summary Card */}
-        <Animated.View 
-          style={styles.summaryCard}
-          entering={FadeInDown.delay(100).duration(500).springify()}
-        >
-          <Text style={styles.cardTitle}>Account Summary</Text>
-          
-          <View style={styles.summaryGrid}>
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Total Transactions</Text>
-              <Text style={styles.summaryValue}>{totalTransactions}</Text>
-            </View>
-            
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Net Amount</Text>
-              <Text style={[
-                styles.summaryValue, 
-                netAmount >= 0 ? styles.positiveAmount : styles.negativeAmount
-              ]}>
-                ${Math.abs(netAmount).toFixed(2)}
-              </Text>
-            </View>
-            
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Last Updated</Text>
-              <Text style={styles.summaryDateTime}>{lastUpdated}</Text>
-            </View>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.light.tint} />
+            <Text style={styles.loadingText}>Loading transactions...</Text>
           </View>
-        </Animated.View>
-
-        {/* Filter Section */}
-        <Animated.View 
-          style={styles.filterContainer}
-          entering={FadeInDown.delay(200).duration(500).springify()}
-        >
-          <TouchableOpacity 
-            style={[
-              styles.filterButton, 
-              filterType === 'all' && styles.filterButtonActive
-            ]}
-            onPress={() => setFilterType('all')}
-            activeOpacity={0.7}
-          >
-            <Text style={[
-              styles.filterButtonText,
-              filterType === 'all' && styles.filterButtonTextActive
-            ]}>All</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[
-              styles.filterButton, 
-              filterType === 'deposits' && styles.filterButtonActive
-            ]}
-            onPress={() => setFilterType('deposits')}
-            activeOpacity={0.7}
-          >
-            <Text style={[
-              styles.filterButtonText,
-              filterType === 'deposits' && styles.filterButtonTextActive
-            ]}>Deposits</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[
-              styles.filterButton, 
-              filterType === 'withdrawals' && styles.filterButtonActive
-            ]}
-            onPress={() => setFilterType('withdrawals')}
-            activeOpacity={0.7}
-          >
-            <Text style={[
-              styles.filterButtonText,
-              filterType === 'withdrawals' && styles.filterButtonTextActive
-            ]}>Withdrawals</Text>
-          </TouchableOpacity>
-        </Animated.View>
-
-        {/* Transactions List */}
-        <Animated.View 
-          style={styles.transactionsSection}
-          entering={FadeInDown.delay(300).duration(500).springify()}
-        >
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              {filteredTransactions.length} Transactions
-            </Text>
-          </View>
-
-          {filteredTransactions.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="document-outline" size={48} color={Colors.light.icon} />
-              <Text style={styles.emptyStateText}>No transactions found</Text>
-            </View>
-          ) : (
-            filteredTransactions.map((transaction, index) => (
-              <Animated.View 
-                key={transaction.id}
-                entering={FadeInRight.delay(index * 50).duration(500)}
-              >
-                <TouchableOpacity
-                  style={styles.transactionItem}
-                  onPress={() => openModal(transaction)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.transactionIconContainer}>
-                    <Ionicons 
-                      name={getTransactionTypeIcon(transaction.type, transaction.category)} 
-                      size={24} 
-                      color={transaction.amount >= 0 ? 
-                        Colors.light.tint : Colors.light.text} 
-                    />
-                  </View>
-                  
-                  <View style={styles.transactionInfo}>
-                    <Text style={styles.transactionDesc} numberOfLines={1}>
-                      {transaction.description}
-                    </Text>
-                    <Text style={styles.transactionDate}>
-                      {transaction.date} • {transaction.timestamp}
-                    </Text>
-                  </View>
-                  
+        ) : (
+          <>
+            {/* Summary Card */}
+            <Animated.View 
+              style={styles.summaryCard}
+              entering={FadeInDown.delay(100).duration(500).springify()}
+            >
+              <Text style={styles.cardTitle}>Account Summary</Text>
+              
+              <View style={styles.summaryGrid}>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Total Transactions</Text>
+                  <Text style={styles.summaryValue}>{totalTransactions}</Text>
+                </View>
+                
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Net Amount</Text>
                   <Text style={[
-                    styles.transactionAmount,
-                    transaction.amount >= 0 ? styles.positiveAmount : styles.negativeAmount
+                    styles.summaryValue, 
+                    netAmount >= 0 ? styles.positiveAmount : styles.negativeAmount
                   ]}>
-                    {transaction.amount >= 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
+                    ${Math.abs(netAmount).toFixed(2)}
                   </Text>
-                </TouchableOpacity>
-              </Animated.View>
-            ))
-          )}
-        </Animated.View>
+                </View>
+                
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Last Updated</Text>
+                  <Text style={styles.summaryDateTime}>{lastUpdated}</Text>
+                </View>
+              </View>
+            </Animated.View>
+
+            {/* Filter Section */}
+            <Animated.View 
+              style={styles.filterContainer}
+              entering={FadeInDown.delay(200).duration(500).springify()}
+            >
+              <TouchableOpacity 
+                style={[
+                  styles.filterButton, 
+                  filterType === 'all' && styles.filterButtonActive
+                ]}
+                onPress={() => setFilterType('all')}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  styles.filterButtonText,
+                  filterType === 'all' && styles.filterButtonTextActive
+                ]}>All</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[
+                  styles.filterButton, 
+                  filterType === 'deposits' && styles.filterButtonActive
+                ]}
+                onPress={() => setFilterType('deposits')}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  styles.filterButtonText,
+                  filterType === 'deposits' && styles.filterButtonTextActive
+                ]}>Deposits</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[
+                  styles.filterButton, 
+                  filterType === 'withdrawals' && styles.filterButtonActive
+                ]}
+                onPress={() => setFilterType('withdrawals')}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  styles.filterButtonText,
+                  filterType === 'withdrawals' && styles.filterButtonTextActive
+                ]}>Withdrawals</Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* Transactions List */}
+            <Animated.View 
+              style={styles.transactionsSection}
+              entering={FadeInDown.delay(300).duration(500).springify()}
+            >
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>
+                  {filteredTransactions.length} Transactions
+                </Text>
+              </View>
+
+              {filteredTransactions.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="document-outline" size={48} color={Colors.light.icon} />
+                  <Text style={styles.emptyStateText}>No transactions found</Text>
+                </View>
+              ) : (
+                filteredTransactions.map((transaction, index) => (
+                  <Animated.View 
+                    key={transaction.id}
+                    entering={FadeInRight.delay(index * 50).duration(500)}
+                  >
+                    <TouchableOpacity
+                      style={styles.transactionItem}
+                      onPress={() => openModal(transaction)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.transactionIconContainer}>
+                        <Ionicons 
+                          name={getTransactionTypeIcon(transaction.type, transaction.category)} 
+                          size={24} 
+                          color={transaction.amount >= 0 ? 
+                            Colors.light.tint : Colors.light.text} 
+                        />
+                      </View>
+                      
+                      <View style={styles.transactionInfo}>
+                        <Text style={styles.transactionDesc} numberOfLines={1}>
+                          {transaction.description}
+                        </Text>
+                        <Text style={styles.transactionDate}>
+                          {transaction.date} • {transaction.timestamp}
+                        </Text>
+                      </View>
+                      
+                      <Text style={[
+                        styles.transactionAmount,
+                        transaction.amount >= 0 ? styles.positiveAmount : styles.negativeAmount
+                      ]}>
+                        {transaction.amount >= 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
+                      </Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                ))
+              )}
+            </Animated.View>
+          </>
+        )}
       </ScrollView>
 
       {/* Transaction Details Modal */}
@@ -450,6 +446,20 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     paddingBottom: 32,
+  },
+  
+  // Loading Container
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    height: 300,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: Colors.light.icon,
   },
   
   // Header Styles
