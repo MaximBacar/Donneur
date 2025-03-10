@@ -304,11 +304,12 @@ class App():
 
     def get_transactions(self):
         receiver_id = request.args.get('receiver_id')
+        organization_id = request.args.get('organization_id')
+
+        if not receiver_id and not organization_id:
+            return jsonify({'error': 'Either receiver_id or organization_id must be provided'}), 400
     
-        if not receiver_id:
-            return jsonify({'error': 'receiver_id must be provided'}), 400
-    
-        transactions = self.donneur.database.get_transactions(receiver_id)
+        transactions = self.donneur.database.get_transactions(receiver_id, organization_id)
     
         return jsonify({'transactions': transactions})
 

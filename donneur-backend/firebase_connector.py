@@ -213,39 +213,68 @@ class Database:
         return None
 
 
-    def get_transactions(self, receiver_id):
-        if not receiver_id:
+    def get_transactions(self, receiver_id=None, organization_id=None):
+        # Return empty if neither parameter is provided
+        if not receiver_id and not organization_id:
             return []
         
         reference = db.reference('/transactions')
         transactions = []
-    
-        # Query 1: Get transactions where receiver_id is the recipient
-        receiver_query = reference.order_by_child('receiver_id').equal_to(receiver_id)
-        receiver_txs = receiver_query.get()
-        if receiver_txs:
-            for tx_id, tx_data in receiver_txs.items():
-                if tx_data.get('confirmed', False):
-                    tx_data['id'] = tx_id
-                    tx_data['transaction_type'] = 'received'
-                    transactions.append(tx_data)
-    
-        # Query 2: Get transactions where receiver_id is the sender
-        sender_query = reference.order_by_child('sender_id').equal_to(receiver_id)
-        sender_txs = sender_query.get()
-        if sender_txs:
-            for tx_id, tx_data in sender_txs.items():
-                if tx_data.get('confirmed', False):
-                    tx_data['id'] = tx_id
-                    tx_data['transaction_type'] = 'sent'
-                    transactions.append(tx_data)
-    
+        
+        # If receiver_id is provided, get their transactions
+        if receiver_id:
+            # Query 1: Get transactions where receiver_id is the recipient
+            receiver_query = reference.order_by_child('receiver_id').equal_to(receiver_id)
+            receiver_txs = receiver_query.get()
+            if receiver_txs:
+                for tx_id, tx_data in receiver_txs.items():
+                    if tx_data.get('confirmed', False):
+                        tx_data['id'] = tx_id
+                        tx_data['transaction_type'] = 'received'
+                        transactions.append(tx_data)
+            
+            # Query 2: Get transactions where receiver_id is the sender
+            sender_query = reference.order_by_child('sender_id').equal_to(receiver_id)
+            sender_txs = sender_query.get()
+            if sender_txs:
+                for tx_id, tx_data in sender_txs.items():
+                    if tx_data.get('confirmed', False):
+                        tx_data['id'] = tx_id
+                        tx_data['transaction_type'] = 'sent'
+                        transactions.append(tx_data)
+        
+        # If organization_id is provided, get organization transactions
+        if organization_id:
+            # Query 3: Get transactions where organization_id is the recipient
+            org_receiver_query = reference.order_by_child('receiver_id').equal_to(organization_id)
+            org_receiver_txs = org_receiver_query.get()
+            if org_receiver_txs:
+                for tx_id, tx_data in org_receiver_txs.items():
+                    if tx_data.get('confirmed', False):
+                        tx_data['id'] = tx_id
+                        tx_data['transaction_type'] = 'received'
+                        # Avoid duplicate transactions if same as receiver_id
+                        if not any(t['id'] == tx_id for t in transactions):
+                            transactions.append(tx_data)
+            
+            # Query 4: Get transactions where organization_id is the sender
+            org_sender_query = reference.order_by_child('sender_id').equal_to(organization_id)
+            org_sender_txs = org_sender_query.get()
+            if org_sender_txs:
+                for tx_id, tx_data in org_sender_txs.items():
+                    if tx_data.get('confirmed', False):
+                        tx_data['id'] = tx_id
+                        tx_data['transaction_type'] = 'sent'
+                        # Avoid duplicate transactions if same as receiver_id
+                        if not any(t['id'] == tx_id for t in transactions):
+                            transactions.append(tx_data)
+        
         # Sort transactions by creation date (newest first)
         transactions.sort(
             key=lambda x: datetime.fromisoformat(x.get('creation_date', '2000-01-01')), 
             reverse=True
         )
-    
+        
         return transactions
 
     
