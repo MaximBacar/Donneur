@@ -12,161 +12,93 @@ import {
   Image,
   TextInput,
   FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../../constants/colors';
 import IconSymbol from '../../../components/ui/IconSymbol';
+import { useAuth } from '../../../context/authContext';
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
 
-// Static data for now; replace with real data once backend is connected
-const withdrawalsData = [
-  {
-    id: 1,
-    name: 'John Doe',
-    date: 'Feb 1, 2023',
-    amount: 100.00,
-    status: 'completed',
-    type: 'withdrawal',
-    userId: 'U1234',
-    timestamp: '2023-02-01T15:30:22Z',
-    notes: 'Funds for emergency housing'
-  },
-  {
-    id: 2,
-    name: 'Jane Smith',
-    date: 'Feb 3, 2023',
-    amount: 50.00,
-    status: 'completed',
-    type: 'withdrawal',
-    userId: 'U2345',
-    timestamp: '2023-02-03T11:22:10Z',
-    notes: 'Food assistance program'
-  },
-  {
-    id: 3,
-    name: 'Carlos Diaz',
-    date: 'Feb 5, 2023',
-    amount: 75.00,
-    status: 'completed',
-    type: 'withdrawal',
-    userId: 'U3456',
-    timestamp: '2023-02-05T14:15:30Z',
-    notes: 'Medical supplies'
-  },
-  {
-    id: 4,
-    name: 'Emily Johnson',
-    date: 'Feb 6, 2023',
-    amount: 20.00,
-    status: 'completed',
-    type: 'withdrawal',
-    userId: 'U4567',
-    timestamp: '2023-02-06T09:45:12Z', 
-    notes: 'Transportation assistance'
-  },
-  {
-    id: 5,
-    name: 'Michael Brown',
-    date: 'Feb 8, 2023',
-    amount: 200.00,
-    status: 'completed',
-    type: 'withdrawal',
-    userId: 'U5678',
-    timestamp: '2023-02-08T16:20:05Z',
-    notes: 'Housing deposit assistance'
-  },
-  {
-    id: 6,
-    name: 'Lisa Wong',
-    date: 'Feb 10, 2023',
-    amount: 65.00,
-    status: 'pending',
-    type: 'withdrawal',
-    userId: 'U6789',
-    timestamp: '2023-02-10T10:11:20Z',
-    notes: 'Clothing voucher'
-  },
-  {
-    id: 7,
-    name: 'David Martinez',
-    date: 'Feb 12, 2023',
-    amount: 90.00,
-    status: 'completed',
-    type: 'withdrawal',
-    userId: 'U7890',
-    timestamp: '2023-02-12T13:40:28Z',
-    notes: 'Utility bill assistance'
-  },
-  {
-    id: 8,
-    name: 'Sarah Johnson',
-    date: 'Feb 15, 2023',
-    amount: 115.00,
-    status: 'completed',
-    type: 'withdrawal',
-    userId: 'U8901',
-    timestamp: '2023-02-15T11:05:32Z',
-    notes: 'Education materials'
-  },
-  {
-    id: 9,
-    name: 'Robert Chen',
-    date: 'Feb 18, 2023',
-    amount: 40.00,
-    status: 'pending',
-    type: 'withdrawal',
-    userId: 'U9012',
-    timestamp: '2023-02-18T15:22:45Z',
-    notes: 'Job interview preparation'
-  },
-  {
-    id: 10,
-    name: 'Amanda Lee',
-    date: 'Feb 20, 2023',
-    amount: 85.00,
-    status: 'completed',
-    type: 'withdrawal',
-    userId: 'U0123',
-    timestamp: '2023-02-20T09:18:33Z',
-    notes: 'Childcare assistance'
-  },
-];
-
-// Financial metrics
+// Financial metrics (will be calculated from real data)
 const financialMetrics = {
-  totalWithdrawals: 840, // Sum of all withdrawals
-  pendingWithdrawals: 105, // Sum of all pending withdrawals 
-  availableBalance: 1234.56,
-  totalUsers: 87,
-  monthlyChange: 12.5, // Percentage increase since last month
-  lastUpdate: 'February 20, 2023'
+  totalWithdrawals: 0,
+  pendingWithdrawals: 0,
+  availableBalance: 0,
+  totalUsers: 0,
+  monthlyChange: 0,
+  lastUpdate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 };
 
 export default function FinanceScreen() {
+  const { user, donneurID } = useAuth();
+  
   // State management
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredData, setFilteredData] = useState(withdrawalsData);
+  const [transactions, setTransactions] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [metrics, setMetrics] = useState({...financialMetrics});
   
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
   const cardScaleAnim = useRef(new Animated.Value(0.97)).current;
   const balanceScaleAnim = useRef(new Animated.Value(1)).current;
+  
+  // Modal animation values
+  const modalBackgroundOpacity = useRef(new Animated.Value(0)).current;
+  // Start with the modal positioned just below the screen
+  const modalTranslateY = useRef(new Animated.Value(screenHeight)).current;
 
   // Modal management
   const openModal = (item) => {
     setSelectedItem(item);
     setModalVisible(true);
+    
+    // Animate the modal opening
+    Animated.parallel([
+      // Fade in the background
+      Animated.timing(modalBackgroundOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      // Slide up the content
+      Animated.timing(modalTranslateY, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   const closeModal = () => {
-    setSelectedItem(null);
-    setModalVisible(false);
+    // Animate the modal closing
+    Animated.parallel([
+      // Fade out the background
+      Animated.timing(modalBackgroundOpacity, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      // Slide down the content
+      Animated.timing(modalTranslateY, {
+        toValue: screenHeight,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // After animation completes, update state
+      setSelectedItem(null);
+      setModalVisible(false);
+    });
   };
 
   // Filter transactions by date
@@ -185,15 +117,13 @@ export default function FinanceScreen() {
     let filtered = [];
     
     if (timeframe === 'all') {
-      filtered = withdrawalsData;
+      filtered = transactions;
     } else if (timeframe === 'today') {
-      filtered = withdrawalsData.filter(item => {
-        // For demo purposes using the date string, but in production
-        // you should parse the timestamp properly
+      filtered = transactions.filter(item => {
         return isToday(item.timestamp);
       });
     } else if (timeframe === 'past') {
-      filtered = withdrawalsData.filter(item => {
+      filtered = transactions.filter(item => {
         return !isToday(item.timestamp);
       });
     }
@@ -215,7 +145,7 @@ export default function FinanceScreen() {
     setSearchQuery(text);
     if (text) {
       const lowercasedQuery = text.toLowerCase();
-      const filtered = withdrawalsData.filter(item => {
+      const filtered = transactions.filter(item => {
         // Check if passes timeframe filter
         if (activeTab === 'today' && !isToday(item.timestamp)) return false;
         if (activeTab === 'past' && isToday(item.timestamp)) return false;
@@ -231,6 +161,94 @@ export default function FinanceScreen() {
       filterByTimeframe(activeTab);
     }
   };
+
+  // Fetch transactions data from API
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // First, get user data to get the DB ID
+        let userDbId = donneurID;
+        
+        if (!userDbId) {
+          setError("No organization ID found. Please log in again.");
+          setLoading(false);
+          return;
+        }
+        
+        // Now fetch transactions using the organization ID
+        const transactionsResponse = await fetch(`https://api.donneur.ca/get_transactions?organization_id=${userDbId}`);
+        
+        if (!transactionsResponse.ok) {
+          throw new Error('Failed to fetch transactions');
+        }
+        
+        const transactionsData = await transactionsResponse.json();
+        
+        if (transactionsData && transactionsData.transactions) {
+          // Transform the API data to match our component's expected format
+          const formattedTransactions = transactionsData.transactions.map(tx => {
+            const date = new Date(tx.creation_date);
+            // Format the date similar to our previous mock data
+            const formattedDate = date.toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            });
+            
+            return {
+              id: tx.id,
+              name: tx.sender_id, // We don't have name, so use sender_id 
+              date: formattedDate,
+              amount: parseFloat(tx.amount),
+              status: tx.confirmed ? 'completed' : 'pending',
+              type: tx.transaction_type,
+              userId: tx.sender_id,
+              timestamp: tx.creation_date,
+              notes: `${tx.transaction_type} - ${tx.currency}`,
+              currency: tx.currency
+            };
+          });
+          
+          setTransactions(formattedTransactions);
+          setFilteredData(formattedTransactions);
+          
+          // Update financial metrics
+          const totalWithdrawals = formattedTransactions
+            .filter(tx => tx.status === 'completed')
+            .reduce((sum, tx) => sum + tx.amount, 0);
+            
+          const pendingWithdrawals = formattedTransactions
+            .filter(tx => tx.status === 'pending')
+            .reduce((sum, tx) => sum + tx.amount, 0);
+          
+          setMetrics({
+            totalWithdrawals,
+            pendingWithdrawals,
+            availableBalance: totalWithdrawals + pendingWithdrawals,
+            totalUsers: new Set(formattedTransactions.map(tx => tx.userId)).size,
+            monthlyChange: 0, // We don't have historical data to calculate this
+            lastUpdate: new Date().toLocaleDateString('en-US', { 
+              month: 'long', 
+              day: 'numeric', 
+              year: 'numeric' 
+            })
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching transactions:', err);
+        setError('Failed to load transactions. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (donneurID) {
+      fetchTransactions();
+    }
+  }, [donneurID]);
 
   // Animations
   useEffect(() => {
@@ -270,14 +288,21 @@ export default function FinanceScreen() {
     setTimeout(() => {
       pulseAnimation.start();
     }, 800);
-    
-    // Initialize filtered data
-    setFilteredData(withdrawalsData);
   }, []);
 
-  // Format dollar amount
-  const formatCurrency = (amount) => {
-    return `$${amount.toFixed(2)}`;
+  // Format currency amount
+  const formatCurrency = (amount, currency = 'USD') => {
+    // Add support for different currencies
+    const currencySymbols = {
+      'USD': '$',
+      'CAD': 'C$',
+      'EUR': '€',
+      'GBP': '£',
+      'JPY': '¥'
+    };
+    
+    const symbol = currencySymbols[currency] || '$';
+    return `${symbol}${parseFloat(amount).toFixed(2)}`;
   };
 
   // Render transaction item
@@ -307,7 +332,7 @@ export default function FinanceScreen() {
             styles.transactionAmount,
             {color: item.status === 'pending' ? '#FF9500' : '#0A7EA4'}
           ]}>
-            {formatCurrency(item.amount)}
+            {formatCurrency(item.amount, item.currency)}
           </Text>
         </View>
         
@@ -349,7 +374,7 @@ export default function FinanceScreen() {
         >
           <View>
             <Text style={styles.headerTitle}>Financial Overview</Text>
-            <Text style={styles.headerSubtitle}>Updated {financialMetrics.lastUpdate}</Text>
+            <Text style={styles.headerSubtitle}>Updated {metrics.lastUpdate}</Text>
           </View>
           
           <TouchableOpacity style={styles.headerButton}>
@@ -386,26 +411,26 @@ export default function FinanceScreen() {
                       { transform: [{ scale: balanceScaleAnim }] }
                     ]}
                   >
-                    {formatCurrency(financialMetrics.availableBalance)}
+                    {formatCurrency(metrics.availableBalance)}
                   </Animated.Text>
                 </View>
                 
                 <View style={styles.monthlyChangeBadge}>
                   <IconSymbol name="arrow.up" size={12} color="#22C55E" />
-                  <Text style={styles.monthlyChangeText}>{financialMetrics.monthlyChange}%</Text>
+                  <Text style={styles.monthlyChangeText}>{metrics.monthlyChange}%</Text>
                 </View>
               </View>
               
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{formatCurrency(financialMetrics.totalWithdrawals)}</Text>
+                  <Text style={styles.statValue}>{formatCurrency(metrics.totalWithdrawals)}</Text>
                   <Text style={styles.statLabel}>Withdrawn</Text>
                 </View>
                 
                 <View style={styles.statDivider} />
                 
                 <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{financialMetrics.totalUsers}</Text>
+                  <Text style={styles.statValue}>{metrics.totalUsers}</Text>
                   <Text style={styles.statLabel}>Users</Text>
                 </View>
               </View>
@@ -474,7 +499,17 @@ export default function FinanceScreen() {
           
           {/* ========== TRANSACTIONS LIST ========== */}
           <View style={styles.transactionsList}>
-            {filteredData.length === 0 ? (
+            {loading ? (
+              <View style={styles.emptyContainer}>
+                <ActivityIndicator size="large" color={Colors.light.tint} />
+                <Text style={styles.emptyText}>Loading transactions...</Text>
+              </View>
+            ) : error ? (
+              <View style={styles.emptyContainer}>
+                <IconSymbol name="exclamationmark.triangle" size={36} color="#F59E0B" />
+                <Text style={styles.emptyText}>{error}</Text>
+              </View>
+            ) : filteredData.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <IconSymbol name="doc.text.magnifyingglass" size={36} color="#CBD5E1" />
                 <Text style={styles.emptyText}>No transactions found</Text>
@@ -491,14 +526,27 @@ export default function FinanceScreen() {
       </ScrollView>
 
       {/* ========== TRANSACTION DETAILS MODAL ========== */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={closeModal}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+      {modalVisible && (
+        <View style={styles.modalWrapper}>
+          <Animated.View 
+            style={[
+              styles.modalContainer, 
+              { opacity: modalBackgroundOpacity }
+            ]}
+          >
+            <TouchableOpacity 
+              style={styles.modalBackdrop}
+              activeOpacity={1}
+              onPress={closeModal}
+            />
+          </Animated.View>
+          
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              { transform: [{ translateY: modalTranslateY }] }
+            ]}
+          >
             <View style={styles.modalHeader}>
               <View style={styles.modalHandleBar} />
               <TouchableOpacity style={styles.modalCloseBtn} onPress={closeModal}>
@@ -522,7 +570,7 @@ export default function FinanceScreen() {
                 </View>
                 
                 <Text style={styles.modalTitle}>{selectedItem.name}</Text>
-                <Text style={styles.modalAmount}>{formatCurrency(selectedItem.amount)}</Text>
+                <Text style={styles.modalAmount}>{formatCurrency(selectedItem.amount, selectedItem.currency)}</Text>
                 
                 <View style={styles.modalStatusContainer}>
                   <View style={[
@@ -576,9 +624,9 @@ export default function FinanceScreen() {
                 </TouchableOpacity>
               </View>
             )}
-          </View>
+          </Animated.View>
         </View>
-      </Modal>
+      )}
     </SafeAreaView>
   );
 }
@@ -843,17 +891,42 @@ const styles = StyleSheet.create({
   },
   
   // ===== Modal =====
+  modalWrapper: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+  },
   modalContainer: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    zIndex: 1,
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    height: screenHeight * 0.7,
+    maxHeight: screenHeight * 0.65,
     paddingBottom: 20,
+    zIndex: 2,
   },
   modalHeader: {
     alignItems: 'center',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   SafeAreaView,
   View,
@@ -6,17 +6,18 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
-  Modal,
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
   StatusBar,
   Platform,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimated';
+import * as ReAnimated from 'react-native-reanimated';
+const { FadeIn, FadeInDown, FadeInRight } = ReAnimated;
 
 // Import UI components and constants
 import IconSymbol from "../../../../components/ui/IconSymbol";
@@ -24,6 +25,7 @@ import { Colors } from "../../../../constants/colors";
 import { useAuth } from "../../../../context/authContext";
 
 const screenWidth = Dimensions.get('window').width;
+const screenHeight = Dimensions.get('window').height;
 
 // Empty transactions array to be filled by API
 const transactionsData = [];
@@ -38,6 +40,10 @@ export default function PastTransactionsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [transactions, setTransactions] = useState(transactionsData);
   const [filterType, setFilterType] = useState('all');
+  
+  // Modal animation values
+  const modalBackgroundOpacity = useRef(new Animated.Value(0)).current;
+  const modalTranslateY = useRef(new Animated.Value(screenHeight)).current;
 
   // Function to fetch transactions from API
   const fetchTransactions = async () => {
@@ -125,11 +131,44 @@ export default function PastTransactionsScreen() {
   const openModal = (transaction) => {
     setSelectedTransaction(transaction);
     setModalVisible(true);
+    
+    // Animate the modal opening
+    Animated.parallel([
+      // Fade in the background
+      Animated.timing(modalBackgroundOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      // Slide up the content
+      Animated.timing(modalTranslateY, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   const closeModal = () => {
-    setSelectedTransaction(null);
-    setModalVisible(false);
+    // Animate the modal closing
+    Animated.parallel([
+      // Fade out the background
+      Animated.timing(modalBackgroundOpacity, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      // Slide down the content
+      Animated.timing(modalTranslateY, {
+        toValue: screenHeight,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // After animation completes, update state
+      setSelectedTransaction(null);
+      setModalVisible(false);
+    });
   };
 
   // Icon for transaction type
@@ -364,17 +403,26 @@ export default function PastTransactionsScreen() {
       </ScrollView>
 
       {/* Transaction Details Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={closeModal}
-        statusBarTranslucent
-      >
-        <View style={styles.modalOverlay}>
+      {modalVisible && (
+        <View style={styles.modalWrapper}>
           <Animated.View 
-            style={styles.modalContent}
-            entering={FadeIn.duration(300)}
+            style={[
+              styles.modalContainer, 
+              { opacity: modalBackgroundOpacity }
+            ]}
+          >
+            <TouchableOpacity 
+              style={styles.modalBackdrop}
+              activeOpacity={1}
+              onPress={closeModal}
+            />
+          </Animated.View>
+          
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              { transform: [{ translateY: modalTranslateY }] }
+            ]}
           >
             {selectedTransaction && (
               <>
@@ -476,7 +524,7 @@ export default function PastTransactionsScreen() {
             )}
           </Animated.View>
         </View>
-      </Modal>
+      )}
     </SafeAreaView>
   );
 }
@@ -707,24 +755,47 @@ const styles = StyleSheet.create({
   },
   
   // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+  modalWrapper: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+  },
+  modalContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
+    zIndex: 1,
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    width: '100%',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 24,
-    maxWidth: 400,
+    maxHeight: screenHeight * 0.9,
+    zIndex: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 10,
   },
