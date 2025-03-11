@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,17 +11,24 @@ import {
   LayoutAnimation,
   UIManager,
   Platform,
+  RefreshControl,
+  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../../../context/authContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeIn, FadeInDown, SlideInRight, ZoomIn } from 'react-native-reanimated';
+
+// Import UI components and constants
+import IconSymbol from "../../../../components/ui/IconSymbol";
+import { Colors } from "../../../../constants/colors";
 
 // Import your Firebase config
 import { auth, database } from '../../../../config/firebase';
 // Import the custom avatar component
-import { AvatarWithLoading } from './AvatarWithLoading'; // Adjust the path as needed
+import { AvatarWithLoading } from './AvatarWithLoading';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -30,30 +37,32 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export default function FriendsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [myFriends, setMyFriends] = useState([]);
+  const [activeTab, setActiveTab] = useState('friends'); // 'friends' or 'requests'
 
   const { user } = useAuth();
 
-  useEffect(() => {
-    console.log(user);
-    if (user) {
-      console.log(user);
-      loadFriends(user.uid);
-    }
+  // Handle refresh
+  const onRefresh = useCallback(async () => {
+    if (!user) return;
+    setRefreshing(true);
+    await loadFriends(user.uid);
+    setRefreshing(false);
+  }, [user]);
 
-    // const unsubscribe = onAuthStateChanged(auth, (user) => {
-    //   if (user) {
-    //     loadFriends(user.uid);
-    //   } else {
-    //     setLoading(false);
-    //     console.log("No user is logged in. Firestore read won't work.");
-    //   }
-    // });
-    // return unsubscribe;
-  }, []);
+  // Load friends on component mount
+  useEffect(() => {
+    if (user) {
+      loadFriends(user.uid);
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
   async function loadFriends(currentUid) {
     setLoading(true);
@@ -194,256 +203,530 @@ export default function FriendsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#000" />
+      <SafeAreaView style={[styles.loadingContainer, {paddingTop: insets.top}]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <Animated.View entering={FadeIn.duration(600)}>
+          <ActivityIndicator size="large" color={Colors.light.tint} />
+          <Text style={styles.loadingText}>Loading friends...</Text>
+        </Animated.View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.contentContainer}>
-        {/* Header */}
-        <View style={styles.headerContainer}>
-          <View>
-            <Text style={styles.title}>Friends</Text>
-            <Text style={styles.subtitle}>Manage your friends</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => router.push("./addFriend")}
-          >
-            <Text style={styles.addButtonText}>Add friends</Text>
-          </TouchableOpacity>
-        </View>
+    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
+      {/* Header */}
+      <Animated.View 
+        style={styles.header}
+        entering={FadeInDown.duration(500).springify()}
+      >
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          style={styles.backButton}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chevron-back" size={24} color={Colors.light.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Friends</Text>
+        <TouchableOpacity 
+          style={styles.addButton}
+          onPress={() => router.push("./addFriend")}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="add" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      </Animated.View>
 
-        {/* Pending Requests */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Pending Requests</Text>
-          {pendingRequests.length > 0 ? (
-            pendingRequests.map((request) => (
-              <View key={request.docId} style={styles.requestItem}>
-                <View style={styles.friendAvatar}>
-                  {request.picture ? (
-                    <AvatarWithLoading
-                      uri={request.picture}
-                      style={styles.avatarImage}
-                    />
-                  ) : (
-                    <View style={styles.avatarPlaceholder} />
-                  )}
-                </View>
-                <Text style={styles.requestText}>
-                  {request.name} {request.note}
-                </Text>
-                <View style={styles.requestButtons}>
-                  <TouchableOpacity
-                    style={styles.acceptButton}
-                    onPress={() => acceptRequest(request.docId)}
-                  >
-                    <Ionicons
-                      name="checkmark-circle-outline"
-                      size={24}
-                      color="green"
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.denyButton}
-                    onPress={() => denyRequest(request.docId)}
-                  >
-                    <Ionicons
-                      name="close-circle-outline"
-                      size={24}
-                      color="red"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))
-          ) : (
-            <View style={styles.noRequestsContainer}>
-              <Ionicons
-                name="mail-unread-outline"
-                size={40}
-                color="#999"
-                style={styles.noRequestsIcon}
-              />
-              <Text style={styles.noRequestsText}>
-                No requests at this time
-              </Text>
+      {/* Tabs */}
+      <Animated.View 
+        style={styles.tabsContainer}
+        entering={FadeInDown.delay(100).duration(500).springify()}
+      >
+        <TouchableOpacity 
+          style={[
+            styles.tab, 
+            activeTab === 'friends' && styles.activeTab
+          ]}
+          onPress={() => setActiveTab('friends')}
+          activeOpacity={0.7}
+        >
+          <Text style={[
+            styles.tabText,
+            activeTab === 'friends' && styles.activeTabText
+          ]}>
+            My Friends
+            {myFriends.length > 0 && ` (${myFriends.length})`}
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[
+            styles.tab, 
+            activeTab === 'requests' && styles.activeTab
+          ]}
+          onPress={() => setActiveTab('requests')}
+          activeOpacity={0.7}
+        >
+          <Text style={[
+            styles.tabText,
+            activeTab === 'requests' && styles.activeTabText
+          ]}>
+            Requests
+            {pendingRequests.length > 0 && ` (${pendingRequests.length})`}
+          </Text>
+          {pendingRequests.length > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{pendingRequests.length}</Text>
             </View>
           )}
-        </View>
-
-        {/* My Friends */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>My friends</Text>
-          {myFriends.length > 0 ? (
-            myFriends.map((friend) => (
-              <TouchableOpacity
-                key={friend.id}
-                style={styles.friendsButton}
-                onPress={() => router.replace(`./${friend.id}`)}
-              >
-                <View style={styles.friendsButtonContent}>
-                  <View style={styles.friendAvatar}>
-                    {friend.picture ? (
-                      <AvatarWithLoading
-                        uri={friend.picture}
-                        style={styles.avatarImage}
+        </TouchableOpacity>
+      </Animated.View>
+      
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            colors={[Colors.light.tint]} 
+          />
+        }
+      >
+        {/* Friends List Tab */}
+        {activeTab === 'friends' && (
+          <Animated.View 
+            style={styles.tabContent}
+            entering={FadeIn.duration(300)}
+          >
+            {myFriends.length > 0 ? (
+              myFriends.map((friend, index) => (
+                <Animated.View 
+                  key={friend.id}
+                  entering={SlideInRight.delay(index * 50).duration(300)}
+                >
+                  <TouchableOpacity
+                    style={styles.friendCard}
+                    onPress={() => router.replace(`./${friend.id}`)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.friendAvatarContainer}>
+                      {friend.picture ? (
+                        <AvatarWithLoading
+                          uri={friend.picture}
+                          style={styles.avatarImage}
+                        />
+                      ) : (
+                        <View style={styles.avatarPlaceholder}>
+                          <Text style={styles.avatarInitial}>
+                            {friend.name.charAt(0)}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    
+                    <View style={styles.friendInfo}>
+                      <Text style={styles.friendName}>{friend.name}</Text>
+                      <Text style={styles.friendNote}>Friend</Text>
+                    </View>
+                    
+                    <View style={styles.friendActions}>
+                      <TouchableOpacity 
+                        style={styles.actionButton}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons 
+                          name="chatbubble-outline" 
+                          size={22} 
+                          color={Colors.light.icon} 
+                        />
+                      </TouchableOpacity>
+                      
+                      <Ionicons 
+                        name="chevron-forward" 
+                        size={20} 
+                        color={Colors.light.icon} 
                       />
-                    ) : (
-                      <View style={styles.avatarPlaceholder} />
-                    )}
-                  </View>
-                  <Text style={styles.friendsText}>{friend.name}</Text>
-                  <Ionicons
-                    name="chevron-forward-outline"
-                    size={24}
-                    color="#007AFF"
-                    style={styles.chevronIcon}
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <Animated.View entering={ZoomIn.duration(500)}>
+                  <Ionicons 
+                    name="people-outline" 
+                    size={64} 
+                    color={Colors.light.icon}
                   />
-                </View>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <Text style={{ color: "#666" }}>No accepted friends yet.</Text>
-          )}
-        </View>
+                </Animated.View>
+                <Text style={styles.emptyStateTitle}>No friends yet</Text>
+                <Text style={styles.emptyStateText}>
+                  Add new friends to see them here
+                </Text>
+                <TouchableOpacity
+                  style={styles.emptyStateButton}
+                  onPress={() => router.push("./addFriend")}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.emptyStateButtonText}>
+                    Add New Friends
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </Animated.View>
+        )}
+        
+        {/* Requests Tab */}
+        {activeTab === 'requests' && (
+          <Animated.View 
+            style={styles.tabContent}
+            entering={FadeIn.duration(300)}
+          >
+            {pendingRequests.length > 0 ? (
+              pendingRequests.map((request, index) => (
+                <Animated.View 
+                  key={request.docId}
+                  entering={SlideInRight.delay(index * 50).duration(300)}
+                >
+                  <View style={styles.requestCard}>
+                    <View style={styles.requestMain}>
+                      <View style={styles.friendAvatarContainer}>
+                        {request.picture ? (
+                          <AvatarWithLoading
+                            uri={request.picture}
+                            style={styles.avatarImage}
+                          />
+                        ) : (
+                          <View style={styles.avatarPlaceholder}>
+                            <Text style={styles.avatarInitial}>
+                              {request.name.charAt(0)}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      
+                      <View style={styles.requestInfo}>
+                        <Text style={styles.friendName}>{request.name}</Text>
+                        <Text style={styles.friendNote}>
+                          wants to be your friend
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.requestActions}>
+                      <TouchableOpacity 
+                        style={styles.rejectButton}
+                        onPress={() => denyRequest(request.docId)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons 
+                          name="close" 
+                          size={22} 
+                          color={Colors.light.text} 
+                        />
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity 
+                        style={styles.acceptRequestButton}
+                        onPress={() => acceptRequest(request.docId)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.acceptRequestButtonText}>
+                          Accept
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Animated.View>
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <Animated.View entering={ZoomIn.duration(500)}>
+                  <Ionicons 
+                    name="mail-unread-outline" 
+                    size={64} 
+                    color={Colors.light.icon}
+                  />
+                </Animated.View>
+                <Text style={styles.emptyStateTitle}>No pending requests</Text>
+                <Text style={styles.emptyStateText}>
+                  When someone adds you as a friend, you'll see their request here
+                </Text>
+              </View>
+            )}
+          </Animated.View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  // Loading Styles
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
   },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: Colors.light.text,
+    textAlign: 'center',
+  },
+  
+  // Main Container
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  contentContainer: {
-    padding: 16,
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 24,
   },
+  
   // Header
-  headerContainer: {
+  header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#000',
-  },
-  subtitle: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
-  },
-  addButton: {
-    backgroundColor: '#000',
-    borderRadius: 8,
-    paddingVertical: 8,
     paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F2',
   },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  // Sections
-  sectionContainer: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
+  headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
-    color: '#333',
+    fontWeight: '700',
+    color: Colors.light.text,
   },
-  noRequestsContainer: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  noRequestsText: {
-    color: '#999',
-    fontSize: 14,
-  },
-  noRequestsIcon: {
-    marginBottom: 8,
-  },
-  // Pending Requests & My Friends Items
-  requestItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  requestText: {
-    fontSize: 14,
-    color: '#333',
-    flex: 1,
-    marginLeft: 8,
-  },
-  requestButtons: {
-    flexDirection: 'row',
-  },
-  acceptButton: {
-    marginRight: 12,
-  },
-  denyButton: {},
-  // Friend card for My Friends
-  friendsButton: {
-    marginBottom: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#989898',
-    backgroundColor: '#FFF',
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
-  },
-  friendsButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-  },
-  friendsText: {
-    flex: 1,
-    fontSize: 12,
-    marginLeft: 12,
-    color: '#222',
-    fontWeight: '500',
-  },
-  chevronIcon: {
-    marginLeft: 8,
-    color: '#222222',
-  },
-  friendAvatar: {
+  backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#DDD',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.light.tint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  
+  // Tabs
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F2',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+    marginHorizontal: 4,
+    position: 'relative',
+  },
+  activeTab: {
+    borderBottomColor: Colors.light.tint,
+  },
+  tabText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: Colors.light.icon,
+  },
+  activeTabText: {
+    color: Colors.light.tint,
+    fontWeight: '600',
+  },
+  badge: {
+    position: 'absolute',
+    top: 0,
+    right: -5,
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  tabContent: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  
+  // Friends Cards
+  friendCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    marginBottom: 12,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#F2F2F2',
+  },
+  friendAvatarContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#F6F8FA',
     overflow: 'hidden',
+    marginRight: 16,
   },
   avatarImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 20,
-    resizeMode: 'cover',
+    borderRadius: 25,
   },
   avatarPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: Colors.light.icon,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '600',
+  },
+  friendInfo: {
     flex: 1,
-    backgroundColor: '#CCC',
+  },
+  friendName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.light.text,
+    marginBottom: 4,
+  },
+  friendNote: {
+    fontSize: 14,
+    color: Colors.light.icon,
+  },
+  friendActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F6F8FA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  
+  // Request Cards
+  requestCard: {
+    backgroundColor: '#FFFFFF',
+    marginBottom: 12,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#F2F2F2',
+  },
+  requestMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  requestInfo: {
+    flex: 1,
+  },
+  requestActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  rejectButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F6F8FA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  acceptRequestButton: {
+    backgroundColor: Colors.light.tint,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  acceptRequestButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  
+  // Empty State
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.light.text,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 15,
+    color: Colors.light.icon,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  emptyStateButton: {
+    backgroundColor: Colors.light.tint,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  emptyStateButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

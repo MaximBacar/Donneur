@@ -53,7 +53,8 @@ class App():
         self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",                self.get_db_id,                 methods=["GET"] )
         self.app.add_url_rule(  "/get_balance/<id>",                "get_balance",              self.get_balance,               methods=["GET"] )
         self.app.add_url_rule(  "/is_password_link_valid",          "is_password_link_valid",   self.is_password_link_valid,    methods=["GET"] )
-        
+        self.app.add_url_rule(  "/get_transactions",                "get_transactions",         self.get_transactions,          methods=["GET"] )
+
 
     def index(self):
         return "Donneur.ca API"
@@ -300,6 +301,17 @@ class App():
             print(e)
             return jsonify({'error': str(e)}), 500
 
+
+    def get_transactions(self):
+        receiver_id = request.args.get('receiver_id')
+        organization_id = request.args.get('organization_id')
+
+        if not receiver_id and not organization_id:
+            return jsonify({'error': 'Either receiver_id or organization_id must be provided'}), 400
+    
+        transactions = self.donneur.database.get_transactions(receiver_id, organization_id)
+    
+        return jsonify({'transactions': transactions})
 
 
 
