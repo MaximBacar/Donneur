@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   View,
   Text,
@@ -8,70 +8,57 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  Dimensions,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from "../../../context/authContext";
-import * as ImagePicker from 'expo-image-picker';
 
-const exampleOrg = {
-  banner: 'https://via.placeholder.com/600x200.png',
-};
-export default function PersonProfileScreen() {
-  const { user, donneurID } = useAuth();
+export default function OtherUserProfileScreen() {
+  const { user } = useAuth();
   const router = useRouter();
-  const windowWidth = Dimensions.get('window').width;
-  const [banner, setBanner] = useState(exampleOrg.banner);
-  const [userInfo, setUserInfo] = useState(null);
-  const [userBalance, setUserBalance] = useState(0);
+  const params = useLocalSearchParams();
+  const { userId } = params; // Get the userId from URL params
+  
+  const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   
-
   useEffect(() => {
-    if (user) {
-      const fetchUserInfo = async () => {
-        try {
-          const res = await fetch(`https://api.donneur.ca/get_user?uid=${user.uid}`);
-          const data = await res.json();
-          setUserInfo(data);
-        } catch (error) {
-          console.error("Error fetching user info:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
+    const fetchUserProfile = async () => {
+      try {
+        const res = await fetch(`https://api.donneur.ca/get_user?uid=${userId}`);
+        const data = await res.json();
+        setProfileData(data);
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        Alert.alert("Error", "Failed to load user profile. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      const fetchBalance = async () => {
-        try {
-          const res = await fetch(`https://api.donneur.ca/get_balance/${donneurID}`);
-          const data = await res.json();
-          setUserBalance(data.balance);
-        } catch (error) {
-          console.error("Error fetching balance:", error);
-        }
-      };
-
-      fetchUserInfo();
-      fetchBalance();
+    if (userId) {
+      fetchUserProfile();
+    } else {
+      setLoading(false);
+      Alert.alert("Error", "User ID not provided");
     }
-  }, [user]);
+  }, [userId]);
 
-  // Fallback to example data if loading or no user data
+  // Fallback example data if loading or no user data
   const examplePerson = {
     type: 'person',
-    firstName: 'John',
-    lastName: 'Doe',
-    bio: 'Passionate traveler, coffee enthusiast, and tech geek.',
-    balance: 42,
-    age: 30,
-    location: 'Toronto, ON',
+    first_name: 'Jane',
+    last_name: 'Smith',
+    bio: 'Digital nomad and coffee connoisseur. Passionate about helping communities.',
+    age: 28,
+    location: 'Montreal, QC',
     banner: 'https://via.placeholder.com/600x200.png',
-    memberSince: 'March 2022',
-    interests: ['Travel', 'Photography', 'Technology'],
+    creation_date: '2022-06-15',
+    interests: ['Volunteering', 'Cooking', 'Hiking'],
     activity: [
-      { type: 'payment', amount: 15, date: '2 days ago', recipient: 'Sarah M.' },
-      { type: 'payment', amount: 28, date: '1 week ago', recipient: 'David K.' },
+      { type: 'payment', amount: 20, date: '3 days ago', recipient: 'Local Shelter' },
+      { type: 'payment', amount: 15, date: '2 weeks ago', recipient: 'Food Bank' },
     ]
   };
 
@@ -83,62 +70,51 @@ export default function PersonProfileScreen() {
     );
   }
 
+  // Use profile data if available, otherwise use example data
+  const userData = profileData || examplePerson;
+
   // Get initials from first and last name
   const getInitials = () => {
-    if (userInfo) {
-      return `${userInfo.first_name.charAt(0)}${userInfo.last_name.charAt(0)}`;
-    }
-    return `${examplePerson.firstName.charAt(0)}${examplePerson.lastName.charAt(0)}`;
+    return `${userData.first_name.charAt(0)}${userData.last_name.charAt(0)}`;
   };
 
   // Format full name
-  const fullName = userInfo 
-    ? `${userInfo.first_name} ${userInfo.last_name}` 
-    : `${examplePerson.firstName} ${examplePerson.lastName}`;
+  const fullName = `${userData.first_name} ${userData.last_name}`;
 
   // Get member since date
-  const memberSince = userInfo 
-    ? new Date(userInfo.creation_date).toLocaleDateString() 
-    : examplePerson.memberSince;
+  const memberSince = new Date(userData.creation_date).toLocaleDateString();
 
   const handleSendMoney = () => {
-    router.push('/send-money');
+    router.push({
+      pathname: '/send-money',
+      params: { recipientId: userId, recipientName: fullName }
+    });
   };
 
   const handleSendMessage = () => {
-    router.push('/send-message');
+    router.push({
+      pathname: '/send-message',
+      params: { recipientId: userId, recipientName: fullName }
+    });
   };
 
-  const pickImage = async (setImage) => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Required', 'We need access to your photos to upload an image.');
-        return;
-      }
-  
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
-      });
-  
-      if (!result.canceled) {
-        setImage(result.assets[0].uri);
-      }
-    };
-  
+  const handleGoBack = () => {
+    router.back();
+  };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       
+      {/* Back Button */}
+      <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+        <Ionicons name="arrow-back" size={24} color="#fff" />
+      </TouchableOpacity>
+      
       {/* Header with Banner */}
       <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={() => pickImage(setBanner)}>
-        <Image source={{ uri: banner }} style={styles.banner} />
-        </TouchableOpacity>
-
+        <Image source={{ uri: userData.banner || 'https://via.placeholder.com/600x200.png' }} style={styles.banner} />
+        
         <View style={styles.headerBottom}>
           {/* Profile circle with initials */}
           <View style={styles.initialsCircle}>
@@ -152,7 +128,7 @@ export default function PersonProfileScreen() {
           
           <Text style={styles.location}>
             <Ionicons name="location-outline" size={14} color="#777" />
-            {' '}{examplePerson.location}
+            {' '}{userData.location || 'Location not provided'}
           </Text>
         </View>
       </View>
@@ -162,57 +138,61 @@ export default function PersonProfileScreen() {
         {/* Bio Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
-          <Text style={styles.bio}>{examplePerson.bio}</Text>
+          <Text style={styles.bio}>{userData.bio || 'No bio provided'}</Text>
           <Text style={styles.memberSince}>Member since {memberSince}</Text>
         </View>
         
         {/* Quick Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>${userBalance ? userBalance.toFixed(2) : examplePerson.balance}</Text>
-            <Text style={styles.statTitle}>Balance</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{examplePerson.age}</Text>
+            <Text style={styles.statValue}>{userData.age || '—'}</Text>
             <Text style={styles.statTitle}>Age</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>{examplePerson.interests.length}</Text>
+            <Text style={styles.statValue}>{userData.interests ? userData.interests.length : '0'}</Text>
             <Text style={styles.statTitle}>Interests</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>—</Text>
+            <Text style={styles.statTitle}>Donations</Text>
           </View>
         </View>
         
         {/* Interests */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Interests</Text>
-          <View style={styles.interestsContainer}>
-            {examplePerson.interests.map((interest, index) => (
-              <View key={index} style={styles.interestTag}>
-                <Text style={styles.interestText}>{interest}</Text>
+        {userData.interests && userData.interests.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Interests</Text>
+            <View style={styles.interestsContainer}>
+              {userData.interests.map((interest, index) => (
+                <View key={index} style={styles.interestTag}>
+                  <Text style={styles.interestText}>{interest}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+        
+        {/* Recent Activity (if shared) */}
+        {userData.activity && userData.activity.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            {userData.activity.map((item, index) => (
+              <View key={index} style={styles.activityItem}>
+                <View style={styles.activityIconContainer}>
+                  <Ionicons name="cash-outline" size={20} color="#1DA1F2" />
+                </View>
+                <View style={styles.activityDetails}>
+                  <Text style={styles.activityTitle}>
+                    Sent ${item.amount} to {item.recipient}
+                  </Text>
+                  <Text style={styles.activityDate}>{item.date}</Text>
+                </View>
               </View>
             ))}
           </View>
-        </View>
-        
-        {/* Recent Activity */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          {examplePerson.activity.map((item, index) => (
-            <View key={index} style={styles.activityItem}>
-              <View style={styles.activityIconContainer}>
-                <Ionicons name="cash-outline" size={20} color="#1DA1F2" />
-              </View>
-              <View style={styles.activityDetails}>
-                <Text style={styles.activityTitle}>
-                  Sent ${item.amount} to {item.recipient}
-                </Text>
-                <Text style={styles.activityDate}>{item.date}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
+        )}
         
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
@@ -248,6 +228,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f8f8',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f8f8',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   headerContainer: {
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
@@ -264,7 +262,6 @@ const styles = StyleSheet.create({
     height: BANNER_HEIGHT,
     backgroundColor: '#ccc',
   },
-  
   headerBottom: {
     backgroundColor: '#fff',
     alignItems: 'center',
