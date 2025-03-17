@@ -17,25 +17,39 @@ class ReceiverError(Exception):
         pass
     class NoLinkedEmail(Exception):
         pass
+    class ReceiverNotFound(Exception): pass
 
 class ReceiverController():
 
-    def exists( receiver_id : str ) -> bool:
-        receiver : Receiver = Receiver( receiver_id )
-        if receiver.get():
-            return True
-        return False
 
-    def create_receiver( first_name : str, last_name : str, dob : str) -> str:
+    def donation_profile( receiver_id : str ) -> dict:
+        receiver : Receiver = Receiver(receiver_id)
+
+        receiver_data : dict = receiver.get()
+
+        profile = None
+
+        if receiver_data:
+            profile = {
+                'id' : receiver_id,
+                'name' : f'{receiver_data.get("first_name")} {receiver_data.get("last_name")[0]}.',
+                'image_url' : f'https://api.donneur.ca/image/{receiver_data.get("id_picture_file")}'
+            }
+            return profile
+        raise ReceiverError.ReceiverNotFound('Receiver not found')
+
+    def create_receiver( first_name : str, last_name : str, dob : str) -> Receiver:
 
         receiver : Receiver = Receiver.create( first_name, last_name, dob )
 
-        return receiver.id
+        return receiver
     
     def update_email( receiver_id : str, email : str ) -> None:
         
         receiver : Receiver = Receiver( receiver_id )
         receiver.set_email( email )
+
+        ReceiverController.send_account_creation_link( receiver_id )
     
     def send_account_creation_link( receiver_id : str ):
         
@@ -44,7 +58,7 @@ class ReceiverController():
 
         email           : str       = receiver_data.get('email')
 
-        SendMail.send_password_creation_email( email, f'https://www.donneur.ca/create/{receiver.id}')
+        SendMail.send_password_creation_email( email, f'https://www.donneur.ca/create_account/{receiver.id}')
 
     def verify_account_creation_link ( self, receiver_id : str ) -> bool:
         

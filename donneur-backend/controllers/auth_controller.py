@@ -7,8 +7,11 @@ def decode_token( token : str) -> dict | None:
 
         reference   : db.Reference  = db.reference(f'/users/{user_uid}')
         user_data   : dict          = reference.get()
-        
-        # TODO Change in Firebase to 'id'
-        return user_data['db_id']
+
+        return user_data['id']
     except:
         return None
+    
+def get_role( uid : str ) -> str | None:
+    user : str = db.reference(f'/users/{uid}').get()
+    return user

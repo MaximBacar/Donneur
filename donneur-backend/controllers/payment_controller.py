@@ -1,12 +1,14 @@
 from    firebase_admin  import db
 from    datetime        import datetime
-from    models          import Transaction, Sender
+from    models          import Transaction, Sender, Receiver
 
 
 import  stripe
 
 class PaymentController():
 
+    class PaymentError(Exception):
+        class ReceiverNotFound(Exception) : pass
     def __format_payment_method( stripe_payment_method : dict ) -> dict:
         payment_method = {
             'wallet'    : stripe_payment_method['wallet']['type'],
@@ -15,6 +17,10 @@ class PaymentController():
         return payment_method
 
     def create_payment( receiver_id : str, amount : float, IP : str = '' ) -> str:
+        receiver : Receiver = Receiver(receiver_id)
+
+        if not receiver.exist():
+            raise PaymentController.PaymentError.ReceiverNotFound('Receiver Not Found')
         
         converted_amount = int(amount * 100)
         intent = stripe.PaymentIntent.create(
@@ -47,10 +53,7 @@ class PaymentController():
 
         Transaction.confirm_transaction(stripe_id, sender_id, payment_method)
 
-    def cancel_payment(self, clientSecret):
-        try:
-            stripe.PaymentIntent.cancel(clientSecret)
-            return True
-        except Exception as error:
-            print(f"Error: {str(error)}")
-            return False
+    def cancel_payment( client_secret : str ):
+
+        transaction : Transaction = Transaction( client_secret.split('_secret_')[0] )
+        stripe.PaymentIntent.cancel( transaction.id )

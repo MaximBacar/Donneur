@@ -82,7 +82,5 @@ class Receiver(User):
     
     def set_app ( self ) -> None:
         self.reference.child('has_app_access').set(True)
-    
-    def get ( id : str ) -> Receiver:
-        return Receiver( id )
+
 

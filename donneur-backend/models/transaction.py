@@ -31,10 +31,10 @@ class Transaction(Model):
     def create_transaction( receiver_id : str, amount : float, type : TransactionType, sender_id : str = '', IP : str = '', stripe_id : str = None ) -> None:
         
         if amount < 0.00:
-            raise Transaction.TransactionError.InvalidAmountError( "Amount must be a postive float" )
+            raise Transaction.TransactionError.InvalidAmountError( 'Amount must be a postive float' )
         if type == Transaction.TransactionType.SEND:
             if not sender_id:
-                raise Transaction.TransactionError.NoSenderError()
+                raise Transaction.TransactionError.NoSenderError( 'No sender assigned')
             
 
         reference = db.reference(Transaction.BASE_TABLE)

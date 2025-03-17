@@ -82,6 +82,9 @@ class FriendController:
             query       = reference.order_by_child(user).equal_to(user_id)
             friendships = query.get()
 
+            if not friendships:
+                continue
+
             for friendship_id in friendships:
                 if friendships[friendship_id].get('friends_since'):
                     friends.append(

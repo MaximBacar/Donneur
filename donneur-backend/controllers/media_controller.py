@@ -17,10 +17,10 @@ class MediaController:
         VIDEO           = 'video'
 
     def upload_image( user_id : str, media_type : MediaType, image_data):
-        image_bytes = base64.b64decode( image_data )
-        image : Image.Image = Image.open(io.BytesIO(image_bytes))
+        image_bytes : bytes         = base64.b64decode( image_data )
+        image       : Image.Image   = Image.open(io.BytesIO(image_bytes))
 
-        temp_path = f"/tmp/{user_id}_{media_type.value}.png"
+        temp_path   : str           = f"/tmp/{user_id}_{media_type.value}.png"
         image.save(temp_path)
 
         

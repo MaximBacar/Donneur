@@ -7,5 +7,9 @@ token = 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImEwODA2N2Q4M2YwY2Y5YzcxNjQyNjUwYzUyMWQ0ZWZ
 headers = {
     'Authorization' : f'Bearer {token}'
 }
-response = requests.get('http://127.0.0.1:5000/get_friends', headers=headers)
+json = {
+    'amount'        : 5.00,
+    'receiver_id'   : '-OLV8csGtA_3Wc2eLScLp'
+}
+response = requests.post('http://127.0.0.1:5005/create_payment', json=json, headers=headers)
 print(response.json())

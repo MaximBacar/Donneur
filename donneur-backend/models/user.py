@@ -33,7 +33,7 @@ class User(Model):
         super().__init__(id, f'{user_type.value}s')
 
 
-    def get ( id : str ):
+    def get_user ( id : str ):
         for user_type in User.UserType:
             reference = db.reference(f'/{user_type.value}/{id}')
             user_data = reference.get()

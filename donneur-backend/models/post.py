@@ -6,12 +6,14 @@ import  enum
 class Post(Model):
 
 
-    BASE_TABLE : str = 'posts'
+    BASE_TABLE : str = 'posts/posts'
+    AUTHOR_TABLE = 'posts/authors'
+    PUBLIC_TABLE = 'posts/public'
 
     class PostVisibility(enum.Enum):
-        HOMELESS_ONLY   = 'receiver'
-        FRIENDS_ONLY    = 'friends'
-        ALL             = 'all'
+        SUBSCRIBERS_ONLY    = 'subscribers'
+        FRIENDS_ONLY        = 'friends'
+        ALL                 = 'all'
     
     class PostError(Exception):
         class InvalidVisibility (Exception) : pass
@@ -23,10 +25,29 @@ class Post(Model):
     def __init__(self, id : str):
         super().__init__(id, Post.BASE_TABLE)
 
+    def __add_public_reference( post_id : str , creation_time : str):
+        reference : db.Reference = db.reference(Post.PUBLIC_TABLE).child(post_id)
+        reference.set(creation_time)
+    def __remove_public_reference( post_id : str ):
+        reference : db.Reference = db.reference(Post.PUBLIC_TABLE).child(post_id)
+        reference.delete()
+
+    def __add_author_reference( author : str, post_id : str , creation_time : str):
+        reference : db.Reference = db.reference(Post.AUTHOR_TABLE).child(author).child(post_id)
+        reference.set(creation_time)
+    def __remove_author_reference( author : str, post_id : str ):
+        reference : db.Reference = db.reference(Post.AUTHOR_TABLE).child(author).child(post_id)
+        reference.delete()
+
+
+
     def create( author : str, content : dict, visibility : Post.PostVisibility, parent_id : str = None) -> Post:
         reference = db.reference(Post.BASE_TABLE)
+
+        creation_time : str = datetime.now().isoformat()
+
         post_data = {
-            'created_at'    : datetime.now().isoformat(),
+            'created_at'    : creation_time,
             'visibility'    : visibility.value,
             'parent_id'     : parent_id,
             'content'       : content,
@@ -34,17 +55,26 @@ class Post(Model):
             'likes'         : []
             
         }
+
         post = reference.push(post_data)
+
+        if not parent_id:
+            Post.__add_author_reference( author, post.key, creation_time)
+
+        if visibility == Post.PostVisibility.ALL:
+            Post.__add_public_reference( post.key , creation_time)
 
         return Post( post.key )
     
 
     def __delete( post_id : str ):
 
-        # Get Post from db
         post_reference  : db.Reference  = db.reference(f'/{Post.BASE_TABLE}/{post_id}')
         post            : dict | None   = post_reference.get()
 
+
+        visibility : Post.PostVisibility = Post.PostVisibility(post['visibility'])
+        author : str = post['author']
         if not post:
             raise Post.PostError.PostNotFound()
 
@@ -59,6 +89,10 @@ class Post(Model):
             for reply_post in replies:
                 Post.__delete( reply_post )
         
+        if visibility == Post.PostVisibility.ALL:
+            Post.__remove_public_reference( post_id )
+        
+        Post.__remove_author_reference( author, post_id )
         post_reference.delete()
 
     def delete ( self ):
@@ -112,3 +146,17 @@ class Post(Model):
         
         author_reference = self.reference.child('author')
         return author_reference.get()
+    
+
+    def get_posts ( user_id : str ) -> list[dict]:
+        
+        posts : dict = db.reference(Post.AUTHOR_TABLE).child(user_id).get()
+        
+        return posts
+
+    
+    def get_public_posts () -> list[dict]:
+        
+        posts : dict = db.reference(Post.PUBLIC_TABLE).get()
+        
+        return posts

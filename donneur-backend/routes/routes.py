@@ -1,4 +1,3 @@
-from    firebase_admin          import  auth,   db
 from    controllers             import  decode_token
 from    flask                   import  request
 def auth_required(func):
