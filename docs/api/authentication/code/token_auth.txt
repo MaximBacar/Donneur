@@ -1,0 +1,35 @@
+title Decode Firebase JWT Token
+
+participant "Client (Frontend)" as client
+
+participant "Controller (REST API)" as controller
+participant "controllers/auth.py\n:Auth" as auth
+participant "auth:Firebase" as auth_firebase
+participant "db:Firebase" as db_firebase
+database "Firebase Realtime-Databse" as db
+activate db
+client->controller:HTTP Request\nheaders : {\n  "authorization": "Bearer <token>"\n}
+activate controller
+controller->auth:decode_token(token)
+activate auth
+auth->auth_firebase: verify_id_token(token)
+activate auth_firebase
+alt User Exists
+auth<--auth_firebase: UID
+deactivate auth_firebase
+auth->db_firebase: reference("/users/<UID>").get()
+activate db_firebase
+db_firebase->db:Find(user.uid == UID)
+activate db
+db_firebase<--db:user data {id, role}
+deactivate db
+auth<--db_firebase: user data {id, role}
+deactivate db_firebase
+controller<--auth: user data {id, role}
+deactivate auth
+activate controller
+controller->controller: Continue request
+
+else User Does Not Exists
+client<--controller:401 Unauthorized
+end

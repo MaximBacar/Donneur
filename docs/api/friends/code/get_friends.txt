@@ -1,0 +1,36 @@
+title Get Friends
+
+participant "Client (Frontend)" as client
+
+participant "Controller (REST API)" as controller
+participant "controllers/auth.py\n:Auth" as auth
+participant "controllers/friends.py\n:Friends" as friends
+participant "db:Firebase" as db_firebase
+database "Firebase Realtime-Databse" as db
+activate db
+client->controller:GET /friends\nheaders : {\n  "authorization": "Bearer <token>"\n}
+activate controller
+ref over controller, auth: Decode Firebase JWT Token\nid, role := controllers.auth.decode_token(token)
+
+controller->friends:get_friends(id)
+friends->db_firebase:reference("/receivers/<id>/friendships").get()
+db_firebase->db:find()
+db_firebase<--db:friendships
+friends<--db_firebase:friendships
+friends->friends: friends = []\nrequests = []
+loop friendship_id in friendships
+
+friends->db_firebase:reference("/friendships/<friendship_id>").get()
+db_firebase->db:find()
+db_firebase<--db:friendship
+friends<--db_firebase:friendship
+
+alt friendship['user_2'] == id and friendship['friends_since'] == ''
+friends->friends: requests.append(\n  { 'id' : friendship['user_1'], 'created_at' : friendship['created_at'], 'friendship_id' : friendship}\n)
+
+else friendship['friends_since'] != ''
+friends->friends: friend_id = friendship['user_1'] if id == friendship['user_2'] else friendship['user_2'] \nfriend.append(\n  { 'id' : friend_id, 'friend_since' : friendship['friend_since'], 'friendship_id' : friendship}\n) 
+end
+end
+controller<--friends: {'requests' : requests, 'friends' : friends}
+client<-controller: JSON Response, 200
