@@ -1,0 +1,96 @@
+@startuml
+skinparam node {
+  BorderColor black
+  BackgroundColor whitesmoke
+}
+skinparam linetype polyline
+skinparam linetype ortho
+
+node "<<device>>\n:Client Computer" as client_computer{
+    node "<<executionEnvironment>>\n:Browser" {
+        node "<<executionEnvironment>>\n:JavaScript" {
+            artifact "Donneur.ca Web Application" as frontend
+        }
+    }
+}
+
+node "<<device>>\n:Client Phone" as client_phone{
+    node "<<executionEnvironment>>\n:iOS or Android" {
+        artifact "Donneur Application" as app
+    }
+}
+
+node "<<device>>\n:VPS Server" as host {
+    node "<<webServer>>\nNGINX" as nginx {
+        artifact "React Build Files" as react_build
+        artifact "Reverse Proxy" as reverse_proxy
+    }
+    node "<<ReactProject>>\nDonneur Web Application" as react {
+        node "<<executionEnvironment>>\n:Node.js"{
+            folder "donneur-webapp"
+        }
+    }
+    node "<<webServer>>\nBackend API" {
+        node "Gunicorn" as gunicorn {
+            artifact "WSGI Server" as wsgi
+        }
+        
+        node "<<executionEnvironment>>\n:Python" as python{
+            node "Backend Flask App" as flask {
+                folder "donneur-backend"{
+                    artifact "app.py" as flaskapp
+                    folder "Controller" as api_controller{
+                        artifact "payments.py"      as c_payments
+                        artifact "chats.py"         as c_chats
+                        artifact "friends.py"       as c_friends
+                        artifact "feeds.py"         as c_feed
+                        artifact "users.py"         as c_users
+                        artifact "organizers.py"    as c_organizer
+                        artifact "receivers.py"     as c_receiver
+                        artifact "senders.py"       as c_sender
+                    }
+                    folder "Routes" as api_routes{
+                        artifact "payment.py"
+                        artifact "chat.py"
+                        artifact "friend.py"
+                        artifact "feed.py"
+                        artifact "organizer.py"
+                        artifact "receiver.py"
+                        artifact "sender.py"
+                    }
+                }
+                
+            }
+        }
+        
+    }
+}
+
+
+
+cloud "External Services" {
+  node "Stripe" as stripe {
+    artifact "Payment API" as paymentapi
+  }
+  node "Firebase" as firebase {
+    database "Real-Time Database" as rtdb
+    artifact "Authentication" as auth
+  }
+}
+
+react --> react_build : Build Static Files
+flaskapp -- api_routes
+api_routes -- api_controller
+frontend -- react_build : Get static files from server
+client_computer -- reverse_proxy : HTTPS : Requests to Backend API 
+client_phone -- reverse_proxy : HTTPS: Requests to Backend API
+reverse_proxy -- gunicorn : "forwards API requests\nto localhost:5000"
+gunicorn -- python : "runs"
+api_controller -- rtdb : "reads/writes data"
+c_payments -- stripe : "HTTPS : Payment Processing & Payement Confirmation"
+client_computer -- stripe : "HTTPS : Send Payment"
+note right of nginx
+  Serves built react project files for urls: give.donneur.ca, www.donneur.ca and donneur.ca (static content)
+  Proxies to localhost:5000 for url: api.donneur.ca
+end note
+@enduml

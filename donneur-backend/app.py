@@ -92,6 +92,7 @@ class App():
         except Exception as e:
             return {"error": str(e)}, 500
     
+    # done
     def payment_profile(self, profile_id):
         if profile_id:
             data = self.donneur.database.get_receiver( profile_id )
@@ -105,6 +106,7 @@ class App():
             return 'No user', 400
         return 'No user', 400
     
+
     def get_shelter_locations(self):
         data = self.donneur.database.get_all_organizations()
 
@@ -144,6 +146,7 @@ class App():
     def docs(self):
         return "Donneur.ca API Docs"
     
+    # done
     def create_receiver(self):
         data = request.get_json()
 
@@ -220,6 +223,7 @@ class App():
     #========================
     #WITHDRAW
 
+    # done
     def withdraw(self):
         data = request.get_json()
 
@@ -244,7 +248,7 @@ class App():
         
         return {'status' : 'invalid'}, 400
 
-
+    # done
     def is_password_link_valid(self):
         id = request.args.get('id')
         if id:
@@ -256,6 +260,7 @@ class App():
         
         return {'status' : 'invalid'}, 400
 
+    # done
     def set_password(self):
         """
         Endpoint for when a receiver sets their password.

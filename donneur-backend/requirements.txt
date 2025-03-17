@@ -1,4 +1,9 @@
 flask
+requests
 flask-cors
+Flask-RESTful
 firebase
 firebase-admin
+pillow
+stripe
+dotenv
