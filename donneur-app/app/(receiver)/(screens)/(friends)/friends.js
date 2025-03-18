@@ -22,10 +22,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown, SlideInRight, ZoomIn } from 'react-native-reanimated';
 
 import { BACKEND_URL } from '../../../../constants/backend';
-
-
-
-
 import { Colors } from "../../../../constants/colors";
 
 // Import the custom avatar component
@@ -86,17 +82,120 @@ export default function FriendsScreen() {
       
       const data = await response.json();
       console.log(data);
-      let friends = data.friends
-      let requests = data.requests
+      let friends = data.friends;
+      let requests = data.requests;
 
       console.log(friends);
       console.log(currentPath);
       console.log(requests);
 
-    
+      // Define acceptedPromises here - this was missing in the original code
+      const acceptedPromises = friends.map(async (friend) => {
+        const friendUid = friend.id; // Adjust this based on your actual data structure
+        
+        try {
+          const res = await fetch(`https://api.donneur.ca/get_user?uid=${friendUid}`);
+          
+          // Check if response is OK
+          if (!res.ok) {
+            throw new Error(`Server responded with status: ${res.status}`);
+          }
+          
+          // Check content type
+          const contentType = res.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            // Handle non-JSON response
+            const text = await res.text();
+            console.error('Non-JSON response:', text);
+            throw new Error('Server returned non-JSON response');
+          }
+          
+          const userData = await res.json();
+          const pictureUrl = userData.picture_id 
+            ? `https://api.donneur.ca/image/${userData.picture_id}`
+            : null;
+          return {
+            id: friendUid,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            name: `${userData.first_name} ${userData.last_name}`,
+            picture: pictureUrl,
+            note: 'See profile.',
+          };
+        } catch (error) {
+          console.error(`Error fetching user data for ${friendUid}:`, error);
+          // Return a placeholder for failed user data fetches
+          return {
+            id: friendUid,
+            first_name: "Unknown",
+            last_name: "User",
+            name: "Unknown User",
+            picture: null,
+            note: 'User data unavailable',
+          };
+        }
+      });
+      
+      const acceptedResults = await Promise.all(acceptedPromises);
 
-      setMyFriends(friends);
-      setPendingRequests(requests);
+      // Define pendingDocs and currentUid - these were missing
+      const pendingDocs = requests;
+      const currentUid = user.id; // Adjust based on your auth structure
+
+      // For pending docs, fetch user info for the "other" user
+      const pendingPromises = pendingDocs.map(async (doc) => {
+        const friendUid = doc.user1 === currentUid ? doc.user2 : doc.user1;
+        
+        try {
+          const res = await fetch(`https://api.donneur.ca/get_user?uid=${friendUid}`);
+          
+          // Check if response is OK
+          if (!res.ok) {
+            throw new Error(`Server responded with status: ${res.status}`);
+          }
+          
+          // Check content type
+          const contentType = res.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            // Handle non-JSON response
+            const text = await res.text();
+            console.error('Non-JSON response:', text);
+            throw new Error('Server returned non-JSON response');
+          }
+          
+          const userData = await res.json();
+          const pictureUrl = userData.picture_id 
+            ? `https://api.donneur.ca/image/${userData.picture_id}`
+            : null;
+          return {
+            docId: doc.id,
+            friendship_id: doc.id, // Adding this based on usage in the component
+            friendUid,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            name: `${userData.first_name} ${userData.last_name}`,
+            picture: pictureUrl,
+            note: 'wants to be your friend',
+          };
+        } catch (error) {
+          console.error(`Error fetching user data for ${friendUid}:`, error);
+          // Return a placeholder for failed user data fetches
+          return {
+            docId: doc.id,
+            friendship_id: doc.id,
+            friendUid,
+            first_name: "Unknown",
+            last_name: "User",
+            name: "Unknown User",
+            picture: null,
+            note: 'User data unavailable',
+          };
+        }
+      });
+      const pendingResults = await Promise.all(pendingPromises);
+
+      setMyFriends(acceptedResults);
+      setPendingRequests(pendingResults);
     } catch (error) {
       console.error('Error loading friends:', error);
     } finally {
