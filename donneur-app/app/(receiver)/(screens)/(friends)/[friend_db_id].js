@@ -150,7 +150,7 @@ export default function FriendProfile() {
       <View style={styles.buttonsRow}>
         <TouchableOpacity
           style={styles.balanceButton}
-          onPress={() => router.push('/withdraw')}
+          onPress={() => router.push(`/send/SendMoney?friend_db_id=${friend_db_id}`)}
         >
           <Ionicons
             name="paper-plane-outline"
@@ -162,7 +162,7 @@ export default function FriendProfile() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.balanceButton}
-          onPress={() => router.push('/inbox')}
+          // onPress={() => router.push('/inbox')}
         >
           <Ionicons
             name="chatbubble-ellipses-outline"
