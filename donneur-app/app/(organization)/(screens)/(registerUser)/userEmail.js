@@ -63,7 +63,7 @@ export default function UserEmailScreen() {
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Email*</Text>
+          <Text style={styles.label}>Email</Text>
           <TextInput
             style={styles.input}
             placeholder="example@domain.com"
