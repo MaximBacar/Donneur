@@ -17,6 +17,8 @@ import * as Location from 'expo-location';
 import { useRouter } from "expo-router";
 import Icon from 'react-native-vector-icons/FontAwesome';
 
+import { BACKEND_URL } from '../../../constants/backend';
+
 export default function ExplorePage() {
   const [location, setLocation] = useState(null);
   const [region, setRegion] = useState(null);
@@ -31,6 +33,7 @@ export default function ExplorePage() {
   // Glow Animation
   const glowSize = useRef(new Animated.Value(50)).current;
   const glowOpacity = useRef(new Animated.Value(0.8)).current;
+
 
   useEffect(() => {
     const animateGlow = () => {
@@ -96,30 +99,31 @@ export default function ExplorePage() {
   useEffect(() => {
     (async () => {
       try {
-        const response = await fetch(
-          "https://api.donneur.ca/get_shelter_locations"
-        );
+        const url = `${BACKEND_URL}/organization/get`;
+        const response = await fetch(url);
         const data = await response.json();
+
+        console.log(data)
+
         const shelterMarkers = [];
 
-        for (const [id, shelter] of Object.entries(data)) {
+        for (const [id, shelter] of Object.entries(data.shelters)) {
+          console.log('ss', shelter);
           const { address } = shelter;
-          const fullAddress = `${address.address}, ${address.city}, ${address.province}, ${address.zip}`;
-          const geoResults = await Location.geocodeAsync(fullAddress);
-          if (geoResults.length > 0) {
-            shelterMarkers.push({
-              id,
-              name: shelter.name,
-              city: address.city,
-              address: fullAddress,
-              description: shelter.description,
-              type: shelter.type || "Shelter",
-              isOpen: true, // Default value, can be updated with actual data
-              distance: 0, // Will be calculated later
-              latitude: geoResults[0].latitude,
-              longitude: geoResults[0].longitude,
-            });
-          }
+          console.log(address);
+          const fullAddress = `${address.street}, ${address.city}, ${address.state}, ${address.postalcode}`;
+          shelterMarkers.push({
+            id,
+            name: shelter.name,
+            city: address.city,
+            address: fullAddress,
+            description: shelter.description,
+            type: shelter.type || "Shelter",
+            isOpen: true, // Default value, can be updated with actual data
+            distance: 0, // Will be calculated later
+            latitude: address.latitude,
+            longitude: address.longitude,
+          });
         }
 
         // Calculate distance from user's location if available

@@ -73,7 +73,6 @@ class Receiver(User):
         COLUMN      : str           = 'balance'
         reference   : db.Reference  = self.reference.child(COLUMN)
         balance     : float         = float(reference.get())
-
         return balance
     
 

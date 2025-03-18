@@ -1,6 +1,4 @@
 from flask_restful  import  Resource, reqparse
-from routes.routes  import  auth_required
-
 from controllers    import  PaymentController
 
 class CreateDonationResource(Resource):
@@ -40,12 +38,3 @@ class CancelDonationResource(Resource):
             return {"status": "ok"}, 200
         except Exception as e:
             return {'error' : str(e)}, 400
-
-
-class SendFundsResource(Resource):
-    def post(self):
-        pass
-
-class WithdrawFundsResource(Resource):
-    def post(self):
-        pass

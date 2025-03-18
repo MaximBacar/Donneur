@@ -1,5 +1,8 @@
+from    flask_restful           import  Resource, reqparse
 from    controllers             import  decode_token
 from    flask                   import  request
+
+
 def auth_required(func):
    
     def wrapper(*args, **kwargs):
@@ -8,13 +11,18 @@ def auth_required(func):
             return {'error': 'Missing or invalid authorization header'}, 401
         
         token = auth_header.split('Bearer ')[1]
-        user_id = decode_token(token)
+        user_id, role = decode_token(token)
 
         if user_id:
-            return func(args[0], user_id, *args[1:], **kwargs)
+            return func(args[0], user_id, role,  *args[2:], **kwargs)
         
         return {'error': f'Invalid token'}, 401
     
             
     wrapper.__name__ = func.__name__ 
     return wrapper
+
+class AuthenticationResource(Resource):
+    @auth_required
+    def get(self, user_id : str, role : str ):
+        return {'id' : user_id, 'role' : role}

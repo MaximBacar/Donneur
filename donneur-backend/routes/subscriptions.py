@@ -1,11 +1,11 @@
 from flask_restful  import Resource,        reqparse
-from routes.routes  import auth_required
+from routes.authentication  import auth_required
 from controllers    import SubscriptionController
 
 class SubscribeResource(Resource): 
     @auth_required
-    def post( self, user_id : str ):
-        
+    def post( self, user_id : str, role : str  ):
+
         parser = reqparse.RequestParser()
         parser.add_argument( 'organization_id', type=str, required=True, help="No organization_id provided" )
         
@@ -18,7 +18,7 @@ class SubscribeResource(Resource):
         
 class UnsubscribeResource(Resource): 
     @auth_required
-    def post( self, user_id : str ):
+    def post( self, user_id : str, role : str  ):
 
         parser = reqparse.RequestParser()
         parser.add_argument( 'organization_id', type=str, required=True, help="No organization_id provided" )
@@ -32,7 +32,7 @@ class UnsubscribeResource(Resource):
         
 class GetSubscriptionsResource(Resource):
     @auth_required
-    def get( self, user_id : str ):
+    def get( self, user_id : str, role : str  ):
 
         try:
             subscriptions : list = SubscriptionController.get_subscriptions( user_id )
