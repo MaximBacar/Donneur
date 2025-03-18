@@ -64,6 +64,7 @@ export default function Index() {
     setPasswordError("");
     try {
       const user = await signInWithEmailAndPassword(auth, email, password);
+      console.log(user);
       if (user) router.replace("/");
     } catch (error) {
       console.log(error);

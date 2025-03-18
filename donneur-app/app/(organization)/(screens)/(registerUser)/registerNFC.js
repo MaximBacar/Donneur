@@ -8,16 +8,62 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useState, useEffect } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
+import { useUser } from './registerContext';
+
+
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function RegisterNfcCardScreen() {
   const router = useRouter();
 
+  const [isWriting, setIsWriting] = useState(false);
+
+  const { userID } = useUser();
+
+  useEffect(() => {
+    NfcManager.start();
+    return () => {
+      NfcManager.stop();
+    };
+  }, []);
+
   const handleWriteNfc = () => {
     // TODO: Implement NFC writing logic
     console.log('Write NFC Card pressed');
+  };
+
+  const writeNfcTag = async () => {
+    try {
+      await NfcManager.cancelTechnologyRequest();
+      setIsWriting(true);
+      const isNfcEnabled = await NfcManager.isEnabled();
+      if (!isNfcEnabled) {
+        Alert.alert('Error', 'NFC is not enabled on this device.');
+        return;
+      }
+      await NfcManager.requestTechnology(NfcTech.Ndef);
+      const message = Ndef.encodeMessage([
+        Ndef.uriRecord('https://give.donneur.ca')
+      ]);
+
+      if (message) {
+        await NfcManager.ndefHandler.writeNdefMessage(message);
+        Alert.alert('Success', 'Data written to NFC tag!');
+      } else {
+        Alert.alert('Error', 'Failed to encode message.');
+      }
+    } catch (err) {
+      console.warn('Error writing to NFC:', err);
+      Alert.alert('Error', 'Failed to write NFC tag.');
+    } finally {
+      setIsWriting(false);
+      NfcManager.cancelTechnologyRequest();
+    }
   };
 
   const handleFinish = () => {
@@ -38,7 +84,7 @@ export default function RegisterNfcCardScreen() {
 
         {/* Center Container */}
         <View style={styles.centerContainer}>
-          <TouchableOpacity style={styles.nfcButton} onPress={handleWriteNfc}>
+          <TouchableOpacity style={styles.nfcButton} onPress={writeNfcTag}>
             <MaterialCommunityIcons
               name="nfc"
               size={28}
