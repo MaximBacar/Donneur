@@ -15,12 +15,14 @@ export default{
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.donneurapp",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show you on the map.",
         "NSCameraUsageDescription": "This app requires camera access to scan QR codes."
       }
     },
     "android": {
+      "package": "com.anonymous.donneurapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

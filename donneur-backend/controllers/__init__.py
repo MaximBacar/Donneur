@@ -4,4 +4,6 @@ from .feed_controller           import FeedController
 from .friend_controller         import FriendController
 from .payment_controller        import PaymentController
 from .receiver_controller       import ReceiverController
+from .transaction_controller    import TransactionController
 from .subscription_controller   import SubscriptionController
+from .organization_controller   import OrganizationController

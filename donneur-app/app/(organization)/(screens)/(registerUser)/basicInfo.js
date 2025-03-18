@@ -11,6 +11,9 @@ import {
 import { useRouter } from 'expo-router';
 import { useUser } from './registerContext';
 
+import { BACKEND_URL } from '../../../../constants/backend';
+import { useAuth } from '../../../../context/authContext';
+
 const screenWidth = Dimensions.get('window').width;
 
 export default function BasicInfoScreen() {
@@ -21,6 +24,8 @@ export default function BasicInfoScreen() {
   const [lastName, setLastName]   = useState('');
   const [dob, setDob]             = useState(''); 
 
+  const {token} = useAuth()
+
 
   const { setUserID } = useUser();
 
@@ -28,15 +33,17 @@ export default function BasicInfoScreen() {
 
     try{
       const body = JSON.stringify({
-        fn: firstName,
-        ln: lastName,
+        first_name: firstName,
+        last_name: lastName,
         dob: dob
       });
 
-      const response = await fetch('https://api.donneur.ca/create_receiver', {
+      const response = await fetch(`${BACKEND_URL}/receiver/create`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json' // Important: Expecting JSON
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
         },
         body:body,
       });

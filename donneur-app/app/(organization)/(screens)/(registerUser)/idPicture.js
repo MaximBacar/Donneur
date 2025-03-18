@@ -13,7 +13,10 @@ import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useUser } from './registerContext';
-
+import { v4 as uuidv4 } from 'uuid';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../../../config/firebase';
+import { useAuth } from '../../../../context/authContext';
 const screenWidth = Dimensions.get('window').width;
 
 
@@ -25,6 +28,7 @@ export default function IdPictureScreen() {
   const cameraRef                       = useRef(null);
   
   const { userID }                      = useUser();
+  const { user }                        = useAuth();
 
 
   const Camera = () => {
@@ -56,7 +60,7 @@ export default function IdPictureScreen() {
 
   const Display = () => {
     return(
-      <Image style={pictureDisplay.picture} source={{uri:'data:image/jpg;base64,'+photo.base64}}/>
+      <Image style={pictureDisplay.picture} source={{ uri: photo.uri }} />
     )
   }
 
@@ -70,35 +74,21 @@ export default function IdPictureScreen() {
       return;
     }
     try {
+      // Upload photo to Firebase Storage
+      const response = await fetch(photo.uri);
+      const blob = await response.blob();
 
-      const cropWidth = photo.width;  
-      const cropHeight = photo.width;
-      const cropX = (photo.width - cropWidth) / 2; // Center X
-      const cropY = (photo.height - cropHeight) / 2; // Center Y
+      const imageRef = ref(storage, `/data/${user.uid}/${uuidv4()}.png`);
+      await uploadBytes(imageRef, blob);
 
-      const resizedPhoto = await ImageManipulator.manipulateAsync(photo.uri, [{ crop: { originX: cropX, originY: cropY, width: cropWidth, height: cropHeight } }], { compress: 0.1, base64:true, format: ImageManipulator.SaveFormat.JPEG});
-      
-    
-      const body = JSON.stringify({
-        image_data:   `data:image/jpeg;base64,${resizedPhoto.base64}`,
-        type:         'pp',
-        id:  userID
-      });
+      const downloadURL = await getDownloadURL(imageRef);
+      console.log('Image uploaded successfully:', downloadURL);
 
-      const response = await fetch('https://api.donneur.ca/upload_base64', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json' // Important: Expecting JSON
-        },
-        body:body,
-      });
-
-      const textResponse = await response.text();
-      console.log(textResponse);
-
+      router.push('/idDocument');
     } catch (error) {
-      console.log(error);
+      console.error('Error uploading image:', error);
     }
+    
     router.push('/idDocument');
   };
 
@@ -130,8 +120,9 @@ export default function IdPictureScreen() {
     if (cameraRef.current){
       const options = {
         quality:1,
-        base64:true,
-        exif:false
+        base64:false,
+        exif:false,
+        imageType: 'png'
       };
 
       const takePhoto = await cameraRef.current.takePictureAsync(options);

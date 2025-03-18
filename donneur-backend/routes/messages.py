@@ -1,11 +1,11 @@
 from flask_restful  import Resource, reqparse
-from routes.routes  import auth_required
+from routes.authentication  import auth_required
 
 
 
 class GetMessagesResource(Resource):
     @auth_required
-    def get(self, user_id):
+    def get(self, user_id : str, role : str ):
         parser = reqparse.RequestParser()
         parser.add_argument('chat_id', type=str, required=True, help='chat_id cannot be blank')
 
@@ -16,7 +16,7 @@ class GetMessagesResource(Resource):
 class SendMessageResource(Resource):
 
     @auth_required
-    def post(self, user_id):
+    def post(self, user_id : str, role : str ):
 
         parser = reqparse.RequestParser()
         parser.add_argument('chat_id', type=str, required=True, help='chat_id cannot be blank')

@@ -12,69 +12,40 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { auth, database } from '../../../../config/firebase';
 import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
-
+import { useFriend } from './friendContext';
+import { BACKEND_URL } from '../../../../constants/backend';
+import { useAuth } from '../../../../context/authContext';
 export default function FriendProfile() {
   const { friend_db_id } = useLocalSearchParams(); // Friend's UID
   const router = useRouter();
 
-  const [friendData, setFriendData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { friendProfile } = useFriend();
+
+  const [loading, setLoading] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
 
-  useEffect(() => {
-    if (friend_db_id) {
-      fetchUserData(friend_db_id);
-    }
-  }, [friend_db_id]);
+  const { token } = useAuth()
 
-  async function fetchUserData(uid) {
-    try {
-      const res = await fetch(`https://api.donneur.ca/get_user?uid=${uid}`);
-      const data = await res.json();
-      setFriendData(data);
-    } catch (err) {
-      console.error('Error fetching friend data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function removeFriend() {
     try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-      const friendsRef = collection(database, 'friends');
-      // Query for the relationship where current user and friend are paired.
-      const q1 = query(
-        friendsRef,
-        where('user1', '==', currentUser.uid),
-        where('user2', '==', friend_db_id)
-      );
-      const q2 = query(
-        friendsRef,
-        where('user2', '==', currentUser.uid),
-        where('user1', '==', friend_db_id)
-      );
-      const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-      let relationshipDoc = null;
-      if (!snap1.empty) {
-        relationshipDoc = snap1.docs[0];
-      } else if (!snap2.empty) {
-        relationshipDoc = snap2.docs[0];
+      
+      let url = `${BACKEND_URL}/friend/remove`;
+      
+      const payload = {
+        'friendship_id': friendProfile.friendship_id,
       }
-      if (relationshipDoc) {
-        // Update the relationship to set both accepted fields to false.
-        await updateDoc(relationshipDoc.ref, {
-          u1_accepted: false,
-          u2_accepted: false,
-        });
-        console.log('Friend removed successfully');
-        // Optionally navigate back to friends list
-        router.push('/friends/friends');
-      } else {
-        console.error('Relationship document not found.');
-      }
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
+        },
+        body: JSON.stringify(payload)
+      });
+      router.back();
     } catch (error) {
       console.error('Error removing friend:', error);
     }
@@ -88,7 +59,7 @@ export default function FriendProfile() {
     );
   }
 
-  if (!friendData) {
+  if (!friendProfile) {
     return (
       <View style={styles.loadingContainer}>
         <Text>Could not load friend data.</Text>
@@ -97,13 +68,11 @@ export default function FriendProfile() {
   }
 
   // Format name: first name + first letter of last name (if exists)
-  const displayName = friendData.last_name 
-    ? `${friendData.first_name} ${friendData.last_name[0]}.`
-    : friendData.first_name;
+  const displayName = `${friendProfile.first_name} ${friendProfile.last_name[0]}.`;
 
   // Build the profile picture URL (if available)
-  const pictureUrl = friendData.picture_id 
-    ? `https://api.donneur.ca/image/${friendData.picture_id}`
+  const pictureUrl = friendProfile.picture_id 
+    ? `${BACKEND_URL}/image/${friendProfile.picture_id}`
     : null;
 
   return (
@@ -143,7 +112,7 @@ export default function FriendProfile() {
         </View>
         <Text style={styles.displayName}>{displayName}</Text>
         <Text style={styles.memberSince}>
-          Member since: {friendData.member_since || '07-07-2002'}
+          Friends since: {friendProfile.friends_since}
         </Text>
       </View>
 
@@ -190,7 +159,7 @@ export default function FriendProfile() {
               style={styles.modalIcon} 
             />
             <Text style={styles.modalText}>
-              Are you sure you want to remove {friendData.first_name} from your friend list?
+              Are you sure you want to remove {friendProfile.first_name} from your friend list?
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity 

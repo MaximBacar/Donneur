@@ -19,6 +19,8 @@ import { useRouter } from "expo-router";
 import * as ReAnimated from 'react-native-reanimated';
 const { FadeIn, FadeInDown, FadeInRight } = ReAnimated;
 
+import { BACKEND_URL } from '../../../../constants/backend';
+
 // Import UI components and constants
 import IconSymbol from "../../../../components/ui/IconSymbol";
 import { Colors } from "../../../../constants/colors";
@@ -33,7 +35,7 @@ const transactionsData = [];
 export default function PastTransactionsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, donneurID } = useAuth();
+  const { user, donneurID, token } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -50,38 +52,40 @@ export default function PastTransactionsScreen() {
     try {
       setIsLoading(true);
       
-      // Step 1: Get receiver ID if not already available in context
-      let receiverId = donneurID;
-      if (!receiverId && user) {
-        const userResponse = await fetch(`https://api.donneur.ca/get_user?uid=${user.uid}`);
-        if (!userResponse.ok) throw new Error('Failed to fetch user data');
-        const userData = await userResponse.json();
-        receiverId = userData.db_id;
-      }
+      let url = `${BACKEND_URL}/transaction/get`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
+        }
+      });
+      const data = await response.json();
       
-      if (!receiverId) {
-        console.error('No receiver ID available');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Step 2: Fetch transactions using the receiver ID
-      const transactionsResponse = await fetch(`https://api.donneur.ca/get_transactions?receiver_id=${receiverId}`);
-      if (!transactionsResponse.ok) throw new Error('Failed to fetch transactions');
-      const data = await transactionsResponse.json();
-      
-      // Format the transactions for display
+  
       const formattedTransactions = data.transactions.map(transaction => {
-        // Convert date string to more readable format
+       
         const date = new Date(transaction.creation_date);
         const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         const formattedTime = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
         
-        // Determine transaction type and description
-        const isReceived = transaction.transaction_type === 'received';
-        const description = isReceived 
-          ? `Payment received from ${transaction.sender_id}`
-          : `Payment sent to ${transaction.receiver_id}`;
+        const isReceived = transaction.receiver_id === donneurID;
+
+
+        let description;
+
+        switch(transaction.type){
+          case 'donation':
+            description = 'Anonymous Donation';
+            break;
+          case 'withdrawal':
+            description = `Withdrawal at ${transaction.receiver_id}`;
+            break;
+          case 'send':
+            description = isReceived ? `Payment received from ${transaction.sender_id}` : `Payment sent to ${transaction.sender_id}`
+            break;
+        }
           
         return {
           id: transaction.id,
@@ -93,7 +97,7 @@ export default function PastTransactionsScreen() {
           status: transaction.confirmed ? 'completed' : 'pending',
           category: transaction.type || 'transfer',
           reference: transaction.id,
-          raw: transaction // Store the raw data for reference
+          raw: transaction
         };
       });
       
