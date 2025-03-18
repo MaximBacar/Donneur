@@ -83,10 +83,11 @@ export default function IdDocumentScreen() {
       const downloadURL = await getDownloadURL(imageRef);
       console.log('Image uploaded successfully:', downloadURL);
 
-      router.push('/registerNFC');
+      
     } catch (error) {
       console.error('Error uploading image:', error);
     }
+    router.push('/registerNFC');
     
   };
 
