@@ -11,6 +11,7 @@ import {
   StatusBar,
   Platform,
   Modal,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
@@ -18,7 +19,7 @@ import { useRouter } from "expo-router";
 
 import { useAuth } from "../../../context/authContext";
 import {
-  fetchPostsOnce, // For manual fetch of all posts
+  fetchPostsOnce,
   useDeletePost,
   useToggleLike,
   fetchUserPostsOnce,
@@ -37,6 +38,11 @@ export default function HomeScreen() {
   // State for feed
   const [feedPosts, setFeedPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [showOnlyMyPosts, setShowOnlyMyPosts] = useState(false);
+  const [displayedPosts, setDisplayedPosts] = useState([]);
+
+  // Animation for filter button
+  const filterButtonScale = useState(new Animated.Value(1))[0];
 
   // Hooks for delete & like
   const removePost = useDeletePost();
@@ -70,19 +76,27 @@ export default function HomeScreen() {
                 return {
                   ...p,
                   likedBy: updatedDoc.likedBy,
-                  commentCount: updatedDoc.commentCount, // <--- crucial
+                  commentCount: updatedDoc.commentCount,
                 };
               }
               return p;
             })
           );
         }
-        // If doc is "added" or "removed", ignore => user must refresh
       });
     });
 
     return () => unsubscribe();
   }, []);
+
+  // Update displayed posts when feed changes or filter changes
+  useEffect(() => {
+    if (showOnlyMyPosts) {
+      setDisplayedPosts(feedPosts.filter((post) => post.name === user.uid));
+    } else {
+      setDisplayedPosts(feedPosts);
+    }
+  }, [feedPosts, showOnlyMyPosts, user.uid]);
 
   // ─────────────────────────────────────────────────────────
   // 2) LOAD POSTS (for initial or pull-to-refresh)
@@ -97,9 +111,45 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
+  // Load only user posts
+  const loadUserPosts = async () => {
+    setRefreshing(true);
+    try {
+      const posts = await fetchUserPostsOnce(user.uid);
+      setFeedPosts(posts);
+      setShowOnlyMyPosts(true);
+    } catch (error) {
+      console.error("Error fetching user posts:", error);
+    }
+    setRefreshing(false);
+  };
+
   // Pull-to-refresh
   const onRefresh = () => {
-    loadPosts();
+    if (showOnlyMyPosts) {
+      loadUserPosts();
+    } else {
+      loadPosts();
+    }
+  };
+
+  // Toggle filter for user posts
+  const toggleMyPostsFilter = () => {
+    // Animate the button press
+    Animated.sequence([
+      Animated.timing(filterButtonScale, {
+        toValue: 0.9,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(filterButtonScale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    setShowOnlyMyPosts(!showOnlyMyPosts);
   };
 
   // ─────────────────────────────────────────────────────────
@@ -170,7 +220,6 @@ export default function HomeScreen() {
 
   // ─────────────────────────────────────────────────────────
   // 6) GO TO COMMENTS
-  //    Instead of an inline push, define a small function:
   const handleCommentPress = (post) => {
     router.push({
       pathname: "/(screens)/(feed)/CommentScreen",
@@ -212,20 +261,29 @@ export default function HomeScreen() {
   const renderPost = ({ item: post }) => {
     const isLiked = post.likedBy?.includes(user.uid);
     const likeCount = post.likedBy?.length || 0;
-
-    // ✅ Now we read post.commentCount from the doc
     const commentCount = post.commentCount ?? 0;
+    const isOwnPost = post.name === user.uid;
 
     return (
-      <View style={styles.feedItem}>
+      <View
+        style={[
+          styles.feedItem,
+          isOwnPost && showOnlyMyPosts && styles.highlightedPost,
+        ]}
+      >
         <Image
           source={{ uri: post.avatar || placeholderAvatar.uri }}
           style={styles.avatar}
         />
         <View style={{ flex: 1 }}>
           <View style={styles.postHeader}>
-            <View>
-              <Text style={styles.name}>{post.name}</Text>
+            <View style={styles.nameContainer}>
+              <Text style={styles.name}>{isOwnPost ? "You" : post.name}</Text>
+              {isOwnPost && (
+                <View style={styles.myPostBadge}>
+                  <Text style={styles.myPostBadgeText}>My Post</Text>
+                </View>
+              )}
               <Text style={styles.timestamp}>
                 {post.timestamp?.toDate
                   ? moment(post.timestamp.toDate()).fromNow()
@@ -233,7 +291,7 @@ export default function HomeScreen() {
               </Text>
             </View>
 
-            {post.name === user.uid && (
+            {isOwnPost && (
               <TouchableOpacity onPress={() => handleMorePress(post)}>
                 <Ionicons
                   name="ellipsis-horizontal"
@@ -270,7 +328,7 @@ export default function HomeScreen() {
               <Ionicons
                 name={isLiked ? "heart" : "heart-outline"}
                 size={24}
-                color="black"
+                color={isLiked ? "#FF3B30" : "black"}
               />
             </TouchableOpacity>
 
@@ -286,7 +344,7 @@ export default function HomeScreen() {
                 style={styles.countItem}
                 onPress={() => showLikesModal(post)}
               >
-                <Ionicons name="heart" size={16} color="black" />
+                <Ionicons name="heart" size={16} color="#FF3B30" />
                 <Text style={styles.countText}>{likeCount}</Text>
               </TouchableOpacity>
               <View style={styles.countItem}>
@@ -308,12 +366,39 @@ export default function HomeScreen() {
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Feed</Text>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>
+            {showOnlyMyPosts ? "My Posts" : "Feed"}
+          </Text>
+          <Animated.View style={{ transform: [{ scale: filterButtonScale }] }}>
+            <TouchableOpacity
+              style={[
+                styles.filterButton,
+                showOnlyMyPosts && styles.filterButtonActive,
+              ]}
+              onPress={toggleMyPostsFilter}
+            >
+              <Ionicons
+                name="person"
+                size={20}
+                color={showOnlyMyPosts ? "white" : "black"}
+              />
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  showOnlyMyPosts && styles.filterButtonTextActive,
+                ]}
+              >
+                {showOnlyMyPosts ? "Viewing My Posts" : "My Posts"}
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
       </View>
 
       <FlatList
         style={styles.feed}
-        data={feedPosts}
+        data={displayedPosts}
         renderItem={renderPost}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
@@ -323,13 +408,21 @@ export default function HomeScreen() {
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconContainer}>
-              <Ionicons name="newspaper-outline" size={80} color="#CCCCCC" />
+              <Ionicons
+                name={showOnlyMyPosts ? "person-outline" : "newspaper-outline"}
+                size={80}
+                color="#CCCCCC"
+              />
             </View>
-            <Text style={styles.emptyTitle}>Your feed is empty</Text>
+            <Text style={styles.emptyTitle}>
+              {showOnlyMyPosts
+                ? "You haven't posted yet"
+                : "Your feed is empty"}
+            </Text>
             <Text style={styles.emptyText}>
-              Your community is waiting! 🌍💙 Share an update, an event, or a
-              simple message to connect with those who need it most. Every word
-              makes a difference!"
+              {showOnlyMyPosts
+                ? "Share your thoughts, experiences, or a photo with the community!"
+                : "Your community is waiting! 🌍💙 Share an update, an event, or a simple message to connect with those who need it most. Every word makes a difference!"}
             </Text>
             <TouchableOpacity
               style={styles.emptyButton}
@@ -389,10 +482,38 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#F0F0F0",
   },
+  headerTitleContainer: {
+    width: "100%",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   headerTitle: {
     fontSize: 28,
     fontWeight: "bold",
     color: "#000",
+    marginBottom: 8,
+  },
+  filterButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0F0F0",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    marginTop: 4,
+  },
+  filterButtonActive: {
+    backgroundColor: "#000",
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginLeft: 4,
+    color: "#000",
+  },
+  filterButtonTextActive: {
+    color: "#FFF",
   },
   feed: {
     backgroundColor: "#FFF",
@@ -401,6 +522,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     padding: 16,
     flexDirection: "row",
+  },
+  highlightedPost: {
+    backgroundColor: "#F8F8F8",
   },
   separator: {
     height: 1,
@@ -416,13 +540,30 @@ const styles = StyleSheet.create({
   postHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     paddingRight: 8,
+  },
+  nameContainer: {
+    flex: 1,
   },
   name: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#000",
+  },
+  myPostBadge: {
+    backgroundColor: "#000",
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    alignSelf: "flex-start",
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  myPostBadgeText: {
+    color: "#FFF",
+    fontSize: 10,
+    fontWeight: "bold",
   },
   timestamp: {
     fontSize: 14,
@@ -484,6 +625,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   // Modal
   modalContainer: {
@@ -531,7 +676,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-  // New empty state styles
+  // Empty state styles
   emptyContainer: {
     flex: 1,
     justifyContent: "center",

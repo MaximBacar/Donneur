@@ -13,6 +13,7 @@ import {
   getDoc,
   onSnapshot,
   increment,
+  where,
 } from "firebase/firestore";
 import { database } from "../../../../config/firebase";
 import { useAuth } from "../../../../context/authContext";
@@ -46,6 +47,22 @@ export const subscribeToPosts = (onPostsChange, onError) => {
  */
 export const fetchPostsOnce = async () => {
   const q = query(collection(database, "posts"), orderBy("timestamp", "desc"));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  }));
+};
+
+/** ──────────────────────────────────────────────────────
+ *  2.1) Fetch posts by a specific user (added function)
+ */
+export const fetchUserPostsOnce = async (userId) => {
+  const q = query(
+    collection(database, "posts"),
+    where("name", "==", userId),
+    orderBy("timestamp", "desc")
+  );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((docSnap) => ({
     id: docSnap.id,
