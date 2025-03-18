@@ -26,6 +26,7 @@ export default function PersonProfileScreen() {
   const [userInfo, setUserInfo] = useState(null);
   const [userBalance, setUserBalance] = useState(0);
   const [loading, setLoading] = useState(true);
+  
 
   useEffect(() => {
     if (user) {

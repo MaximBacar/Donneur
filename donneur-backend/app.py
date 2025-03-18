@@ -3,7 +3,6 @@ from    flask_cors          import  CORS
 from    firebase_connector  import  Database
 from    donneur             import  Donneur
 from    firebase_admin      import  auth,         db  
-import datetime
 
 
 
@@ -22,27 +21,40 @@ class App():
             "allow_headers": ["Content-Type", "Authorization"]  # Allow these headers
         }})
         
-        self.app.add_url_rule(  "/",                                "index",                self.index                                  )
-        self.app.add_url_rule(  "/docs",                            "docs",                 self.docs                                   )
-        self.app.add_url_rule(  "/upload_image",                    "upload_image",         self.upload_image,          methods=["POST"])
-        self.app.add_url_rule(  "/upload_base64",                   "upload_base64",        self.upload_base64,         methods=["POST"])
-        self.app.add_url_rule(  "/image/<image_id>",                "image",                self.image,                 methods=["GET"] )
-        self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",      self.payment_profile,       methods=["GET"] )
-        self.app.add_url_rule(  "/create_payment",                  "create_payment",       self.create_stripe_payment, methods=["POST"])
-        self.app.add_url_rule(  "/payment_succeeded",                "payment_succeeded",    self.payment_succeeded,    methods=["POST"])
-        self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",       self.cancel_stripe_payment, methods=["POST"])
-        self.app.add_url_rule(  "/withdraw",                        "withdraw",             self.withdraw,              methods=["POST"])
-        self.app.add_url_rule(  "/create_receiver",                 "create_receiver",      self.create_receiver,       methods=["POST"])
-        self.app.add_url_rule(  "/update_receiver_email",           "update_receiver_email", self.update_receiver_email, methods=["POST"])
-        self.app.add_url_rule(  "/get_id/<profile_id>",             "get_id",               self.get_id,                methods=["GET"] )
-        self.app.add_url_rule(  "/get_shelter_locations",           "get_shelter_locations", self.get_shelter_locations, methods=["GET"])
-        self.app.add_url_rule(  "/get_role",                        "get_role",         self.get_role,              methods=["GET"] )
-        self.app.add_url_rule(  "/get_user",                        "get_user",         self.get_user,              methods=["GET"] )
-        self.app.add_url_rule(  "/get_uid",                         "get_uid",          self.get_uid,               methods=["GET"])
-        self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",        self.get_db_id,             methods=["GET"] )
-        self.app.add_url_rule(  "/get_balance/<id>",                "get_balance",      self.get_balance,             methods=["GET"] )
-        self.app.add_url_rule(  "/set_password",                    "set_password",      self.set_password,          methods=["POST"])
+        self.app.add_url_rule(  "/",                                "index",                    self.index                                      )
+        self.app.add_url_rule(  "/docs",                            "docs",                     self.docs                                       )
+
         
+
+        #   PAYMENT
+        self.app.add_url_rule(  "/create_payment",                  "create_payment",           self.create_stripe_payment,     methods=["POST"])
+        self.app.add_url_rule(  "/cancel_payment",                  "cancel_payment",           self.cancel_stripe_payment,     methods=["POST"])
+        self.app.add_url_rule(  "/payment_succeeded",               "payment_succeeded",        self.payment_succeeded,         methods=["POST"])
+        self.app.add_url_rule(  "/withdraw",                        "withdraw",                 self.withdraw,                  methods=["POST"])
+        self.app.add_url_rule(  "/send",                            "send",                     self.send,                      methods=["POST"])
+        
+        #   IMAGE
+        self.app.add_url_rule(  "/upload_base64",                   "upload_base64",            self.upload_base64,             methods=["POST"])
+        self.app.add_url_rule(  "/image/<image_id>",                "image",                    self.image,                     methods=["GET"] )
+        
+        #   RECEIVER
+        self.app.add_url_rule(  "/create_receiver",                 "create_receiver",          self.create_receiver,           methods=["POST"])
+        self.app.add_url_rule(  "/update_receiver_email",           "update_receiver_email",    self.update_receiver_email,     methods=["POST"])
+        self.app.add_url_rule(  "/set_password",                    "set_password",             self.set_password,              methods=["POST"])
+        
+        
+        
+        self.app.add_url_rule(  "/payment_profile/<profile_id>",    "payment_profile",          self.payment_profile,           methods=["GET"] )
+        self.app.add_url_rule(  "/get_id/<profile_id>",             "get_id",                   self.get_id,                    methods=["GET"] )
+        self.app.add_url_rule(  "/get_shelter_locations",           "get_shelter_locations",    self.get_shelter_locations,     methods=["GET"] )
+        self.app.add_url_rule(  "/get_role",                        "get_role",                 self.get_role,                  methods=["GET"] )
+        self.app.add_url_rule(  "/get_user",                        "get_user",                 self.get_user,                  methods=["GET"] )
+        self.app.add_url_rule(  "/get_uid",                         "get_uid",                  self.get_uid,                   methods=["GET"] )
+        self.app.add_url_rule(  "/get_db_id/<uid>",                 "get_db_id",                self.get_db_id,                 methods=["GET"] )
+        self.app.add_url_rule(  "/get_balance/<id>",                "get_balance",              self.get_balance,               methods=["GET"] )
+        self.app.add_url_rule(  "/is_password_link_valid",          "is_password_link_valid",   self.is_password_link_valid,    methods=["GET"] )
+        self.app.add_url_rule(  "/get_transactions",                "get_transactions",         self.get_transactions,          methods=["GET"] )
+
 
     def index(self):
         return "Donneur.ca API"
@@ -53,14 +65,6 @@ class App():
             if image:
                 return send_file(image, mimetype='image/png')
         return 'Image not found', 404
-    
-    def upload_image(self):
-        if 'image' not in request.files:
-            return 400
-
-        image = request.files['image']
-        self.donneur.add_profile_picture('uzS6R6ZwE7', image)
-        return {'status':'success'}
     
     def upload_base64(self):
 
@@ -88,6 +92,7 @@ class App():
         except Exception as e:
             return {"error": str(e)}, 500
     
+    # done
     def payment_profile(self, profile_id):
         if profile_id:
             data = self.donneur.database.get_receiver( profile_id )
@@ -101,6 +106,7 @@ class App():
             return 'No user', 400
         return 'No user', 400
     
+
     def get_shelter_locations(self):
         data = self.donneur.database.get_all_organizations()
 
@@ -140,6 +146,7 @@ class App():
     def docs(self):
         return "Donneur.ca API Docs"
     
+    # done
     def create_receiver(self):
         data = request.get_json()
 
@@ -170,6 +177,12 @@ class App():
             if user_data:
                 return {'role' : user_data['role']}
         return 400
+    
+    def send(self):
+        # TODO Implement
+        receiver_id = request.args.get('receiver')
+        sender_id   = request.args.get('sender')
+        return { 'status' : 200 }
     
 
 
@@ -210,6 +223,7 @@ class App():
     #========================
     #WITHDRAW
 
+    # done
     def withdraw(self):
         data = request.get_json()
 
@@ -234,7 +248,19 @@ class App():
         
         return {'status' : 'invalid'}, 400
 
+    # done
+    def is_password_link_valid(self):
+        id = request.args.get('id')
+        if id:
+            receiver_ref = db.reference(f'/receivers/{id}')
+            receiver = receiver_ref.get()
+            if receiver['app_account'] == False:
+                return {'validity':True}
+            return {'validity':False}
+        
+        return {'status' : 'invalid'}, 400
 
+    # done
     def set_password(self):
         """
         Endpoint for when a receiver sets their password.
@@ -243,6 +269,7 @@ class App():
         then updates the receiver record with the generated uid.
         """
         data = request.get_json()
+        print(data)
         receiver_id = data.get('receiver_id')
         password = data.get('password')
         if not receiver_id or not password:
@@ -251,20 +278,22 @@ class App():
         # Look up the receiver record from the Realtime Database.
         receiver_ref = db.reference(f'/receivers/{receiver_id}')
         receiver = receiver_ref.get()
+        print(receiver)
         if not receiver or not receiver.get('email'):
             return jsonify({'error': 'Receiver not found or email not set'}), 400
 
         email = receiver['email']
+        print(email)
         try:
             # Create the Firebase Auth user with the stored email and provided password.
             user_record = auth.create_user(
                 email=email,
                 password=password,
             )
+            print(user_record)
             # Update the receiver record with the new auth uid (stored as uid)
             receiver_ref.update({
-                'uid': user_record.uid,
-                'password_set_date': datetime.now().isoformat()
+                'app_account': True,
             })
              # Create a corresponding entry in the /users table.
             users_ref = db.reference('/users')
@@ -274,8 +303,20 @@ class App():
             })
             return jsonify({'status': 'success', 'uid': user_record.uid}), 200
         except Exception as e:
+            print(e)
             return jsonify({'error': str(e)}), 500
 
+
+    def get_transactions(self):
+        receiver_id = request.args.get('receiver_id')
+        organization_id = request.args.get('organization_id')
+
+        if not receiver_id and not organization_id:
+            return jsonify({'error': 'Either receiver_id or organization_id must be provided'}), 400
+    
+        transactions = self.donneur.database.get_transactions(receiver_id, organization_id)
+    
+        return jsonify({'transactions': transactions})
 
 
 
