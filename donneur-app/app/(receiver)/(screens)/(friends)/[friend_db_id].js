@@ -16,6 +16,7 @@ import { auth, database } from '../../../../config/firebase';
 import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+
 export default function FriendProfile() {
   const { friend_db_id } = useLocalSearchParams(); // Friend's UID
   const router = useRouter();
