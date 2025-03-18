@@ -7,3 +7,4 @@ from .receiver_controller       import ReceiverController
 from .transaction_controller    import TransactionController
 from .subscription_controller   import SubscriptionController
 from .organization_controller   import OrganizationController
+from .media_controller          import MediaController
