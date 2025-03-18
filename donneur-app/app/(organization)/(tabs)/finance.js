@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   SafeAreaView,
   View,
@@ -13,6 +13,7 @@ import {
   TextInput,
   FlatList,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../../constants/colors';
@@ -44,6 +45,7 @@ export default function FinanceScreen() {
   const [transactions, setTransactions] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [metrics, setMetrics] = useState({...financialMetrics});
   
@@ -253,6 +255,13 @@ export default function FinanceScreen() {
     }
   };
 
+  // Handle refresh
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await getTransactions();
+    setRefreshing(false);
+  }, [donneurID, token]);
+
   // Initial data fetch
   useEffect(() => {
     if (donneurID && token) {
@@ -409,6 +418,13 @@ export default function FinanceScreen() {
       <ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContent}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            colors={[Colors.light.tint]} 
+          />
+        }
       >
         {/* ========== HEADER SECTION ========== */}
         <Animated.View 
