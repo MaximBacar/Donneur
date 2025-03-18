@@ -15,12 +15,13 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { useUser } from './registerContext';
 
 import { v4 as uuidv4 } from 'uuid';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, updateMetadata } from 'firebase/storage';
 import { storage } from '../../../../config/firebase';
 import { useAuth } from '../../../../context/authContext';
 
 const screenWidth = Dimensions.get('window').width;
 
+import { BACKEND_URL } from '../../../../constants/backend';
 
 
 export default function IdDocumentScreen() {
@@ -30,7 +31,7 @@ export default function IdDocumentScreen() {
   const cameraRef                       = useRef(null);
   
   const { userID }                      = useUser();
-  const { user }                        = useAuth();
+  const { user, token }                 = useAuth();
 
 
   const Camera = () => {
@@ -63,6 +64,50 @@ export default function IdDocumentScreen() {
     )
   }
 
+  const uploadImage = async (blob) => {
+      // STORE IMAGE IN FIREBASE
+      const imageRef = ref(storage, `/images/${uuidv4()}.png`);
+      await uploadBytes(imageRef, blob);
+  
+      await updateMetadata(imageRef, {
+        cacheControl: 'public,max-age=31536000', // Long-term cache
+        contentType: 'image/png',
+      });
+  
+      // GET IMAGE URL
+      const publicURL = `https://firebasestorage.googleapis.com/v0/b/${storage.app.options.storageBucket}/o/${encodeURIComponent(imageRef.fullPath)}?alt=media`;
+  
+      await sendLinkToBackEnd(publicURL)
+  
+      console.log(publicURL);
+    }
+  
+    const sendLinkToBackEnd = async (firebase_link) => {
+      try{
+        const body = JSON.stringify({
+          'firebase_link': firebase_link,
+          'user_id':userID
+        });
+        const response = await fetch(`${BACKEND_URL}/media/set_id_document`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning' : 'remove-later'
+          },
+          body:body,
+        });
+  
+        if (!response.ok) {
+          throw new Error(`Failed to send link: ${response.status} ${response.statusText}`);
+        }
+  
+      }
+      catch(error){
+        console.log(error);
+      }
+    }
+
 
   const router = useRouter();
 
@@ -77,17 +122,15 @@ export default function IdDocumentScreen() {
       const response = await fetch(photo.uri);
       const blob = await response.blob();
 
-      const imageRef = ref(storage, `/data/${user.uid}/${uuidv4()}.png`);
-      await uploadBytes(imageRef, blob);
+      uploadImage(blob);
+      console.log("Uploaded");
 
-      const downloadURL = await getDownloadURL(imageRef);
-      console.log('Image uploaded successfully:', downloadURL);
-
-      
     } catch (error) {
       console.error('Error uploading image:', error);
     }
-    router.push('/registerNFC');
+    
+    router.push('/registrationConfirmation');
+    // router.push('/registerNFC');
     
   };
 

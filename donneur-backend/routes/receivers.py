@@ -4,6 +4,8 @@ from routes.authentication  import auth_required
 from controllers import ReceiverController
 from models         import Receiver
 
+import logging
+
 class CreateReceiverResource(Resource):
     @auth_required
     def post(self, user_id : str, role : str ):
@@ -20,6 +22,7 @@ class CreateReceiverResource(Resource):
             )
             return { 'receiver_id' : receiver.id }, 200
         except Exception as e:
+            logging.error(str(e))
             return {'error' : str(e)}, 400
 
 class AddEmailResource(Resource):

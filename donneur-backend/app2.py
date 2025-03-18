@@ -11,6 +11,7 @@ from routes.transactions    import GetTransactionsResource, SendFundsResource, W
 from routes.subscriptions   import SubscribeResource, UnsubscribeResource, GetSubscriptionsResource
 from routes.organizations   import GetOrganizationsResource, GetCurrentOccupancy, SetCurrentOccupancy
 from routes.authentication  import AuthenticationResource
+from routes.medias          import IdDocumentUploadResource, IdPictureUploadResource, BannerUploadResource, LogoUploadResource
 
 
 
@@ -59,12 +60,19 @@ api.add_resource(   GetTransactionsResource,    '/transaction/get'              
 api.add_resource(   SendFundsResource,          '/transaction/send'             )
 api.add_resource(   WithdrawFundsResource,      '/transaction/withdraw'         )
 
+api.add_resource(   IdPictureUploadResource,    '/media/set_id_picture'         )
+api.add_resource(   IdDocumentUploadResource,   '/media/set_id_document'        )
+api.add_resource(   BannerUploadResource,       '/media/set_banner'             )
+api.add_resource(   LogoUploadResource,         '/media/set_logo'               )
+
 api.add_resource(   GetFeedResource,            '/feed'                         ) # get the feed params: start, end
 api.add_resource(   GetPostResource,            '/feed/get_post'                ) # get a single post params: post_id
 api.add_resource(   CreatePostResource,         '/feed/create'                  ) # create a new post
 api.add_resource(   DeletePostResource,         '/feed/delete'                  ) # delete a post params: post_id
 api.add_resource(   ReplyToPostResource,        '/feed/reply'                   ) # reply to a post params: post_id
 api.add_resource(   GetUserPostsResource,       '/feed/get_user_posts'          ) # reply to a post params: post_id
+
+
 
 
 @app.route('/')
