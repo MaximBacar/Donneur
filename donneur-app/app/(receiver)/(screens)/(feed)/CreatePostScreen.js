@@ -21,10 +21,12 @@ import { useRouter } from "expo-router";
 import { useAddPost } from "./postService";
 import { useAuth } from "../../../../context/authContext";
 
+import { BACKEND_URL } from "../../../../constants/backend";
+
 export default function CreatePostScreen() {
   const navigation = useNavigation();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, userData, role, token } = useAuth();
   const addPost = useAddPost();
 
   const [text, setText] = useState("");
@@ -40,6 +42,29 @@ export default function CreatePostScreen() {
     });
     return unsubscribe;
   }, [navigation]);
+
+
+  const publishPost = async (text) => {
+    let url = `${BACKEND_URL}/feed/create`;
+    console.log(text);
+    const payload = {
+      content : {'text' : text},
+      visibility : 'all'
+    };
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`, 
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning' : 'remove-later'
+      },
+      body:JSON.stringify(payload)
+    });
+    
+    const data = await response.json();
+    console.log(data);
+
+  }
 
   // Pick image from gallery
   const pickImage = async () => {
@@ -85,7 +110,8 @@ export default function CreatePostScreen() {
 
     try {
       setIsPosting(true);
-      await addPost(text, image);
+      // await addPost(text, image);
+      await publishPost(text);
       setIsPosting(false);
 
       // Show an Alert with an "OK" button
@@ -97,6 +123,7 @@ export default function CreatePostScreen() {
       ]);
     } catch (error) {
       setIsPosting(false);
+      console.log(error);
       Alert.alert("Error", "Could not create post. Please try again later.");
     }
   };
@@ -149,14 +176,14 @@ export default function CreatePostScreen() {
         <View style={styles.userInfoRow}>
           <Image
             source={{
-              uri: user?.photoURL || "https://i.pravatar.cc/300",
+              uri: userData?.logo_id || userData?.id_picture_file || "https://i.pravatar.cc/300",
             }}
             style={styles.userAvatar}
           />
 
           <View style={styles.userNameContainer}>
             {/* Replaced "John Doe" with user.uid */}
-            <Text style={styles.userName}>{user?.uid || "UnknownUID"}</Text>
+            <Text style={styles.userName}>{userData?.name || userData?.first_name + " " + userData?.last_name || 'Loading error'}</Text>
             <Text style={styles.timeText}>Now</Text>
           </View>
         </View>

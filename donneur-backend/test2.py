@@ -25,3 +25,6 @@ Controller.initialize()
 # )
 
 # print(o.id)
+
+
+#FeedController.create_post('-OL_DerRWLhVkVebdg7L', {'text' : 'New to the app'}, 'all')

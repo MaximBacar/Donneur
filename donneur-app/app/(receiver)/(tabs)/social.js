@@ -16,7 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
 import { useRouter } from "expo-router";
-
+import { BACKEND_URL } from "../../../constants/backend";
 import { useAuth } from "../../../context/authContext";
 import {
   fetchPostsOnce,
@@ -33,13 +33,15 @@ const placeholderAvatar = { uri: "https://i.pravatar.cc/300" };
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, token, DonneurID } = useAuth();
 
-  // State for feed
-  const [feedPosts, setFeedPosts] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
+  const [myPosts, setMyPosts]                 = useState([]);
+  const [feedPosts, setFeedPosts]             = useState([]);
+  const [refreshing, setRefreshing]           = useState(false);
+  const [displayedPosts, setDisplayedPosts]   = useState([]);
   const [showOnlyMyPosts, setShowOnlyMyPosts] = useState(false);
-  const [displayedPosts, setDisplayedPosts] = useState([]);
+  const [firstLoad, setFirstLoad]             = useState(false);
+  
 
   // Animation for filter button
   const filterButtonScale = useState(new Animated.Value(1))[0];
@@ -52,74 +54,78 @@ export default function HomeScreen() {
   const [likesModalVisible, setLikesModalVisible] = useState(false);
   const [currentLikes, setCurrentLikes] = useState([]);
 
-  // ─────────────────────────────────────────────────────────
-  // 1) ON MOUNT: fetch once + partial real-time for doc changes
   useEffect(() => {
-    // A) Initial fetch
+    const fetchData = async () => {
+      if (!firstLoad) {
+        await loadPosts();
+        await loadUserPosts();
+        setFirstLoad(true);
+      }
+    };
+  
+    fetchData();
+  
+  }, [firstLoad]);
+
+  useEffect(() => {
     loadPosts();
-
-    // B) onSnapshot => merges 'likedBy' AND 'commentCount' if doc is "modified"
-    const q = query(
-      collection(database, "posts"),
-      orderBy("timestamp", "desc")
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === "modified") {
-          const updatedDoc = change.doc.data();
-          const docId = change.doc.id;
-
-          setFeedPosts((prev) =>
-            prev.map((p) => {
-              if (p.id === docId) {
-                // Merge BOTH likedBy and commentCount from updated doc
-                return {
-                  ...p,
-                  likedBy: updatedDoc.likedBy,
-                  commentCount: updatedDoc.commentCount,
-                };
-              }
-              return p;
-            })
-          );
-        }
-      });
-    });
-
-    return () => unsubscribe();
+    loadUserPosts();
   }, []);
 
-  // Update displayed posts when feed changes or filter changes
+
+
   useEffect(() => {
     if (showOnlyMyPosts) {
-      setDisplayedPosts(feedPosts.filter((post) => post.name === user.uid));
+      setDisplayedPosts(myPosts);
     } else {
       setDisplayedPosts(feedPosts);
     }
-  }, [feedPosts, showOnlyMyPosts, user.uid]);
+  }, [feedPosts, myPosts, showOnlyMyPosts]);
 
-  // ─────────────────────────────────────────────────────────
-  // 2) LOAD POSTS (for initial or pull-to-refresh)
+
+  
   const loadPosts = async () => {
     setRefreshing(true);
     try {
-      const posts = await fetchPostsOnce();
-      setFeedPosts(posts);
+      let url = `${BACKEND_URL}/feed`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
+        }
+      });
+      const data = await response.json();
+      const dataList = Object.values(data.feed);
+
+      setFeedPosts(dataList);
     } catch (error) {
       console.error("Error fetching posts:", error);
     }
     setRefreshing(false);
   };
 
-  // Load only user posts
+
   const loadUserPosts = async () => {
     setRefreshing(true);
     try {
-      const posts = await fetchUserPostsOnce(user.uid);
-      setFeedPosts(posts);
-      setShowOnlyMyPosts(true);
+      let url = `${BACKEND_URL}/feed/get_user_posts`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
+        }
+      });
+      
+      const data = await response.json();
+      const dataList = Object.values(data.posts);
+      console.log(dataList);
+      setMyPosts(dataList);
     } catch (error) {
-      console.error("Error fetching user posts:", error);
+      console.error("Error fetching posts:", error);
     }
     setRefreshing(false);
   };
@@ -222,8 +228,8 @@ export default function HomeScreen() {
   // 6) GO TO COMMENTS
   const handleCommentPress = (post) => {
     router.push({
-      pathname: "/(screens)/(feed)/CommentScreen",
-      params: { id: post.id },
+      pathname: "/(screens)/(feed)/"+post.id,
+      // params: { id: post.id },
     });
   };
 
@@ -262,7 +268,7 @@ export default function HomeScreen() {
     const isLiked = post.likedBy?.includes(user.uid);
     const likeCount = post.likedBy?.length || 0;
     const commentCount = post.commentCount ?? 0;
-    const isOwnPost = post.name === user.uid;
+    const isOwnPost = post.author.id === DonneurID;
 
     return (
       <View
@@ -272,22 +278,20 @@ export default function HomeScreen() {
         ]}
       >
         <Image
-          source={{ uri: post.avatar || placeholderAvatar.uri }}
+          source={{ uri: post.author.picture_id || placeholderAvatar.uri }}
           style={styles.avatar}
         />
         <View style={{ flex: 1 }}>
           <View style={styles.postHeader}>
             <View style={styles.nameContainer}>
-              <Text style={styles.name}>{isOwnPost ? "You" : post.name}</Text>
+              <Text style={styles.name}>{isOwnPost ? "You" : post.author.name}</Text>
               {isOwnPost && (
                 <View style={styles.myPostBadge}>
                   <Text style={styles.myPostBadgeText}>My Post</Text>
                 </View>
               )}
               <Text style={styles.timestamp}>
-                {post.timestamp?.toDate
-                  ? moment(post.timestamp.toDate()).fromNow()
-                  : "Some time ago"}
+                {moment(Date.parse(post.created_at.split('.')[0])).fromNow()}
               </Text>
             </View>
 
@@ -303,7 +307,7 @@ export default function HomeScreen() {
           </View>
 
           <Text style={styles.post}>
-            {post.text || "No text for this post."}
+            {post.content.text || "No text for this post."}
           </Text>
 
           {post.image && (
@@ -359,8 +363,9 @@ export default function HomeScreen() {
 
   const ItemSeparator = () => <View style={styles.separator} />;
 
-  // ─────────────────────────────────────────────────────────
-  // 9) MAIN RENDER
+  if (firstLoad == false) {
+    return
+  }
   return (
     <SafeAreaView style={styles.safeContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
