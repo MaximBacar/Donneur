@@ -15,8 +15,7 @@ export default function ConfirmAddFriend(){
     const { user } = useAuth();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
-
-
+    const [isScanning, setIsScanning] = useState(false);
     const [imageLoading, setImageLoading] = useState(true);
     
       useEffect(() => {
@@ -29,16 +28,33 @@ export default function ConfirmAddFriend(){
       async function fetchUserData(uid) {
         try {
           const res = await fetch(`https://api.donneur.ca/get_user?uid=${uid}`);
+          
+          // Check if response is OK
+          if (!res.ok) {
+            throw new Error(`Server responded with status: ${res.status}`);
+          }
+          
+          // Check content type
+          const contentType = res.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            // Handle non-JSON response
+            const text = await res.text();
+            console.error('Non-JSON response:', text);
+            throw new Error('Server returned non-JSON response');
+          }
+          
           const data = await res.json();
           setFriendData(data);
         } catch (err) {
           console.error('Error fetching friend data:', err);
+          Alert.alert('Error', 'Could not load friend data. Please try again.');
         } finally {
           setLoading(false);
         }
       }
     
     async function addFriend(){
+        setIsScanning(true);
         try {
             // For example, use the scanned encoded string to create a new friend request.
             const docRef = await addDoc(collection(database, 'friends'), {

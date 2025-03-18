@@ -6,26 +6,45 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
+  StatusBar
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import QRCode from 'react-native-qrcode-svg';
 import { useAuth } from '../../../../context/authContext'; // adjust the path as needed
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ReceiveScreen() {
   const router = useRouter();
   const { user, donneurID } = useAuth();
+  const insets = useSafeAreaInsets();
 
   // Use the user's uid as the unique QR code value.
   const uniqueValue = user ? user.uid : '';
 
+  const handleGoBack = () => {
+    router.back();
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleGoBack}
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Receive</Text>
+        <View style={{ width: 24 }} />
+      </View>
+
       <ScrollView contentContainerStyle={styles.contentContainer}>
-        {/* Header */}
-        <View style={styles.headerContainer}>
-          <Text style={styles.title}>Receive</Text>
-          <Text style={styles.subtitle}>How to receive donations</Text>
-        </View>
+        {/* Subtitle */}
+        <Text style={styles.subtitle}>How to receive donations</Text>
 
         {/* NFC Card Section */}
         <Text style={styles.sectionHeader}>NFC Card</Text>
@@ -71,21 +90,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+  },
   contentContainer: {
     padding: 24,
   },
-  headerContainer: {
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 4,
-  },
   subtitle: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
+    marginBottom: 20,
   },
   sectionHeader: {
     fontSize: 20,

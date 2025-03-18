@@ -1,4 +1,4 @@
-from    firebase_admin import storage
+from    firebase_admin import storage, db
 from    PIL import Image
 import  base64
 import  enum
@@ -16,22 +16,30 @@ class MediaController:
         PICTURE         = 'picture'
         VIDEO           = 'video'
 
-    def upload_image( user_id : str, media_type : MediaType, image_data):
-        image_bytes : bytes         = base64.b64decode( image_data )
-        image       : Image.Image   = Image.open(io.BytesIO(image_bytes))
+    def upload_image(user_id: str, media_type: MediaType, firebase_link: str):
+    
+        match media_type:
+            case MediaController.MediaType.ID_DOCUMENT:
+                path = f'/receivers/{user_id}/id_document_file'
+            case MediaController.MediaType.ID_PICTURE:
+                path = f'/receivers/{user_id}/id_picture_file'
+            case MediaController.MediaType.LOGO:
+                path = f'/organizations/{user_id}/logo_file'
+       
+            case MediaController.MediaType.BANNER:
+                path = f'/organizations/{user_id}/banner_file'
+            
+            case _:
+                raise ValueError("Unsupported media type for database storage")
+            
+        reference : db.Reference = db.reference(path)
 
-        temp_path   : str           = f"/tmp/{user_id}_{media_type.value}.png"
-        image.save(temp_path)
-
+        if not reference.parent.get():
+            raise ValueError("Invalid user")
         
-        bucket = storage.bucket()
-        blob = bucket.blob(f"{media_type.value}/{user_id}.png")
-        blob.upload_from_filename(temp_path, content_type="image/png")
-
-        public_url = blob.public_url
+        reference.set(firebase_link)
         
 
-        return public_url
-     
+      
         
         

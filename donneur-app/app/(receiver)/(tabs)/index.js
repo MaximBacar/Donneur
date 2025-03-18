@@ -73,7 +73,7 @@ export default function DashboardScreen() {
     setRefreshing(true);
     await Promise.all([fetchUserInfo(), fetchBalance(), fetchFriendsCount(), fetchTransactions()]);
     setRefreshing(false);
-  }, [user]);
+  }, [user, donneurID, token]);
   
 
   const fetchFriendsCount = async () => {
@@ -194,7 +194,8 @@ export default function DashboardScreen() {
           status: transaction.confirmed ? 'completed' : 'pending',
           category: transaction.type || 'transfer',
           reference: transaction.id,
-          raw: transaction
+          raw: transaction,
+          rawDate: date // Add the actual date object for chart processing
         };
       });
       
@@ -425,12 +426,15 @@ export default function DashboardScreen() {
       fetchTransactions();
       
       // Set interval to fetch balance every 30 seconds
-      const interval = setInterval(fetchBalance, 30000);
+      const interval = setInterval(() => {
+        fetchBalance();
+        fetchTransactions(); // Also refresh transactions periodically
+      }, 30000);
       
       // Cleanup interval on component unmount
       return () => clearInterval(interval);
     }
-  }, [user, donneurID]);
+  }, [user, donneurID, token]);
 
   // While user info is loading, show an enhanced loader
   if (loadingUser) {
@@ -496,6 +500,7 @@ export default function DashboardScreen() {
           <TouchableOpacity 
             style={styles.withdrawButton} 
             activeOpacity={0.7}
+            onPress={() => router.push("/(screens)/withdraw/withdraw")}
           >
             <IconSymbol 
               name={Platform.OS === 'ios' ? 'arrow.up.circle.fill' : 'arrow-upward'} 
@@ -522,7 +527,7 @@ export default function DashboardScreen() {
               <Text style={styles.walletSubtitle}>{fullName}</Text>
               <View style={styles.walletDetails}>
                 <View style={styles.walletDetailRow}>
-                  <Text style={[styles.walletDetailLabel, { width: 100 }]}>DOB:</Text>
+                  <Text style={[styles.walletDetailLabel, { width: 40 }]}>DOB:</Text>
                   <Text style={styles.walletDetailValue}>{dob}</Text>
                 </View>
                 <View style={styles.walletDetailRow}>
@@ -781,7 +786,7 @@ const styles = StyleSheet.create({
   // Balance Display Styles
   balanceContainer: {
     alignItems: "center",
-    marginTop: 24,
+    marginTop: 48,
     marginBottom: 24,
   },
   balanceValue: {
@@ -897,7 +902,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#fff",
     opacity: 0.8,
-    marginRight: 8, // Using margin instead of fixed width for consistent spacing
+    width: 100, // Fixed width instead of marginRight for proper alignment
   },
   walletDetailValue: {
     fontSize: 14,
