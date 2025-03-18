@@ -1,6 +1,7 @@
 from    flask_restful           import  Resource, reqparse
 from    controllers             import  decode_token
 from    flask                   import  request
+from    models                  import  User
 
 
 def auth_required(func):
@@ -16,6 +17,7 @@ def auth_required(func):
         if user_id:
             return func(args[0], user_id, role,  *args[2:], **kwargs)
         
+        
         return {'error': f'Invalid token'}, 401
     
             
@@ -25,4 +27,5 @@ def auth_required(func):
 class AuthenticationResource(Resource):
     @auth_required
     def get(self, user_id : str, role : str ):
-        return {'id' : user_id, 'role' : role}
+        user : User = User.get_user(user_id)
+        return {'id' : user_id, 'role' : role, 'data' : user.get()}

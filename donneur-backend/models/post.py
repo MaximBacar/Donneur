@@ -151,6 +151,9 @@ class Post(Model):
     def get_posts ( user_id : str ) -> list[dict]:
         
         posts : dict = db.reference(Post.AUTHOR_TABLE).child(user_id).get()
+
+        if not posts:
+            return {}
         
         return posts
 

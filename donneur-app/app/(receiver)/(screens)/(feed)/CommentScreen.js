@@ -34,8 +34,7 @@ import { database } from "../../../../config/firebase";
 
 const placeholderAvatar = { uri: "https://i.pravatar.cc/300" };
 
-// ─────────────────────────────────────────────────────────
-// POST HEADER COMPONENT
+
 function PostHeader({ post, onToggleLikePost, commentCount }) {
   if (!post) {
     return (
@@ -103,8 +102,7 @@ function PostHeader({ post, onToggleLikePost, commentCount }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────
-// COMMENT ITEM COMPONENT
+
 function CommentItem({
   comment,
   user,

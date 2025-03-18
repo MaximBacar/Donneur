@@ -23,6 +23,13 @@ class OrganizationController:
         
         raise OrganizationController.OrganizationError.OrganizationNotFound()
     
+    def set_occupancy ( organization_id : str, occupancy : int):
+        organization : Organization = Organization( organization_id )
+        organization.set_occupancy(occupancy)
+
+    def get_occupancy ( organization_id : str) -> int:
+        organization : Organization = Organization( organization_id )
+        return organization.get_occupancy()
 
     def create_organization(
             email           : str,
