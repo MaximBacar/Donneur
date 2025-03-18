@@ -1,4 +1,4 @@
-import { useAuth } from "../../../context/authContext";
+import { useAuth } from "../../../../context/authContext";
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
@@ -26,7 +26,7 @@ import {
   updateDoc,
   getDoc,
 } from "firebase/firestore";
-import { database } from "../../../config/firebase";
+import { database } from "../../../../config/firebase";
 import { useRouter } from "expo-router";
 
 export default function Inbox() {
@@ -503,11 +503,10 @@ export default function Inbox() {
   // Navigate
   const handleItemPress = (item) => {
     if (item.type === "direct") {
-      router.push("/(inbox)/chats/" + item.id);
+      router.push("/(inboxOrg)/chats2/" + item.id);
     } else if (item.type === "channel") {
-      // Mark channel as read when navigating to it
       markChannelAsRead(item.id);
-      router.push("/(inbox)/channel/" + item.id);
+      router.push("/(inboxOrg)/channel2/" + item.id);
     }
   };
 
