@@ -1,7 +1,7 @@
 from    firebase_admin  import db
 from    models          import Receiver
 from    datetime        import datetime
-from    models          import Model
+from    models          import Model, User
 import  enum
 
 
@@ -125,3 +125,21 @@ class Transaction(Model):
 
 
         return transaction_amount, transaction_receiver
+
+    def get_transactions( user_id : str):
+
+        reference       : db.Reference = db.reference('/transactions')
+        
+        user_types      : list = ['receiver_id', 'sender_id']
+        transactions    : list = []
+
+        for user_type in user_types:
+            query : db.Query = reference.order_by_child(user_type).equal_to(user_id)
+            transactions_data = query.get()
+            for transaction_id in transactions_data:
+                transaction = transactions_data[transaction_id]
+                transaction['id'] = transaction_id
+
+                transactions.append(transaction)
+        
+        return transactions

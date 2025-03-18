@@ -21,6 +21,8 @@ import Animated, { FadeIn, FadeInDown, FadeOut, Layout } from 'react-native-rean
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { LineChart } from "react-native-chart-kit";
 
+import { BACKEND_URL } from "../../../constants/backend";
+
 // Import UI components and constants
 import IconSymbol from "../../../components/ui/IconSymbol";
 import { Colors } from "../../../constants/colors";
@@ -52,6 +54,7 @@ const chartConfig = {
 export default function DashboardScreen() {
   const router = useRouter();
   const { user, donneurID } = useAuth();
+  const { token } = useAuth();
   const insets = useSafeAreaInsets();
 
   // State management
@@ -70,46 +73,28 @@ export default function DashboardScreen() {
     setRefreshing(true);
     await Promise.all([fetchUserInfo(), fetchBalance(), fetchFriendsCount(), fetchTransactions()]);
     setRefreshing(false);
-  }, [user, donneurID]);
+  }, [user]);
   
-  // Fetch friends count directly from Firebase
+
   const fetchFriendsCount = async () => {
-    if (!user) return;
-    
-    try {
-      const friendsRef = collection(database, 'friends');
-      const q1 = query(friendsRef, where('user1', '==', user.uid));
-      const q2 = query(friendsRef, where('user2', '==', user.uid));
-      
-      // Execute both queries in parallel for better performance
-      const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-      
-      let allDocs = [];
-      
-      // Collect documents from both queries
-      snap1.forEach((doc) => {
-        allDocs.push({ id: doc.id, ...doc.data() });
-      });
-      
-      snap2.forEach((doc) => {
-        allDocs.push({ id: doc.id, ...doc.data() });
-      });
-      
-      // Remove duplicates in case there are any
-      const uniqueDocs = [
-        ...new Map(allDocs.map((item) => [item.id, item])).values(),
-      ];
-      
-      // Count only fully accepted friend relationships
-      const acceptedCount = uniqueDocs.filter(doc => {
-        if (doc.user1 === user.uid) {
-          return doc.u1_accepted && doc.u2_accepted;
-        } else {
-          return doc.u1_accepted && doc.u2_accepted;
+    try{
+      let url = `${BACKEND_URL}/friend/get`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
         }
-      }).length;
+      });
       
-      setFriendsCount(acceptedCount);
+      const data      = await response.json();
+      let friends = data.friends
+
+      console.log(friends.length);
+      
+      setFriendsCount(friends.length);
+      
     } catch (error) {
       console.error("Error fetching friends count:", error);
       setFriendsCount(0);
@@ -118,15 +103,19 @@ export default function DashboardScreen() {
 
   // Fetch user balance
   const fetchBalance = async () => {
-    if (!user || !donneurID) return;
     
     try {
-      const res = await fetch(
-        `https://api.donneur.ca/get_balance/${donneurID}`
-      );
-      if (!res.ok) throw new Error('Network response was not ok');
-      const data = await res.json();
-      setBalance(data.balance);
+      let url = `${BACKEND_URL}/receiver/get_balance`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
+        }
+      });
+      const data = await response.json();
+      setBalance(data);
     } catch (error) {
       console.error("Error fetching balance:", error);
     } finally {
@@ -134,16 +123,18 @@ export default function DashboardScreen() {
     }
   };
 
-  // Fetch user info
-  const fetchUserInfo = async () => {
-    if (!user) return;
-    
+  const fetchUserInfo = async () => { 
     try {
-      const res = await fetch(
-        `https://api.donneur.ca/get_user?uid=${user.uid}`
-      );
-      if (!res.ok) throw new Error('Network response was not ok');
-      const data = await res.json();
+      let url = `${BACKEND_URL}/receiver/get`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
+        }
+      });
+      const data = await response.json();
       setUserInfo(data);
     } catch (error) {
       console.error("Error fetching user info:", error);
@@ -156,52 +147,54 @@ export default function DashboardScreen() {
   const fetchTransactions = async () => {
     try {
       setChartLoading(true);
+
+            
+      let url = `${BACKEND_URL}/transaction/get`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
+        }
+      });
+      const data = await response.json();
       
-      // Step 1: Get receiver ID if not already available in context
-      let receiverId = donneurID;
-      if (!receiverId && user) {
-        const userResponse = await fetch(`https://api.donneur.ca/get_user?uid=${user.uid}`);
-        if (!userResponse.ok) throw new Error('Failed to fetch user data');
-        const userData = await userResponse.json();
-        receiverId = userData.db_id;
-      }
-      
-      if (!receiverId) {
-        console.error('No receiver ID available');
-        setChartLoading(false);
-        return;
-      }
-      
-      // Step 2: Fetch transactions using the receiver ID
-      const transactionsResponse = await fetch(`https://api.donneur.ca/get_transactions?receiver_id=${receiverId}`);
-      if (!transactionsResponse.ok) throw new Error('Failed to fetch transactions');
-      const data = await transactionsResponse.json();
-      
-      // Format the transactions for display
+        
       const formattedTransactions = data.transactions.map(transaction => {
-        // Convert date string to more readable format
+       
         const date = new Date(transaction.creation_date);
         const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         const formattedTime = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
         
-        // Determine transaction type and description
-        const isReceived = transaction.transaction_type === 'received';
-        const description = isReceived 
-          ? `Payment received from ${transaction.sender_id}`
-          : `Payment sent to ${transaction.receiver_id}`;
+        const isReceived = transaction.receiver_id === donneurID;
+      
+      
+        let description;
+      
+        switch(transaction.type){
+          case 'donation':
+            description = 'Anonymous Donation';
+            break;
+          case 'withdrawal':
+            description = `Withdrawal at ${transaction.receiver_id}`;
+            break;
+          case 'send':
+            description = isReceived ? `Payment received from ${transaction.sender_id}` : `Payment sent to ${transaction.sender_id}`
+            break;
+        }
           
         return {
           id: transaction.id,
           description: description,
           date: formattedDate,
           timestamp: formattedTime,
-          rawDate: date,
           amount: isReceived ? transaction.amount : -transaction.amount,
           type: isReceived ? 'deposit' : 'withdrawal',
           status: transaction.confirmed ? 'completed' : 'pending',
           category: transaction.type || 'transfer',
           reference: transaction.id,
-          raw: transaction // Store the raw data for reference
+          raw: transaction
         };
       });
       
@@ -567,7 +560,7 @@ export default function DashboardScreen() {
           {/* Friends Card */}
           <TouchableOpacity
             style={styles.actionCard}
-            onPress={() => router.push("/(screens)/(friends)/friends")}
+            onPress={() => router.push("/(friends)/friends")}
             activeOpacity={0.7}
           >
             <View style={styles.actionCardContent}>

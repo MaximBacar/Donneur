@@ -37,6 +37,7 @@ class ReceiverController():
             }
             return profile
         raise ReceiverError.ReceiverNotFound('Receiver not found')
+    
 
     def create_receiver( first_name : str, last_name : str, dob : str) -> Receiver:
 
@@ -96,3 +97,12 @@ class ReceiverController():
         )
 
         receiver.set_app()
+
+    def get_balance( receiver_id : str ) -> float:
+        receiver : Receiver = Receiver(receiver_id)
+
+        return receiver.get_balance()
+    
+    def get_receiver( receiver_id : str ) -> dict:
+        receiver : Receiver = Receiver(receiver_id)
+        return receiver.get()
