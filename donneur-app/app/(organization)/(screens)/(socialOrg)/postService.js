@@ -13,6 +13,7 @@ import {
   getDoc,
   onSnapshot,
   increment,
+  where,
 } from "firebase/firestore";
 import { database } from "../../../../config/firebase";
 import { useAuth } from "../../../../context/authContext";
@@ -365,17 +366,38 @@ export const decrementAnswerCountInComment = async (postId, commentId) => {
 };
 
 export const fetchCommentById = async (postId, commentId) => {
-  const commentRef = doc(database, "posts", postId, "responses", commentId);
-  const snapshot = await getDoc(commentRef);
-  if (snapshot.exists()) {
-    return { id: snapshot.id, ...snapshot.data() };
-  } else {
-    console.error(
-      "❌ No comment found. postId:",
-      postId,
-      "commentId:",
-      commentId
-    );
-    throw new Error("No comment found with ID: " + commentId);
+  try {
+    console.log("Fetching comment with:", { postId, commentId });
+
+    // Correct reference to the comment inside the post's responses
+    const commentRef = doc(database, "posts", postId, "responses", commentId);
+    const snapshot = await getDoc(commentRef);
+
+    if (snapshot.exists()) {
+      return { id: snapshot.id, ...snapshot.data() };
+    } else {
+      throw new Error(
+        `No comment found with ID: ${commentId} in post: ${postId}`
+      );
+    }
+  } catch (error) {
+    console.error("Error fetching comment:", error);
+    throw error;
   }
+};
+
+/** ──────────────────────────────────────────────────────
+ *  2.1) One-time fetch of ONLY the user’s own posts
+ */
+export const fetchUserPostsOnce = async (userId) => {
+  const q = query(
+    collection(database, "posts"),
+    where("name", "==", userId), // ← Filter by userId
+    orderBy("timestamp", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  }));
 };

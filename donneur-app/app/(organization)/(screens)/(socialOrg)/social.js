@@ -16,17 +16,17 @@ import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
 import { useRouter } from "expo-router";
 
-import { useAuth } from "../../../context/authContext";
+import { useAuth } from "../../../../context/authContext";
 import {
   fetchPostsOnce, // For manual fetch of all posts
   useDeletePost,
   useToggleLike,
   fetchUserPostsOnce,
-} from "../(screens)/(feed)/postService";
+} from "./postService";
 
 // Firestore for partial real-time
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { database } from "../../../config/firebase";
+import { database } from "../../../../config/firebase";
 
 const placeholderAvatar = { uri: "https://i.pravatar.cc/300" };
 
@@ -89,7 +89,7 @@ export default function HomeScreen() {
   const loadPosts = async () => {
     setRefreshing(true);
     try {
-      const posts = await fetchPostsOnce();
+      const posts = await fetchUserPostsOnce(user.uid);
       setFeedPosts(posts);
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -173,7 +173,7 @@ export default function HomeScreen() {
   //    Instead of an inline push, define a small function:
   const handleCommentPress = (post) => {
     router.push({
-      pathname: "/(screens)/(feed)/CommentScreen",
+      pathname: "/CommentScreen",
       params: { id: post.id },
     });
   };
@@ -182,7 +182,7 @@ export default function HomeScreen() {
   // 6.1) GO TO CREATE POST
   const handleCreatePost = () => {
     router.push({
-      pathname: "/(screens)/(feed)/CreatePostScreen",
+      pathname: "/CreatePostScreen",
     });
   };
 

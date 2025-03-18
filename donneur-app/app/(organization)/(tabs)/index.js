@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,18 +9,18 @@ import {
   Dimensions,
   Image,
   Animated,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import IconSymbol from '../../../components/ui/IconSymbol';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Colors } from '../../../constants/colors';
+} from "react-native";
+import { useRouter } from "expo-router";
+import IconSymbol from "../../../components/ui/IconSymbol";
+import { LinearGradient } from "expo-linear-gradient";
+import { Colors } from "../../../constants/colors";
 
-const screenWidth = Dimensions.get('window').width;
-const screenHeight = Dimensions.get('window').height;
+const screenWidth = Dimensions.get("window").width;
+const screenHeight = Dimensions.get("window").height;
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const [greeting, setGreeting] = useState('Good day');
+  const [greeting, setGreeting] = useState("Good day");
   const fadeAnim = useState(new Animated.Value(0))[0];
   const translateYAnim = useState(new Animated.Value(20))[0];
   const scaleAnim = useState(new Animated.Value(0.95))[0];
@@ -28,9 +28,9 @@ export default function DashboardScreen() {
   // Set greeting based on time of day
   useEffect(() => {
     const hour = new Date().getHours();
-    if (hour < 12) setGreeting('Good morning');
-    else if (hour < 18) setGreeting('Good afternoon');
-    else setGreeting('Good evening');
+    if (hour < 12) setGreeting("Good morning");
+    else if (hour < 18) setGreeting("Good afternoon");
+    else setGreeting("Good evening");
 
     // Entrance animations
     Animated.parallel([
@@ -58,7 +58,7 @@ export default function DashboardScreen() {
     occupied: 23,
     announcements: 34,
     messages: 354,
-  }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -67,29 +67,34 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ============== WELCOME SECTION ============== */}
-        <Animated.View 
+        <Animated.View
           style={[
             styles.headerContainer,
             {
               opacity: fadeAnim,
-              transform: [
-                { translateY: translateYAnim },
-                { scale: scaleAnim }
-              ]
-            }
+              transform: [{ translateY: translateYAnim }, { scale: scaleAnim }],
+            },
           ]}
         >
           <View style={styles.greetingContainer}>
             <Text style={styles.greeting}>{greeting}</Text>
             <Text style={styles.orgName}>Shelter Organization</Text>
-            <Text style={styles.date}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+            <Text style={styles.date}>
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+            </Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.profileButton}
-            onPress={() => router.push('/(organization)/(screens)/(editProfile)')}
+            onPress={() =>
+              router.push("/(organization)/(screens)/(editProfile)")
+            }
           >
             <LinearGradient
-              colors={['#4c669f', '#3b5998', '#192f6a']}
+              colors={["#4c669f", "#3b5998", "#192f6a"]}
               style={styles.profileGradient}
             >
               <IconSymbol name="person.fill" size={22} color="#ffffff" />
@@ -101,11 +106,11 @@ export default function DashboardScreen() {
         <Animated.View
           style={{
             opacity: fadeAnim,
-            transform: [{ translateY: translateYAnim }]
+            transform: [{ translateY: translateYAnim }],
           }}
         >
           <LinearGradient
-            colors={['#0a7ea4', '#005b84']}
+            colors={["#0a7ea4", "#005b84"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.topCard}
@@ -117,35 +122,41 @@ export default function DashboardScreen() {
                   1234 Maple Street, Hometown
                 </Text>
               </View>
-              
+
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{shelterStats.available + shelterStats.occupied}</Text>
+                  <Text style={styles.statValue}>
+                    {shelterStats.available + shelterStats.occupied}
+                  </Text>
                   <Text style={styles.statLabel}>Total Capacity</Text>
                 </View>
-                
+
                 <View style={styles.statDivider} />
-                
+
                 <View style={styles.statItem}>
                   <Text style={styles.statValue}>{shelterStats.occupied}</Text>
                   <Text style={styles.statLabel}>Current Occupancy</Text>
                 </View>
-                
+
                 <View style={styles.statDivider} />
-                
+
                 <View style={styles.statItem}>
                   <Text style={styles.statValue}>{shelterStats.available}</Text>
                   <Text style={styles.statLabel}>Available Spots</Text>
                 </View>
               </View>
-              
+
               <TouchableOpacity
                 style={styles.shareButton}
                 onPress={() => {
                   // Share logic here
                 }}
               >
-                <IconSymbol name="square.and.arrow.up" size={20} color="#ffffff" />
+                <IconSymbol
+                  name="square.and.arrow.up"
+                  size={20}
+                  color="#ffffff"
+                />
                 <Text style={styles.shareButtonText}>Share Status</Text>
               </TouchableOpacity>
             </View>
@@ -153,25 +164,32 @@ export default function DashboardScreen() {
         </Animated.View>
 
         {/* ============== QUICK ACTIONS ============== */}
-        <Animated.View 
-          style={[styles.quickActionsContainer, { 
-            opacity: fadeAnim,
-            transform: [{ translateY: translateYAnim }]
-          }]}
+        <Animated.View
+          style={[
+            styles.quickActionsContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: translateYAnim }],
+            },
+          ]}
         >
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-          
+
           <View style={styles.quickActionsGrid}>
             {/* Register User */}
             <TouchableOpacity
               style={styles.quickActionButton}
-              onPress={() => router.push('/(registerUser)')}
+              onPress={() => router.push("/(registerUser)")}
             >
               <LinearGradient
-                colors={['#5e72e4', '#324cdd']}
+                colors={["#5e72e4", "#324cdd"]}
                 style={styles.quickActionIcon}
               >
-                <IconSymbol name="person.badge.plus" size={24} color="#ffffff" />
+                <IconSymbol
+                  name="person.badge.plus"
+                  size={24}
+                  color="#ffffff"
+                />
               </LinearGradient>
               <Text style={styles.quickActionText}>Register User</Text>
             </TouchableOpacity>
@@ -179,13 +197,17 @@ export default function DashboardScreen() {
             {/* Withdrawal */}
             <TouchableOpacity
               style={styles.quickActionButton}
-              onPress={() => router.push('/(screens)/(withdrawal)')}
+              onPress={() => router.push("/(screens)/(withdrawal)")}
             >
               <LinearGradient
-                colors={['#fb6340', '#f56036']}
+                colors={["#fb6340", "#f56036"]}
                 style={styles.quickActionIcon}
               >
-                <IconSymbol name="arrow.down.circle.fill" size={24} color="#ffffff" />
+                <IconSymbol
+                  name="arrow.down.circle.fill"
+                  size={24}
+                  color="#ffffff"
+                />
               </LinearGradient>
               <Text style={styles.quickActionText}>Withdrawal</Text>
             </TouchableOpacity>
@@ -193,13 +215,17 @@ export default function DashboardScreen() {
             {/* Get User Data */}
             <TouchableOpacity
               style={styles.quickActionButton}
-              onPress={() => router.push('/get-user-data')}
+              onPress={() => router.push("/get-user-data")}
             >
               <LinearGradient
-                colors={['#11cdef', '#1da1f2']}
+                colors={["#11cdef", "#1da1f2"]}
                 style={styles.quickActionIcon}
               >
-                <IconSymbol name="person.text.rectangle" size={24} color="#ffffff" />
+                <IconSymbol
+                  name="person.text.rectangle"
+                  size={24}
+                  color="#ffffff"
+                />
               </LinearGradient>
               <Text style={styles.quickActionText}>Get User Data</Text>
             </TouchableOpacity>
@@ -207,10 +233,12 @@ export default function DashboardScreen() {
             {/* Settings */}
             <TouchableOpacity
               style={styles.quickActionButton}
-              onPress={() => {/* Settings navigation */}}
+              onPress={() => {
+                /* Settings navigation */
+              }}
             >
               <LinearGradient
-                colors={['#f3a4b5', '#fe7096']}
+                colors={["#f3a4b5", "#fe7096"]}
                 style={styles.quickActionIcon}
               >
                 <IconSymbol name="gearshape.fill" size={24} color="#ffffff" />
@@ -232,7 +260,12 @@ export default function DashboardScreen() {
           <View style={styles.notificationsContainer}>
             {/* Notification 1 */}
             <TouchableOpacity style={styles.notificationItem}>
-              <View style={[styles.notificationIcon, { backgroundColor: '#ffeae9' }]}>
+              <View
+                style={[
+                  styles.notificationIcon,
+                  { backgroundColor: "#ffeae9" },
+                ]}
+              >
                 <IconSymbol name="megaphone.fill" size={20} color="#FF6A55" />
               </View>
               <View style={styles.notificationContent}>
@@ -246,11 +279,18 @@ export default function DashboardScreen() {
 
             {/* Notification 2 */}
             <TouchableOpacity style={styles.notificationItem}>
-              <View style={[styles.notificationIcon, { backgroundColor: '#e8f7ff' }]}>
+              <View
+                style={[
+                  styles.notificationIcon,
+                  { backgroundColor: "#e8f7ff" },
+                ]}
+              >
                 <IconSymbol name="person.2.fill" size={20} color="#36B3FC" />
               </View>
               <View style={styles.notificationContent}>
-                <Text style={styles.notificationTitle}>New User Registered</Text>
+                <Text style={styles.notificationTitle}>
+                  New User Registered
+                </Text>
                 <Text style={styles.notificationDesc}>
                   John Smith has been registered successfully
                 </Text>
@@ -260,11 +300,22 @@ export default function DashboardScreen() {
 
             {/* Notification 3 */}
             <TouchableOpacity style={styles.notificationItem}>
-              <View style={[styles.notificationIcon, { backgroundColor: '#f0fdf4' }]}>
-                <IconSymbol name="arrow.down.circle.fill" size={20} color="#22C55E" />
+              <View
+                style={[
+                  styles.notificationIcon,
+                  { backgroundColor: "#f0fdf4" },
+                ]}
+              >
+                <IconSymbol
+                  name="arrow.down.circle.fill"
+                  size={20}
+                  color="#22C55E"
+                />
               </View>
               <View style={styles.notificationContent}>
-                <Text style={styles.notificationTitle}>Withdrawal Completed</Text>
+                <Text style={styles.notificationTitle}>
+                  Withdrawal Completed
+                </Text>
                 <Text style={styles.notificationDesc}>
                   $50.00 withdrawal processed for Sarah Johnson
                 </Text>
@@ -285,26 +336,47 @@ export default function DashboardScreen() {
 
           <View style={styles.statsCards}>
             {/* Messages Card */}
-            <TouchableOpacity style={styles.statsCard}>
+            <TouchableOpacity
+              style={styles.statsCard}
+              onPress={() =>
+                router.push("/(organization)/(screens)/(inboxOrg)/inbox")
+              }
+            >
               <View style={styles.statsCardHeader}>
                 <Text style={styles.statsCardTitle}>Messages</Text>
-                <View style={[styles.statsIconContainer, { backgroundColor: 'rgba(0, 122, 255, 0.1)' }]}>
+                <View
+                  style={[
+                    styles.statsIconContainer,
+                    { backgroundColor: "rgba(0, 122, 255, 0.1)" },
+                  ]}
+                >
                   <IconSymbol name="message.fill" size={22} color="#007AFF" />
                 </View>
               </View>
               <Text style={styles.statsCardValue}>{shelterStats.messages}</Text>
               <Text style={styles.statsCardChange}>+14% from last week</Text>
             </TouchableOpacity>
-
             {/* Announcements Card */}
-            <TouchableOpacity style={styles.statsCard}>
+            <TouchableOpacity
+              style={styles.statsCard}
+              onPress={() =>
+                router.push("/(organization)/(screens)/(socialOrg)/social")
+              }
+            >
               <View style={styles.statsCardHeader}>
                 <Text style={styles.statsCardTitle}>Announcements</Text>
-                <View style={[styles.statsIconContainer, { backgroundColor: 'rgba(255, 149, 0, 0.1)' }]}>
+                <View
+                  style={[
+                    styles.statsIconContainer,
+                    { backgroundColor: "rgba(255, 149, 0, 0.1)" },
+                  ]}
+                >
                   <IconSymbol name="megaphone.fill" size={22} color="#FF9500" />
                 </View>
               </View>
-              <Text style={styles.statsCardValue}>{shelterStats.announcements}</Text>
+              <Text style={styles.statsCardValue}>
+                {shelterStats.announcements}
+              </Text>
               <Text style={styles.statsCardChange}>+5% from last week</Text>
             </TouchableOpacity>
           </View>
@@ -318,7 +390,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
   scrollContainer: {
     paddingBottom: 30,
@@ -326,9 +398,9 @@ const styles = StyleSheet.create({
 
   // ===== Header Section =====
   headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
@@ -338,18 +410,18 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 16,
-    color: '#64748b',
+    color: "#64748b",
     marginBottom: 4,
   },
   orgName: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1e293b',
+    fontWeight: "bold",
+    color: "#1e293b",
     marginBottom: 4,
   },
   date: {
     fontSize: 14,
-    color: '#94a3b8',
+    color: "#94a3b8",
   },
   profileButton: {
     marginLeft: 12,
@@ -358,18 +430,18 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  
+
   // ===== Top Card (Shelter Status) =====
   topCard: {
     borderRadius: 16,
     marginHorizontal: 16,
     marginTop: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -379,58 +451,58 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: "bold",
+    color: "#ffffff",
     marginBottom: 6,
   },
   orgAddress: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: "rgba(255,255,255,0.8)",
     marginBottom: 16,
   },
   statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: "rgba(255,255,255,0.15)",
     borderRadius: 12,
     padding: 16,
     marginVertical: 16,
   },
   statItem: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   statValue: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: "bold",
+    color: "#ffffff",
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
-    textAlign: 'center',
+    color: "rgba(255,255,255,0.8)",
+    textAlign: "center",
   },
   statDivider: {
     width: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: "rgba(255,255,255,0.2)",
     marginHorizontal: 8,
   },
   shareButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.2)",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   shareButtonText: {
     marginLeft: 8,
     fontSize: 14,
-    fontWeight: '500',
-    color: '#ffffff',
+    fontWeight: "500",
+    color: "#ffffff",
   },
 
   // ===== Quick Actions =====
@@ -439,19 +511,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     marginTop: 4,
   },
   quickActionButton: {
-    width: '48%',
-    backgroundColor: '#ffffff',
+    width: "48%",
+    backgroundColor: "#ffffff",
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -461,14 +533,14 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 12,
   },
   quickActionText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#334155',
+    fontWeight: "500",
+    color: "#334155",
   },
 
   // ===== Section Styling =====
@@ -477,46 +549,46 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1e293b',
+    fontWeight: "600",
+    color: "#1e293b",
   },
   seeAllText: {
     fontSize: 14,
     color: Colors.light.tint,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 
   // ===== Notifications Section =====
   notificationsContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 16,
     padding: 4,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
   notificationItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: "#f1f5f9",
   },
   notificationIcon: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   notificationContent: {
@@ -524,63 +596,63 @@ const styles = StyleSheet.create({
   },
   notificationTitle: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#334155',
+    fontWeight: "600",
+    color: "#334155",
     marginBottom: 4,
   },
   notificationDesc: {
     fontSize: 14,
-    color: '#64748b',
+    color: "#64748b",
     marginBottom: 6,
     lineHeight: 20,
   },
   notificationTime: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: "#94a3b8",
   },
-  
+
   // ===== Statistics Cards =====
   statsCards: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   statsCard: {
-    width: '48%',
-    backgroundColor: '#ffffff',
+    width: "48%",
+    backgroundColor: "#ffffff",
     borderRadius: 16,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
   statsCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
   statsCardTitle: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#475569',
+    fontWeight: "500",
+    color: "#475569",
   },
   statsIconContainer: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   statsCardValue: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#0f172a',
+    fontWeight: "bold",
+    color: "#0f172a",
     marginBottom: 8,
   },
   statsCardChange: {
     fontSize: 12,
-    color: '#22C55E',
+    color: "#22C55E",
   },
 });
