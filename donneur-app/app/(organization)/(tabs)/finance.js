@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../../constants/colors';
+import { BACKEND_URL } from '../../../constants/backend';
 import IconSymbol from '../../../components/ui/IconSymbol';
 import { useAuth } from '../../../context/authContext';
 
@@ -33,7 +34,7 @@ const financialMetrics = {
 };
 
 export default function FinanceScreen() {
-  const { user, donneurID } = useAuth();
+  const { user, donneurID, token } = useAuth();
   
   // State management
   const [modalVisible, setModalVisible] = useState(false);
@@ -162,93 +163,102 @@ export default function FinanceScreen() {
     }
   };
 
-  // Fetch transactions data from API
-  useEffect(() => {
-    const fetchTransactions = async () => {
+  // Function to fetch transactions from API
+  const getTransactions = async () => {
+    try {
       setLoading(true);
       setError(null);
       
-      try {
-        // First, get user data to get the DB ID
-        let userDbId = donneurID;
+      let url = `${BACKEND_URL}/transaction/get`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
+        }
+      });
+      const data = await response.json();
+      
+      // Transform the API data to match our component's expected format
+      const formattedTransactions = data.transactions.map(transaction => {
+        const date = new Date(transaction.creation_date);
+        const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const formattedTime = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
         
-        if (!userDbId) {
-          setError("No organization ID found. Please log in again.");
-          setLoading(false);
-          return;
+        // Determine if organization received or sent this transaction
+        const isReceived = transaction.receiver_id === donneurID;
+        
+        let description;
+        switch(transaction.type){
+          case 'donation':
+            description = 'Anonymous Donation';
+            break;
+          case 'withdrawal':
+            description = `Withdrawal at ${transaction.receiver_id}`;
+            break;
+          case 'send':
+            description = isReceived ? `Payment received from ${transaction.sender_id}` : `Payment sent to ${transaction.sender_id}`
+            break;
         }
         
-        // Now fetch transactions using the organization ID
-        const transactionsResponse = await fetch(`https://api.donneur.ca/get_transactions?organization_id=${userDbId}`);
+        return {
+          id: transaction.id,
+          name: isReceived ? transaction.sender_id : transaction.receiver_id,
+          description: description,
+          date: formattedDate,
+          timestamp: transaction.creation_date,
+          formattedTime: formattedTime,
+          amount: isReceived ? transaction.amount : -transaction.amount,
+          status: transaction.confirmed ? 'completed' : 'pending',
+          type: isReceived ? 'deposit' : 'withdrawal',
+          category: transaction.type || 'transfer',
+          userId: isReceived ? transaction.sender_id : transaction.receiver_id,
+          notes: `${transaction.type} transaction`,
+          currency: transaction.currency || 'USD',
+          reference: transaction.id,
+          raw: transaction
+        };
+      });
+      
+      setTransactions(formattedTransactions);
+      setFilteredData(formattedTransactions);
+      
+      // Update financial metrics
+      const totalWithdrawals = formattedTransactions
+        .filter(tx => tx.status === 'completed')
+        .reduce((sum, tx) => sum + tx.amount, 0);
         
-        if (!transactionsResponse.ok) {
-          throw new Error('Failed to fetch transactions');
-        }
-        
-        const transactionsData = await transactionsResponse.json();
-        
-        if (transactionsData && transactionsData.transactions) {
-          // Transform the API data to match our component's expected format
-          const formattedTransactions = transactionsData.transactions.map(tx => {
-            const date = new Date(tx.creation_date);
-            // Format the date similar to our previous mock data
-            const formattedDate = date.toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric'
-            });
-            
-            return {
-              id: tx.id,
-              name: tx.sender_id, // We don't have name, so use sender_id 
-              date: formattedDate,
-              amount: parseFloat(tx.amount),
-              status: tx.confirmed ? 'completed' : 'pending',
-              type: tx.transaction_type,
-              userId: tx.sender_id,
-              timestamp: tx.creation_date,
-              notes: `${tx.transaction_type} - ${tx.currency}`,
-              currency: tx.currency
-            };
-          });
-          
-          setTransactions(formattedTransactions);
-          setFilteredData(formattedTransactions);
-          
-          // Update financial metrics
-          const totalWithdrawals = formattedTransactions
-            .filter(tx => tx.status === 'completed')
-            .reduce((sum, tx) => sum + tx.amount, 0);
-            
-          const pendingWithdrawals = formattedTransactions
-            .filter(tx => tx.status === 'pending')
-            .reduce((sum, tx) => sum + tx.amount, 0);
-          
-          setMetrics({
-            totalWithdrawals,
-            pendingWithdrawals,
-            availableBalance: totalWithdrawals + pendingWithdrawals,
-            totalUsers: new Set(formattedTransactions.map(tx => tx.userId)).size,
-            monthlyChange: 0, // We don't have historical data to calculate this
-            lastUpdate: new Date().toLocaleDateString('en-US', { 
-              month: 'long', 
-              day: 'numeric', 
-              year: 'numeric' 
-            })
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching transactions:', err);
-        setError('Failed to load transactions. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (donneurID) {
-      fetchTransactions();
+      const pendingWithdrawals = formattedTransactions
+        .filter(tx => tx.status === 'pending')
+        .reduce((sum, tx) => sum + tx.amount, 0);
+      
+      setMetrics({
+        totalWithdrawals,
+        pendingWithdrawals,
+        availableBalance: totalWithdrawals + pendingWithdrawals,
+        totalUsers: new Set(formattedTransactions.map(tx => tx.userId)).size,
+        monthlyChange: 0, // We don't have historical data to calculate this
+        lastUpdate: new Date().toLocaleDateString('en-US', { 
+          month: 'long', 
+          day: 'numeric', 
+          year: 'numeric' 
+        })
+      });
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      setError('Failed to load transactions. Please try again later.');
+    } finally {
+      setLoading(false);
     }
-  }, [donneurID]);
+  };
+
+  // Initial data fetch
+  useEffect(() => {
+    if (donneurID && token) {
+      getTransactions();
+    }
+  }, [donneurID, token]);
 
   // Animations
   useEffect(() => {
@@ -305,10 +315,48 @@ export default function FinanceScreen() {
     return `${symbol}${parseFloat(amount).toFixed(2)}`;
   };
 
+  // Get icon for transaction type
+  const getTransactionTypeIcon = (type, category) => {
+    switch (type) {
+      case 'deposit':
+        return category === 'bonus' 
+          ? 'gift.fill'
+          : 'arrow.down.circle.fill';
+      case 'withdrawal':
+        return category === 'bank' 
+          ? 'creditcard.fill' 
+          : 'arrow.up.circle.fill';
+      case 'fee':
+        return 'receipt.fill';
+      default:
+        return 'arrow.left.arrow.right.circle.fill';
+    }
+  };
+  
+  // Get status color based on transaction status
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed':
+        return '#34C759'; // Green
+      case 'pending':
+        return '#FF9500'; // Orange
+      case 'cancelled':
+        return '#FF3B30'; // Red
+      default:
+        return Colors.light.icon;
+    }
+  };
+
   // Render transaction item
   const renderTransactionItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.transactionItem}
+      style={[
+        styles.transactionItem,
+        {
+          borderLeftWidth: 4,
+          borderLeftColor: item.amount >= 0 ? '#34C759' : '#FF3B30'
+        }
+      ]}
       onPress={() => openModal(item)}
       activeOpacity={0.7}
     >
@@ -318,7 +366,7 @@ export default function FinanceScreen() {
           style={styles.transactionIcon}
         >
           <IconSymbol 
-            name={item.status === 'pending' ? 'clock.fill' : 'arrow.down.circle.fill'} 
+            name={getTransactionTypeIcon(item.type, item.category)} 
             color="#FFFFFF" 
             size={18} 
           />
@@ -327,31 +375,31 @@ export default function FinanceScreen() {
       
       <View style={styles.transactionInfo}>
         <View style={styles.transactionHeader}>
-          <Text style={styles.transactionName} numberOfLines={1}>{item.name}</Text>
+          <Text style={styles.transactionName} numberOfLines={1}>{item.description || item.name}</Text>
           <Text style={[
             styles.transactionAmount,
-            {color: item.status === 'pending' ? '#FF9500' : '#0A7EA4'}
+            {color: item.amount >= 0 ? '#34C759' : '#FF3B30'}
           ]}>
-            {formatCurrency(item.amount, item.currency)}
+            {item.amount >= 0 ? '+' : '-'}{formatCurrency(Math.abs(item.amount), item.currency)}
           </Text>
         </View>
         
         <View style={styles.transactionMeta}>
-          <Text style={styles.transactionDate}>{item.date}</Text>
+          <Text style={styles.transactionDate}>{item.date} • {item.formattedTime}</Text>
           <View style={[
             styles.statusBadge, 
-            {backgroundColor: item.status === 'pending' ? '#FFF5EB' : '#E6F6FD'}
+            {backgroundColor: getStatusColor(item.status) + '20'} // 20% opacity
           ]}>
             <Text style={[
               styles.statusText,
-              {color: item.status === 'pending' ? '#FF9500' : '#0A7EA4'}
+              {color: getStatusColor(item.status)}
             ]}>
               {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
             </Text>
           </View>
         </View>
         
-        <Text style={styles.transactionNotes} numberOfLines={1}>{item.notes}</Text>
+        <Text style={styles.transactionNotes} numberOfLines={1}>{item.category} • Ref: #{item.reference}</Text>
       </View>
     </TouchableOpacity>
   );
