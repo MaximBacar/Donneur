@@ -18,6 +18,9 @@ import { useUser } from './registerContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialIcons } from '@expo/vector-icons';
 
+import { BACKEND_URL } from '../../../../constants/backend';
+import { useAuth } from '../../../../context/authContext';
+
 const screenWidth = Dimensions.get('window').width;
 
 export default function BasicInfoScreen() {
@@ -32,10 +35,13 @@ export default function BasicInfoScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+
   // Validation state
   const [firstNameError, setFirstNameError] = useState('');
   const [lastNameError, setLastNameError] = useState('');
   const [dobError, setDobError] = useState('');
+  const {token} = useAuth()
+
 
   const { setUserID } = useUser();
 
@@ -100,15 +106,19 @@ export default function BasicInfoScreen() {
       const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       
       const body = JSON.stringify({
-        fn: firstName,
-        ln: lastName,
-        dob: isoDate
+
+        first_name: firstName,
+        last_name: lastName,
+        dob: dob
+
       });
 
-      const response = await fetch('https://api.donneur.ca/create_receiver', {
+      const response = await fetch(`${BACKEND_URL}/receiver/create`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
         },
         body: body,
       });

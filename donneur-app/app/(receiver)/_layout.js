@@ -2,8 +2,9 @@ import { Stack } from "expo-router";
 
 const ReceiverLayout = () => {
   return(
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(screens)" />
     </Stack>
   )
 }
