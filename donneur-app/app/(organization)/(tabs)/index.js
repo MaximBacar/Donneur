@@ -212,38 +212,36 @@ export default function DashboardScreen() {
               <Text style={styles.quickActionText}>Withdrawal</Text>
             </TouchableOpacity>
 
-            {/* Get User Data */}
+            {/* Messages - Replaced Get User Data */}
             <TouchableOpacity
               style={styles.quickActionButton}
-              onPress={() => router.push("/get-user-data")}
+              onPress={() =>
+                router.push("/(organization)/(screens)/(inboxOrg)/inbox")
+              }
             >
               <LinearGradient
                 colors={["#11cdef", "#1da1f2"]}
                 style={styles.quickActionIcon}
               >
-                <IconSymbol
-                  name="person.text.rectangle"
-                  size={24}
-                  color="#ffffff"
-                />
+                <IconSymbol name="message.fill" size={24} color="#ffffff" />
               </LinearGradient>
-              <Text style={styles.quickActionText}>Get User Data</Text>
+              <Text style={styles.quickActionText}>Messages</Text>
             </TouchableOpacity>
 
-            {/* Settings */}
+            {/* Announcements - Replaced Settings */}
             <TouchableOpacity
               style={styles.quickActionButton}
-              onPress={() => {
-                /* Settings navigation */
-              }}
+              onPress={() =>
+                router.push("/(organization)/(screens)/(socialOrg)/social")
+              }
             >
               <LinearGradient
                 colors={["#f3a4b5", "#fe7096"]}
                 style={styles.quickActionIcon}
               >
-                <IconSymbol name="gearshape.fill" size={24} color="#ffffff" />
+                <IconSymbol name="megaphone.fill" size={24} color="#ffffff" />
               </LinearGradient>
-              <Text style={styles.quickActionText}>Settings</Text>
+              <Text style={styles.quickActionText}>Announcements</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -326,61 +324,6 @@ export default function DashboardScreen() {
         </View>
 
         {/* ============== STATISTICS SECTION ============== */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Statistics</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>Details</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.statsCards}>
-            {/* Messages Card */}
-            <TouchableOpacity
-              style={styles.statsCard}
-              onPress={() =>
-                router.push("/(organization)/(screens)/(inboxOrg)/inbox")
-              }
-            >
-              <View style={styles.statsCardHeader}>
-                <Text style={styles.statsCardTitle}>Messages</Text>
-                <View
-                  style={[
-                    styles.statsIconContainer,
-                    { backgroundColor: "rgba(0, 122, 255, 0.1)" },
-                  ]}
-                >
-                  <IconSymbol name="message.fill" size={22} color="#007AFF" />
-                </View>
-              </View>
-              <Text style={styles.statsCardValue}>{shelterStats.messages}</Text>
-              <Text style={styles.statsCardChange}>+14% from last week</Text>
-            </TouchableOpacity>
-            {/* Announcements Card */}
-            <TouchableOpacity
-              style={styles.statsCard}
-              onPress={() =>
-                router.push("/(organization)/(screens)/(socialOrg)/social")
-              }
-            >
-              <View style={styles.statsCardHeader}>
-                <Text style={styles.statsCardTitle}>Announcements</Text>
-                <View
-                  style={[
-                    styles.statsIconContainer,
-                    { backgroundColor: "rgba(255, 149, 0, 0.1)" },
-                  ]}
-                >
-                  <IconSymbol name="megaphone.fill" size={22} color="#FF9500" />
-                </View>
-              </View>
-              <Text style={styles.statsCardValue}>
-                {shelterStats.announcements}
-              </Text>
-              <Text style={styles.statsCardChange}>+5% from last week</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -609,50 +552,5 @@ const styles = StyleSheet.create({
   notificationTime: {
     fontSize: 12,
     color: "#94a3b8",
-  },
-
-  // ===== Statistics Cards =====
-  statsCards: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  statsCard: {
-    width: "48%",
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  statsCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  statsCardTitle: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#475569",
-  },
-  statsIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  statsCardValue: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#0f172a",
-    marginBottom: 8,
-  },
-  statsCardChange: {
-    fontSize: 12,
-    color: "#22C55E",
   },
 });
