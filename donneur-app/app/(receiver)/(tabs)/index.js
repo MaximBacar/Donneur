@@ -73,7 +73,7 @@ export default function DashboardScreen() {
     setRefreshing(true);
     await Promise.all([fetchUserInfo(), fetchBalance(), fetchFriendsCount(), fetchTransactions()]);
     setRefreshing(false);
-  }, [user]);
+  }, [user, donneurID, token]);
   
 
   const fetchFriendsCount = async () => {
@@ -194,7 +194,8 @@ export default function DashboardScreen() {
           status: transaction.confirmed ? 'completed' : 'pending',
           category: transaction.type || 'transfer',
           reference: transaction.id,
-          raw: transaction
+          raw: transaction,
+          rawDate: date // Add the actual date object for chart processing
         };
       });
       
@@ -425,12 +426,15 @@ export default function DashboardScreen() {
       fetchTransactions();
       
       // Set interval to fetch balance every 30 seconds
-      const interval = setInterval(fetchBalance, 30000);
+      const interval = setInterval(() => {
+        fetchBalance();
+        fetchTransactions(); // Also refresh transactions periodically
+      }, 30000);
       
       // Cleanup interval on component unmount
       return () => clearInterval(interval);
     }
-  }, [user, donneurID]);
+  }, [user, donneurID, token]);
 
   // While user info is loading, show an enhanced loader
   if (loadingUser) {
