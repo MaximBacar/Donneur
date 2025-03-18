@@ -1,6 +1,7 @@
 from    firebase_admin          import  credentials
 import  firebase_admin
 
+import  logging
 import  stripe
 import  dotenv
 import  os
@@ -26,7 +27,8 @@ class Controller:
 
 
     def initialize():
-       
+        
+        logging.basicConfig(level=logging.INFO)
         dotenv.load_dotenv()
         
         Controller.__init_firebase()

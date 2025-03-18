@@ -35,8 +35,9 @@ class User(Model):
 
     def get_user ( id : str ):
         for user_type in User.UserType:
-            reference = db.reference(f'/{user_type.value}/{id}')
+            reference = db.reference(f'/{user_type.value}s/{id}')
             user_data = reference.get()
+            
             if user_data:
                 match user_type:
                     case User.UserType.SENDER:
@@ -46,4 +47,5 @@ class User(Model):
                         from models.receiver import Receiver
                         return Receiver( id )
                     case User.UserType.ORGANIZATION:
-                        pass
+                        from models.organization import Organization
+                        return Organization( id )

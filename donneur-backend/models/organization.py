@@ -31,6 +31,7 @@ class Organization(Model):
             'banner_file'   : banner_file,
             'description'   : description,
             'logo_file'     : logo_file,
+            'occupancy'     : 0,
             'name'          : name
         }
 
@@ -42,6 +43,15 @@ class Organization(Model):
             organization.set_address( street, postalcode, city, province, country, apt )
 
         return organization
+    
+
+    def set_occupancy(self, occupancy : int):
+
+        self.reference.set({'occupancy' : occupancy })
+
+    def get_occupancy(self) -> int:
+
+        return self.reference.child('occupancy').get()
     
 
     def set_address( self, street : str, postalcode : str, city : str, province : str, country : str, apt : str = None ):

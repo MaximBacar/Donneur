@@ -1,6 +1,6 @@
 from firebase_admin import  db
 from datetime       import datetime
-from models         import Post, Receiver
+from models         import Post, Receiver, Organization
 from collections import deque
 
 from .friend_controller         import FriendController
@@ -42,6 +42,34 @@ class FeedController:
         if post_data:
             return {post_id : post_data}
         raise FeedController.FeedError.PostNotFound('Post not found')
+    
+
+    def __get_author( author_id : str ):
+        user = Receiver(author_id)
+        if not user.exist():
+            user = Organization( author_id )
+        
+        author_data : dict = user.get()
+
+        if not author_data:
+            return None
+
+        if isinstance(user, Organization):
+            pic =  author_data.get("logo_file")
+            author = {
+                'name' : author_data.get('name'),
+                'picture_id' : pic if pic else 'https://appalachiantrail.org/wp-content/uploads/2020/02/Deep-Gap-Shelter.jpg',
+                'id'        : author_id
+            }
+        else:
+            pic = author_data.get("id_picture_file"),
+            author = {
+                'name' : f'{author_data.get("first_name")} {author_data.get("last_name")[0]}.',
+                'picture_id' :  pic if pic else '',
+                'id'        : author_id
+            }
+
+        return author
         
 
     def __generate_feed( receiver_id : str ) -> dict:
@@ -53,7 +81,8 @@ class FeedController:
         
         friends         : list = FriendController.get_friends( receiver.id ).get('friends')
         subscriptions   : list = SubscriptionController.get_subscriptions( receiver.id )
-       
+
+        
        
         friend_posts        : dict = {}
         public_posts        : dict = {}
@@ -66,12 +95,15 @@ class FeedController:
         for subscription in subscriptions:
             organization_posts.update(Post.get_posts(subscription))
 
+
         public_posts = Post.get_public_posts()
-        public_posts = [item for item in public_posts]
+        public_posts : list = [item for item in public_posts]
+        public_posts.reverse()
+        
+        friend_and_subsciption_posts = friend_posts | organization_posts
 
-
-        followed_posts = [key for key, _ in sorted((friend_posts | organization_posts).items(), key=lambda x: datetime.fromisoformat(x[1]))]
- 
+        followed_posts = [key for key, _ in sorted((friend_and_subsciption_posts).items(), key=lambda x: datetime.fromisoformat(x[1]))]
+        #followed_posts.reverse()
         feed = []
 
         chunk_size : int  = 5
@@ -79,6 +111,8 @@ class FeedController:
         
         for i in range(0, len(followed_posts)):
             feed.append(followed_posts[i])
+
+            print(followed_posts[i])
 
             if i % chunk_size == 0 and i != 0:
                 
@@ -109,7 +143,22 @@ class FeedController:
             feed : dict = FeedController.feed_cache.get(receiver_id)
         
         
-        return { 'feed' : feed[page * result_per_page : page * result_per_page + 20] }
+        feed = feed[page * result_per_page : page * result_per_page + 20]
+        feed_data = []
+        for i, post_id in enumerate(feed):
+            post_data : dict = Post(post_id).get()
+            post_data['id'] = post_id
+
+            author = FeedController.__get_author(post_data['author'])
+            if not author:
+                continue
+            if author.get('id') == receiver_id:
+                continue
+            post_data['author'] = author
+
+            feed_data.append(post_data)
+
+        return { 'feed' : feed_data }
 
     def reply_to_post ( post_id : str, author : str, content : str, visibiliy_str : str ) -> Post:
 
@@ -124,3 +173,22 @@ class FeedController:
         parent_post.reply( reply_post.id )
 
         return reply_post
+    
+    def get_user_posts ( receiver_id : str ):
+        posts = Post.get_posts( receiver_id )
+        posts : list = [key for key, _ in sorted((posts).items(), key=lambda x: datetime.fromisoformat(x[1]))]
+
+        author = FeedController.__get_author( receiver_id )
+
+        user_posts = []
+
+        for post_id in posts:
+            post_data : dict = Post(post_id).get()
+            post_data['id'] = post_id
+            post_data['author'] = author
+
+            user_posts.append(post_data)
+        
+        return {'posts' : user_posts}
+        
+        

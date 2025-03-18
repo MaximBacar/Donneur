@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [role, setRole] = useState(null);
   const [donneurID, setDonneurID] = useState(null);
+  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }) => {
           const data      = await response.json();
           setRole(data.role);
           setDonneurID(data.id);
+          setUserData(data.data);
           
         } catch (error) {
           console.error("Failed to fetch role:", error);
@@ -47,7 +49,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role, loading, donneurID, token }}>
+    <AuthContext.Provider value={{ user, role, loading, donneurID, token, userData }}>
       {children}
     </AuthContext.Provider>
   );
