@@ -11,7 +11,7 @@ const FriendLayout = () => {
           <Stack.Screen name="friends"            options={{ headerShown: false }} />
           <Stack.Screen name="addFriend"          options={{ headerShown: false }} />
           <Stack.Screen name="readFriendCode"     options={{ headerShown: false }} />
-          <Stack.Screen name="[friend_db_id]"     options={{ headerShown: false }} />
+          <Stack.Screen name="[id]"     options={{ headerShown: false }} />
           <Stack.Screen name="AvatarWithLoading"  options={{ headerShown: false }} />
           <Stack.Screen name="confirmAddFriend"  options={{ headerShown: false }} />
       </Stack>
