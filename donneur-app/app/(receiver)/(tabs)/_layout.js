@@ -16,9 +16,11 @@ export default function TabLayout() {
             iconName = 'mail';
           } else if (route.name === 'map') {
             iconName = 'compass';
+          } else if (route.name === 'social') {
+            iconName = 'people';
           } else if (route.name === 'profile') {
             iconName = 'person';
-          }
+          } 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: Colors.light.tint,
@@ -28,6 +30,7 @@ export default function TabLayout() {
       <Tabs.Screen name="index"     options={{ title: 'Dashboard' }} />
       <Tabs.Screen name="inbox"      options={{ title: 'Inbox' }} />
       <Tabs.Screen name="map"       options={{ title: 'Map' }} />
+      <Tabs.Screen name="social"   options={{ title: 'Social' }} />
       <Tabs.Screen name="profile"   options={{ title: 'Profile' }} />
     </Tabs>
   );
