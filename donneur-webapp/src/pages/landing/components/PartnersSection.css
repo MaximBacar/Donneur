@@ -1,0 +1,46 @@
+/* Container for the section */
+.partners-container {
+    text-align: center;
+    background-color: white;
+    padding: 40px 20px;
+  }
+  
+  /* Title */
+  .partners-title {
+    font-size: 40px;
+    font-weight: bold;
+    color: #444;
+    margin-top: 50px;
+    margin-bottom: 30px;
+  }
+
+  .title-divider {
+    width: 80px; /* Adjust width */
+    height: 5px; /* Adjust thickness */
+    background: linear-gradient(to right, #a2e290, #444);
+    margin: 0 auto; /* Centering */
+    border-radius: 3px; /* Rounded edges */
+    margin-top: 0px;
+    margin-bottom: 70px;
+
+
+  }
+  
+  /* Logos container */
+  .partners-logos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px; /* Adjust spacing between logos */
+    flex-wrap: wrap; /* Ensures responsiveness */
+    margin-bottom: 50px;
+
+  }
+  
+  /* Logo images */
+  .partner-logo {
+    height: 60px; /* Adjust height */
+    max-width: 150px; /* Ensures logos are not stretched */
+    object-fit: contain;
+  }
+  
