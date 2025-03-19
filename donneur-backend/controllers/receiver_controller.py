@@ -4,6 +4,7 @@ from    utils           import SendMail
 from    models          import Receiver
 from    datetime        import datetime
 from    firebase_admin  import db, auth
+import logging
 
 
 class ReceiverError(Exception):
@@ -53,11 +54,13 @@ class ReceiverController():
         ReceiverController.send_account_creation_link( receiver_id )
     
     def send_account_creation_link( receiver_id : str ):
-        
+        logging.INFO(f'SEND ACCOUNT LINK RECEIVER : {receiver_id}')
         receiver        : Receiver  = Receiver( receiver_id )
         receiver_data   : dict      = receiver.get()
 
         email           : str       = receiver_data.get('email')
+
+        logging.INFO(f'SEND ACCOUNT LINK EMAIL : {email}')
 
         SendMail.send_password_creation_email( email, f'https://www.donneur.ca/set_password/{receiver.id}')
 

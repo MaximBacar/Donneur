@@ -8,7 +8,6 @@ class SendMail:
     SENDER_EMAIL : Final[str] = "Donneur Support <noreply@donneur.ca>"  
     def send_password_creation_email( user_email : str, link : str ):
 
-
         recipient_to : str = user_email
         
         subject = "Account Creation"
