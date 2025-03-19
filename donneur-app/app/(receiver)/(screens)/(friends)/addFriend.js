@@ -24,6 +24,7 @@ export default function AddFriendScreen() {
   const [scanned, setScanned] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const insets = useSafeAreaInsets();
+  const { fromFriends } = router.params || {};
 
 
   const readNfc = async () => {
@@ -63,8 +64,10 @@ export default function AddFriendScreen() {
   };
 
   const onPressScanQRCode = async () => {
-    router.push('./readFriendCode')
-    
+    router.push({
+      pathname: './readFriendCode',
+      params: { fromFriends }
+    });
   };
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
