@@ -66,11 +66,40 @@ export default function SendMoney() {
     }
   }
 
-  const handleSend = () => {
-    // We'll implement the API call here later
-    console.log('Sending amount:', amount, 'to:', id, 'Note:', note);
-    alert(`Money sent successfully! (This is just a placeholder - no real transaction)`);
-    router.back();
+  const handleSend = async () => {
+    try {
+      setLoading(true);
+      console.log('Sending to receiver_id:', id, 'Amount:', parseFloat(amount));
+      
+      const payload = {
+        receiver_id: id,
+        amount: parseFloat(amount)
+      };
+      
+      const response = await fetch(`${BACKEND_URL}/transaction/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'remove-later'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Server response:', errorText);
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+      
+      alert(`Money sent successfully to ${friendData.first_name}!`);
+      router.back();
+    } catch (error) {
+      console.error('Error sending money:', error);
+      alert(`Failed to send money: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleKeyPress = (key) => {
