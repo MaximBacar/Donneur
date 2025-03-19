@@ -1,4 +1,3 @@
-from geopy.geocoders    import Nominatim
 from firebase_admin     import db
 from models             import Model
 from utils              import GoogleMaps
