@@ -211,7 +211,7 @@ export default function ExplorePage() {
             distance: 0, // Will be calculated later
             latitude: address.latitude,
             longitude: address.longitude,
-            image_url: shelter.image_url || "https://via.placeholder.com/400x200", // Use image_url from DB or fallback
+            logo_file: shelter.logo_file || "https://via.placeholder.com/400x200", // Use image_url from DB or fallback
           });
         }
 
@@ -371,7 +371,7 @@ export default function ExplorePage() {
       }}
     >
       <Image 
-        source={{ uri: item.image_url }}
+        source={{ uri: item.logo_file }}
         style={styles.shelterImage}
         resizeMode="cover"
       />
@@ -455,7 +455,7 @@ export default function ExplorePage() {
                   ]}
                 >
                   <Image 
-                    source={{ uri: shelter.image_url }}
+                    source={{ uri: shelter.logo_file }}
                     style={styles.markerImage}
                     resizeMode="cover"
                   />
