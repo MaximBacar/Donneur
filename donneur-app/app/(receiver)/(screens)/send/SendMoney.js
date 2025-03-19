@@ -56,6 +56,7 @@ export default function SendMoney() {
         throw new Error(`Server responded with status: ${response.status}`);
       }
       const data = await response.json();
+      console.log('user ', data);
       setFriendData(data);
   
     } catch (err) {
@@ -81,7 +82,6 @@ export default function SendMoney() {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'remove-later'
         },
         body: JSON.stringify(payload)
       });
@@ -92,7 +92,7 @@ export default function SendMoney() {
         throw new Error(`Server responded with status: ${response.status}`);
       }
       
-      alert(`Money sent successfully to ${friendData.first_name}!`);
+      alert(`Money sent successfully to ${friendData.name}!`);
       router.back();
     } catch (error) {
       console.error('Error sending money:', error);
@@ -168,9 +168,7 @@ export default function SendMoney() {
   }
 
   // Format name: first name + first letter of last name (if exists)
-  const displayName = friendData.last_name 
-    ? `${friendData.first_name} ${friendData.last_name[0]}.`
-    : friendData.first_name;
+  const displayName = friendData?.name || 'N/A';
 
   // Build the profile picture URL (if available)
   const pictureUrl = friendData?.picture_id  || '';
@@ -215,7 +213,7 @@ export default function SendMoney() {
             </>
           ) : (
             <View style={[styles.avatar, styles.placeholder]}>
-              <Text style={styles.placeholderInitial}>{friendData.first_name?.[0]}</Text>
+              <Text style={styles.placeholderInitial}>{friendData.name?.[0]}</Text>
             </View>
           )}
         </View>

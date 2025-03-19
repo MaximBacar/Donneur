@@ -79,7 +79,7 @@ export default function FriendProfile() {
 
   // Build the profile picture URL (if available)
   const pictureUrl = friendProfile.picture_id 
-    ? `${BACKEND_URL}/image/${friendProfile.picture_id}`
+    ? `${friendProfile.picture_id}`
     : null;
 
     return (
@@ -102,7 +102,7 @@ export default function FriendProfile() {
             <Ionicons name="trash-outline" size={18} color="red" style={styles.trashIcon} />
           </TouchableOpacity>
         </View>
-  
+        {console.log(friendProfile)}
         <View style={styles.content}>
           <View style={styles.profileContainer}>
             <View style={styles.imageWrapper}>
@@ -128,7 +128,8 @@ export default function FriendProfile() {
             </View>
             <Text style={styles.displayName}>{displayName}</Text>
             <Text style={styles.memberSince}>
-              Member since: {friendProfile.member_since || '07-07-2002'}
+              {console.log(friendProfile)}
+              Friends since : {friendProfile.friends_since || '07-07-2002'}
             </Text>
           </View>
   
