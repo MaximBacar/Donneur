@@ -25,6 +25,7 @@ createRoot(document.getElementById('root')).render(
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-conditions" element={<TermsConditions />} />
           </>
+          
         )}
       </Routes>
     </Router>
