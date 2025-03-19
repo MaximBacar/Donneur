@@ -29,6 +29,7 @@ export default function ExplorePage() {
   const [showList, setShowList] = useState(true);
   const [selectedSortOption, setSelectedSortOption] = useState("distance");
   const [modalPosition, setModalPosition] = useState("half"); // "half", "minimized"
+  const [selectedPickupOnly, setSelectedPickupOnly] = useState(false); // Filter for pickup points only
   
   // Initialize modal at half-screen position
   useEffect(() => {
@@ -267,10 +268,17 @@ export default function ExplorePage() {
 
   const filteredShelters = shelters.filter((shelter) => {
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = (
       shelter.name.toLowerCase().includes(query) ||
       shelter.city.toLowerCase().includes(query)
     );
+    
+    // Apply pickup-only filter if selected
+    if (selectedPickupOnly) {
+      return matchesSearch && !shelter.isOpen; // isOpen false means it's a pickup point
+    }
+    
+    return matchesSearch;
   });
 
   // Sort shelters by selected option
@@ -373,7 +381,7 @@ export default function ExplorePage() {
           {!item.isOpen && (
             <View style={styles.pickupBadge}>
               <Icon name="money" size={10} color="white" />
-              <Text style={styles.pickupBadgeText}>Pickup</Text>
+              <Text style={styles.pickupBadgeText}>Withdraw</Text>
             </View>
           )}
         </View>
@@ -417,6 +425,7 @@ export default function ExplorePage() {
         showsUserLocation={true}
         showsMyLocationButton={false}
       >
+        {/* Display only the filtered shelters on the map */}
         {filteredShelters.map((shelter) => (
           <Marker
             key={shelter.id}
@@ -487,7 +496,9 @@ export default function ExplorePage() {
             bottom: 0,
           }}
         />
-        <Text style={styles.shelterButtonText}>See Shelters</Text>
+        <Text style={styles.shelterButtonText}>
+          {selectedPickupOnly ? "See Pickup Points" : "See Shelters"}
+        </Text>
         <Icon name="angle-up" size={16} color="white" style={{marginLeft: 8}} />
       </TouchableOpacity>
 
@@ -511,7 +522,7 @@ export default function ExplorePage() {
             {modalPosition === "minimized" && (
               <View style={styles.minimizedTitleContainer}>
                 <Text style={styles.minimizedTitle}>
-                  {filteredShelters.length} Shelters Nearby
+                  {filteredShelters.length} {selectedPickupOnly ? "Pickup Points" : "Shelters"} Nearby
                 </Text>
               </View>
             )}
@@ -537,11 +548,16 @@ export default function ExplorePage() {
               </View>
               <View style={styles.shelterListHeader}>
                 <View style={styles.shelterCountContainer}>
-                  <View style={styles.shelterIconCircle}>
-                    <Icon name="home" size={16} color="white" />
+                  <View style={[
+                    styles.shelterIconCircle, 
+                    {backgroundColor: selectedPickupOnly ? '#FF8C00' : '#FF6347'}
+                  ]}>
+                    <Icon name={selectedPickupOnly ? "money" : "home"} size={16} color="white" />
                   </View>
                   <View>
-                    <Text style={styles.shelterListTitle}>Shelters</Text>
+                    <Text style={styles.shelterListTitle}>
+                      {selectedPickupOnly ? "Pickup Points" : "Shelters"}
+                    </Text>
                     <Text style={styles.shelterCount}>{filteredShelters.length} found</Text>
                   </View>
                 </View>
@@ -566,19 +582,17 @@ export default function ExplorePage() {
           {modalPosition === "half" && (
             <View style={{flex: 1, flexDirection: 'column'}}>
               <View style={styles.filterOptions}>
-                <TouchableOpacity style={styles.filterButton}>
-                  <Icon name="clock-o" size={14} color="#007AFF" style={{marginRight: 5}} />
-                  <Text style={styles.filterButtonText}>Open Now</Text>
+                
+                <TouchableOpacity 
+                  style={[styles.filterButton, {backgroundColor: !selectedPickupOnly ? '#f0f8ff' : '#007AFF'}]}
+                  onPress={() => setSelectedPickupOnly(!selectedPickupOnly)}
+                >
+                  <Icon name="money" size={14} color={!selectedPickupOnly ? '#007AFF' : 'white'} style={{marginRight: 5}} />
+                  <Text style={[styles.filterButtonText, {color: !selectedPickupOnly ? '#007AFF' : 'white'}]}>
+                    Pickup Only
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.filterButton}>
-                  <Icon name="check-circle" size={14} color="#007AFF" style={{marginRight: 5}} />
-                  <Text style={styles.filterButtonText}>Spots Avail.</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.sortButton}>
-                  <Icon name="sort" size={14} color="#007AFF" style={{marginRight: 5}} />
-                  <Text style={styles.filterButtonText}>Distance</Text>
-                  <Icon name="chevron-down" size={10} color="#007AFF" style={styles.sortIcon} />
-                </TouchableOpacity>
+                
               </View>
 
               <FlatList
