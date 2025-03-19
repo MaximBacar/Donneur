@@ -46,6 +46,8 @@ export default function BasicInfoScreen() {
 
   const { setUserID } = useUser();
 
+  
+
   const validateDate = (dateString) => {
     // Validate date format dd-mm-yyyy
     const regex = /^(\d{1,2})-(\d{1,2})-(\d{4})$/;
@@ -143,27 +145,23 @@ export default function BasicInfoScreen() {
     }
   };
 
-  const handleDateChange = (event, selectedDate) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      // Format date as dd-mm-yyyy
-      const day = selectedDate.getDate().toString().padStart(2, '0');
-      const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
-      const year = selectedDate.getFullYear();
-      const formattedDate = `${day}-${month}-${year}`;
-      setDob(formattedDate);
-      setDobError('');
-    }
-  };
-
   const handleDobInputChange = (text) => {
-    setDob(text);
-    
-    // Clear error if field is empty or valid
-    if (!text.trim() || validateDate(text)) {
-      setDobError('');
+    // Remove non-digit characters
+    const cleanedText = text.replace(/\D/g, '');
+  
+    // Auto-insert dashes for dd-mm-yyyy format
+    let formattedText = cleanedText;
+    if (cleanedText.length > 2) {
+      formattedText = `${cleanedText.slice(0, 2)}-${cleanedText.slice(2)}`;
     }
+    if (cleanedText.length > 4) {
+      formattedText = `${formattedText.slice(0, 5)}-${formattedText.slice(5, 9)}`;
+    }
+  
+    // Limit length to 10 characters (dd-mm-yyyy)
+    setDob(formattedText.slice(0, 10));
   };
+  
 
   const handleCancel = () => {
     router.back();
@@ -263,12 +261,6 @@ export default function BasicInfoScreen() {
                     maxLength={10}
                   />
                 </View>
-                <TouchableOpacity
-                  style={styles.calendarButton}
-                  onPress={() => setShowDatePicker(true)}
-                >
-                  <MaterialIcons name="date-range" size={24} color="#007AFF" />
-                </TouchableOpacity>
               </View>
               
               {dobError ? <Text style={styles.errorText}>{dobError}</Text> : null}

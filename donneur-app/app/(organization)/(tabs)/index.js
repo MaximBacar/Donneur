@@ -96,8 +96,6 @@ export default function DashboardScreen() {
   const shelterStats = {
     available: 42,
     occupied: 23,
-    announcements: 34,
-    messages: 354,
   };
 
   if (loading) {
@@ -184,7 +182,7 @@ export default function DashboardScreen() {
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
                   <Text style={styles.statValue}>
-                    {shelterStats.available + shelterStats.occupied}
+                    {shelter.max_occupancy + shelter.occupancy}
                   </Text>
                   <Text style={styles.statLabel}>Total Capacity</Text>
                 </View>
@@ -192,14 +190,14 @@ export default function DashboardScreen() {
                 <View style={styles.statDivider} />
 
                 <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{shelterStats.occupied}</Text>
+                  <Text style={styles.statValue}>{shelter.occupancy}</Text>
                   <Text style={styles.statLabel}>Current Occupancy</Text>
                 </View>
 
                 <View style={styles.statDivider} />
 
                 <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{shelterStats.available}</Text>
+                  <Text style={styles.statValue}>{shelter.max_occupancy}</Text>
                   <Text style={styles.statLabel}>Available Spots</Text>
                 </View>
               </View>
@@ -237,7 +235,7 @@ export default function DashboardScreen() {
             {/* Register User */}
             <TouchableOpacity
               style={styles.quickActionButton}
-              onPress={() => router.push("/(registerUser)")}
+              onPress={() => router.push("/(registerUser)/basicInfo")}
             >
               <LinearGradient
                 colors={["#5e72e4", "#324cdd"]}
@@ -255,7 +253,7 @@ export default function DashboardScreen() {
             {/* Withdrawal */}
             <TouchableOpacity
               style={styles.quickActionButton}
-              onPress={() => router.push("/(screens)/(withdrawal)")}
+              onPress={() => router.push("/(screens)/(withdrawal)/withdrawal")}
             >
               <LinearGradient
                 colors={["#fb6340", "#f56036"]}
