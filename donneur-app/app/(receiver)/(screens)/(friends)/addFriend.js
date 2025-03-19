@@ -26,6 +26,7 @@ export default function AddFriendScreen() {
   const [scanned, setScanned] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const insets = useSafeAreaInsets();
+  const { fromFriends } = router.params || {};
 
   // Request camera permissions when the component mounts.
   useEffect(() => {
@@ -37,7 +38,11 @@ export default function AddFriendScreen() {
   }, []);
 
   const handleGoBack = () => {
-    navigation.goBack();
+    if (fromFriends) {
+      router.replace('(screens)/(friends)/friends');
+    } else {
+      navigation.goBack();
+    }
   };
 
   // This function is called when a QR code is scanned.
@@ -65,8 +70,10 @@ export default function AddFriendScreen() {
   };
 
   const onPressScanQRCode = async () => {
-    router.push('./readFriendCode')
-    
+    router.push({
+      pathname: './readFriendCode',
+      params: { fromFriends }
+    });
   };
 
   // If we're in scanning mode, render the camera view.

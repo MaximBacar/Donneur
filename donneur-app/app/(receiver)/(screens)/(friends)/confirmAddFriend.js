@@ -15,6 +15,7 @@ export default function ConfirmAddFriend(){
     const [friendData, setFriendData] = useState(null);
     const { user, token } = useAuth();
     const router = useRouter();
+    const { fromFriends } = router.params || {};
     const [loading, setLoading] = useState(true);
     const [imageLoading,setImageLoading] = useState(false);
     const [boxSize, setBoxSize] = useState(0);
@@ -53,7 +54,11 @@ export default function ConfirmAddFriend(){
     const cancel = () => {
       // Also clear the friend ID when canceling
       setNewFriendID(null);
-      router.replace('(friends)/friends')
+      if (fromFriends) {
+        router.replace('(screens)/(friends)/friends');
+      } else {
+        router.replace('/');
+      }
     }
     
     const addFriend = async () =>{
@@ -78,7 +83,11 @@ export default function ConfirmAddFriend(){
           setNewFriendID(null);
                 
           Alert.alert("Success", "Friend request sent!");
-          router.replace('(friends)/friends')
+          if (fromFriends) {
+            router.replace('(screens)/(friends)/friends');
+          } else {
+            router.replace('/');
+          }
       } catch (error) {
         console.error("Error adding friend:", error);
         Alert.alert("Error", "Failed to send friend request.");
