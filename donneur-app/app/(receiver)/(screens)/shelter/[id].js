@@ -18,6 +18,9 @@ import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { Linking } from 'react-native';
+
+import { useAuth } from '../../../../context/authContext';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -31,6 +34,8 @@ export default function ShelterDetail() {
   const [location, setLocation] = useState(null);
   const [region, setRegion] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
+
+  const { token } = useAuth();
   
   // Added from your code
   const [shelter, setShelter] = useState(null);
@@ -38,33 +43,88 @@ export default function ShelterDetail() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch shelter data
-  const fetchShelterData = useCallback(async () => {
-    try {
-      const url = `${BACKEND_URL}/organization/get?id=${id}`;
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      const data = await response.json();
-      setShelter(data);
-      
-      let lat = data.address.latitude;
-      let long = data.address.longitude;
-      setRegion({
-        latitude: parseFloat(lat),
-        longitude: parseFloat(long),
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-    } catch (error) {
-      console.error('Full error details:', error);
-      setError(error.message);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+  const handleFollowButton = async () => {
+    body = {
+      'organization_id' : id
     }
+    let func = isFollowing ? 'unsubscribe' : 'subscribe';
+
+    const url = `${BACKEND_URL}/subscription/${func}`;
+
+    try{
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body)
+      });
+
+      setIsFollowing(!isFollowing)
+      if (!response.ok){
+        console.log(response.json());
+      }
+    }catch (err){
+      console.log(err);
+    }
+  }
+  useEffect(() => {
+    const fetchSubscriptions = async () => {
+      try {
+        const url = `${BACKEND_URL}/subscription/get`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`, 
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        let subs = data.subscriptions
+        if (subs.includes(id)) {
+          setIsFollowing(true);
+        }
+      }catch (error) {
+        console.error('Full error details:', error);
+        setError(error.message);
+      }
+    }
+
+    const fetchShelterData = async () => {
+      try {
+        const url = `${BACKEND_URL}/organization/get?id=${id}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        setShelter(data);
+        
+        console.log("addy",data.address.longitude)
+        let lat = data.address.latitude
+        let long = data.address.longitude
+        setRegion({
+            latitude: parseFloat(lat),
+            longitude: parseFloat(long),
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+        });
+      } catch (error) {
+        console.error('Full error details:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSubscriptions();
+    fetchShelterData();
+   
   }, [id]);
   
   useEffect(() => {
@@ -127,8 +187,8 @@ export default function ShelterDetail() {
   }
 
   // Calculate the occupancy percentage
-  const occupancyPercentage = shelter.current_occupancy && shelter.max_occupancy 
-    ? Math.round((shelter.current_occupancy / shelter.max_occupancy) * 100) 
+  const occupancyPercentage = shelter.occupancy && shelter.max_occupancy 
+    ? Math.round((shelter.occupancy / shelter.max_occupancy) * 100) 
     : 50; // Default if not available
   
   // Determine color based on occupancy
@@ -189,6 +249,7 @@ export default function ShelterDetail() {
   };
 
   return (
+
     <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
@@ -326,6 +387,7 @@ export default function ShelterDetail() {
                 <Text style={styles.contactLabel}>Phone</Text>
                 <Text style={styles.contactValue}>{shelter.phone || 'No phone available'}</Text>
               </View>
+
               <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
             </TouchableOpacity>
             

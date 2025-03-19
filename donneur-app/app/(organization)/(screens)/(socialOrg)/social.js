@@ -11,14 +11,15 @@ import {
   StatusBar,
   Platform,
   Modal,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
 import { useRouter } from "expo-router";
-
+import { BACKEND_URL } from "../../../../constants/backend";
 import { useAuth } from "../../../../context/authContext";
 import {
-  fetchPostsOnce, // For manual fetch of all posts
+  fetchPostsOnce,
   useDeletePost,
   useToggleLike,
   fetchUserPostsOnce,
@@ -32,11 +33,11 @@ const placeholderAvatar = { uri: "https://i.pravatar.cc/300" };
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, token, donneurID } = useAuth();
 
-  // State for feed
-  const [feedPosts, setFeedPosts] = useState([]);
+  const [myPosts, setMyPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [firstLoad, setFirstLoad] = useState(false);
 
   // Hooks for delete & like
   const removePost = useDeletePost();
@@ -46,51 +47,46 @@ export default function HomeScreen() {
   const [likesModalVisible, setLikesModalVisible] = useState(false);
   const [currentLikes, setCurrentLikes] = useState([]);
 
-  // ─────────────────────────────────────────────────────────
-  // 1) ON MOUNT: fetch once + partial real-time for doc changes
   useEffect(() => {
-    // A) Initial fetch
-    loadPosts();
+    const fetchData = async () => {
+      if (!firstLoad) {
+        await loadUserPosts();
+        setFirstLoad(true);
+      }
+    };
 
-    // B) onSnapshot => merges 'likedBy' AND 'commentCount' if doc is "modified"
-    const q = query(
-      collection(database, "posts"),
-      orderBy("timestamp", "desc")
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === "modified") {
-          const updatedDoc = change.doc.data();
-          const docId = change.doc.id;
+    fetchData();
+  }, [firstLoad]);
 
-          setFeedPosts((prev) =>
-            prev.map((p) => {
-              if (p.id === docId) {
-                // Merge BOTH likedBy and commentCount from updated doc
-                return {
-                  ...p,
-                  likedBy: updatedDoc.likedBy,
-                  commentCount: updatedDoc.commentCount, // <--- crucial
-                };
-              }
-              return p;
-            })
-          );
-        }
-        // If doc is "added" or "removed", ignore => user must refresh
-      });
-    });
-
-    return () => unsubscribe();
+  useEffect(() => {
+    loadUserPosts();
   }, []);
 
-  // ─────────────────────────────────────────────────────────
-  // 2) LOAD POSTS (for initial or pull-to-refresh)
-  const loadPosts = async () => {
+  const loadUserPosts = async () => {
     setRefreshing(true);
     try {
-      const posts = await fetchUserPostsOnce(user.uid);
-      setFeedPosts(posts);
+      let url = `${BACKEND_URL}/feed/get_user_posts`;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "remove-later",
+        },
+      });
+
+      const data = await response.json();
+      const dataList = Object.values(data.posts);
+      console.log("User posts loaded:", dataList.length);
+
+      // Sort by date (newest first)
+      dataList.sort((a, b) => {
+        const dateA = Date.parse(a.created_at.split(".")[0]);
+        const dateB = Date.parse(b.created_at.split(".")[0]);
+        return dateB - dateA;
+      });
+
+      setMyPosts(dataList);
     } catch (error) {
       console.error("Error fetching posts:", error);
     }
@@ -99,57 +95,164 @@ export default function HomeScreen() {
 
   // Pull-to-refresh
   const onRefresh = () => {
-    loadPosts();
+    loadUserPosts();
   };
 
   // ─────────────────────────────────────────────────────────
-  // 3) DELETE POST
+  // DELETE POST
   const deletePost = async (post) => {
     try {
-      await removePost(post);
-      Alert.alert("Deleted", "Post has been removed.");
-      // We do NOT remove from feedPosts => user must refresh to see it gone
+      console.log("=== COMPREHENSIVE DELETE APPROACH ===");
+      console.log("Post ID:", post.id);
+      console.log("User ID:", user.uid);
+
+      // Try multiple field names that the backend might be expecting
+      const requestBody = JSON.stringify({
+        post_id: post.id,
+        postId: post.id,
+        id: post.id,
+        "post-id": post.id,
+        _id: post.id,
+        postID: post.id,
+        // Include some nested structures too
+        data: {
+          post_id: post.id,
+        },
+        params: {
+          post_id: post.id,
+        },
+      });
+
+      console.log("Sending with multiple field names:", requestBody);
+
+      // Make the request with careful attention to headers
+      const response = await fetch(`${BACKEND_URL}/feed/delete`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "ngrok-skip-browser-warning": "remove-later",
+          // Add cache control to prevent any caching issues
+          "Cache-Control": "no-cache, no-store",
+        },
+        body: requestBody,
+      });
+
+      console.log("Response status:", response.status);
+
+      let responseText;
+      try {
+        responseText = await response.text();
+        console.log("Response text:", responseText);
+      } catch (e) {
+        console.error("Error reading response:", e);
+      }
+
+      if (response.ok) {
+        console.log("Post deleted successfully!");
+        Alert.alert("Success", "Post has been deleted.");
+
+        // Update UI after successful deletion
+        setMyPosts((prev) => prev.filter((p) => p.id !== post.id));
+
+        // Refresh feeds
+        setTimeout(() => {
+          loadUserPosts();
+        }, 500);
+
+        return;
+      }
+
+      // Alternative approach: Try using a DELETE method
+      console.log("POST method failed, trying DELETE method...");
+
+      const deleteResponse = await fetch(
+        `${BACKEND_URL}/feed/delete?post_id=${encodeURIComponent(post.id)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "ngrok-skip-browser-warning": "remove-later",
+          },
+        }
+      );
+
+      console.log("DELETE method response status:", deleteResponse.status);
+
+      try {
+        const deleteResponseText = await deleteResponse.text();
+        console.log("DELETE response text:", deleteResponseText);
+
+        if (deleteResponse.ok) {
+          console.log("Post deleted successfully with DELETE method!");
+          Alert.alert("Success", "Post has been deleted.");
+
+          // Update UI after successful deletion
+          setMyPosts((prev) => prev.filter((p) => p.id !== post.id));
+
+          // Refresh feeds
+          setTimeout(() => {
+            loadUserPosts();
+          }, 500);
+
+          return;
+        }
+      } catch (e) {
+        console.error("Error reading DELETE response:", e);
+      }
+
+      // If we get here, all attempts failed
+      Alert.alert(
+        "Delete Failed",
+        `Could not delete post. Multiple approaches failed. Please check the console logs and contact the backend developer.`
+      );
     } catch (error) {
-      Alert.alert("Error", error.message);
+      console.error("Error in deletePost:", error);
+      Alert.alert(
+        "Error",
+        "An exception occurred while trying to delete the post."
+      );
     }
   };
 
-  // 3-dot menu
+  // For debugging purposes only
   const handleMorePress = (post) => {
-    if (post.name === user.uid) {
-      Alert.alert("Post Options", "Choose an action", [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => deletePost(post),
-        },
-      ]);
-    } else {
-      Alert.alert("Info", "You are not the owner of this post.");
-    }
+    Alert.alert("Post Options", "Choose an action", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete (Debug Mode)",
+        style: "destructive",
+        onPress: () => deletePost(post),
+      },
+    ]);
   };
 
   // ─────────────────────────────────────────────────────────
-  // 4) TOGGLE LIKE => optional local update
+  // TOGGLE LIKE
   const handleToggleLike = async (post) => {
     try {
-      // local update
-      setFeedPosts((prev) =>
-        prev.map((p) => {
+      const isLiked = post.likedBy?.includes(user.uid);
+      let newLikedBy;
+
+      if (isLiked) {
+        newLikedBy = post.likedBy.filter((uid) => uid !== user.uid);
+      } else {
+        newLikedBy = [...(post.likedBy || []), user.uid];
+      }
+
+      // Update in list for immediate UI response
+      setMyPosts(
+        myPosts.map((p) => {
           if (p.id === post.id) {
-            const isLiked = p.likedBy?.includes(user.uid);
-            let newLikedBy;
-            if (isLiked) {
-              newLikedBy = p.likedBy.filter((uid) => uid !== user.uid);
-            } else {
-              newLikedBy = [...(p.likedBy || []), user.uid];
-            }
             return { ...p, likedBy: newLikedBy };
           }
           return p;
         })
       );
+
       // Firestore
       await toggleLike(post);
     } catch (error) {
@@ -158,7 +261,7 @@ export default function HomeScreen() {
   };
 
   // ─────────────────────────────────────────────────────────
-  // 5) SHOW WHO LIKED
+  // SHOW WHO LIKED
   const showLikesModal = (post) => {
     if (!post.likedBy?.length) {
       Alert.alert("Likes", "No one has liked this post yet.");
@@ -169,17 +272,19 @@ export default function HomeScreen() {
   };
 
   // ─────────────────────────────────────────────────────────
-  // 6) GO TO COMMENTS
-  //    Instead of an inline push, define a small function:
+  // GO TO COMMENTS
   const handleCommentPress = (post) => {
+    console.log("Navigating to post:", post.id);
+
     router.push({
-      pathname: "/CommentScreen",
-      params: { id: post.id },
+      pathname: "/(socialOrg)/" + post.id,
+      // pathname: "/(screens)/(feed)/" + post.id,
+      params: { isOwnPost: "true" },
     });
   };
 
   // ─────────────────────────────────────────────────────────
-  // 6.1) GO TO CREATE POST
+  // GO TO CREATE POST
   const handleCreatePost = () => {
     router.push({
       pathname: "/CreatePostScreen",
@@ -187,7 +292,7 @@ export default function HomeScreen() {
   };
 
   // ─────────────────────────────────────────────────────────
-  // 7) RENDER "WHO LIKED" ITEM
+  // RENDER "WHO LIKED" ITEM
   const renderLikeItem = ({ item: uid }) => {
     const isCurrentUser = uid === user.uid;
     return (
@@ -200,6 +305,7 @@ export default function HomeScreen() {
       </View>
     );
   };
+
   const handleViewProfile = (postCreatorId) => {
     router.push({
       pathname: "/see_profile",
@@ -208,49 +314,45 @@ export default function HomeScreen() {
   };
 
   // ─────────────────────────────────────────────────────────
-  // 8) RENDER EACH POST
+  // RENDER EACH POST
   const renderPost = ({ item: post }) => {
     const isLiked = post.likedBy?.includes(user.uid);
     const likeCount = post.likedBy?.length || 0;
-
-    // ✅ Now we read post.commentCount from the doc
     const commentCount = post.commentCount ?? 0;
+
+    console.log("===== DEBUG USER IDs SOCIAL.JSSSSS =====");
+    console.log("user.uid:", user?.uid);
+    console.log("DonneurID:", donneurID);
+    console.log("Poste.authorId):", post.author.id);
+    console.log("==========================");
 
     return (
       <View style={styles.feedItem}>
         <Image
-          source={{ uri: post.avatar || placeholderAvatar.uri }}
+          source={{ uri: post.author.picture_id || placeholderAvatar.uri }}
           style={styles.avatar}
         />
         <View style={{ flex: 1 }}>
           <View style={styles.postHeader}>
-            <View>
-              <Text style={styles.name}>{post.name}</Text>
+            <View style={styles.nameContainer}>
+              <Text style={styles.name}>You</Text>
               <Text style={styles.timestamp}>
-                {post.timestamp?.toDate
-                  ? moment(post.timestamp.toDate()).fromNow()
-                  : "Some time ago"}
+                {moment(Date.parse(post.created_at.split(".")[0])).fromNow()}
               </Text>
             </View>
 
-            {post.name === user.uid && (
-              <TouchableOpacity onPress={() => handleMorePress(post)}>
-                <Ionicons
-                  name="ellipsis-horizontal"
-                  size={24}
-                  color="#73788B"
-                />
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity onPress={() => handleMorePress(post)}>
+              <Ionicons name="ellipsis-horizontal" size={24} color="#73788B" />
+            </TouchableOpacity>
           </View>
 
           <Text style={styles.post}>
-            {post.text || "No text for this post."}
+            {post.content.text || "No text for this post."}
           </Text>
 
           {post.image && (
             <TouchableOpacity
-              onPress={() => handleViewProfile(post.name)}
+              onPress={() => handleViewProfile(post.name || post.author.id)}
               activeOpacity={0.8}
             >
               <Image
@@ -270,7 +372,7 @@ export default function HomeScreen() {
               <Ionicons
                 name={isLiked ? "heart" : "heart-outline"}
                 size={24}
-                color="black"
+                color={isLiked ? "#FF3B30" : "black"}
               />
             </TouchableOpacity>
 
@@ -286,11 +388,13 @@ export default function HomeScreen() {
                 style={styles.countItem}
                 onPress={() => showLikesModal(post)}
               >
-                <Ionicons name="heart" size={16} color="black" />
+                <Ionicons name="heart" size={16} color="#FF3B30" />
                 <Text style={styles.countText}>{likeCount}</Text>
               </TouchableOpacity>
               <View style={styles.countItem}>
-                <Text style={styles.countText}>{commentCount} comments</Text>
+                <Text style={styles.countText}>
+                  {commentCount} {commentCount === 1 ? "comment" : "comments"}
+                </Text>
               </View>
             </View>
           </View>
@@ -301,19 +405,23 @@ export default function HomeScreen() {
 
   const ItemSeparator = () => <View style={styles.separator} />;
 
-  // ─────────────────────────────────────────────────────────
-  // 9) MAIN RENDER
+  if (firstLoad == false) {
+    return null;
+  }
+
   return (
     <SafeAreaView style={styles.safeContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Feed</Text>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>My Posts</Text>
+        </View>
       </View>
 
       <FlatList
         style={styles.feed}
-        data={feedPosts}
+        data={myPosts}
         renderItem={renderPost}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
@@ -323,13 +431,11 @@ export default function HomeScreen() {
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconContainer}>
-              <Ionicons name="newspaper-outline" size={80} color="#CCCCCC" />
+              <Ionicons name="person-outline" size={80} color="#CCCCCC" />
             </View>
-            <Text style={styles.emptyTitle}>Your feed is empty</Text>
+            <Text style={styles.emptyTitle}>You haven't posted yet</Text>
             <Text style={styles.emptyText}>
-              Your community is waiting! 🌍💙 Share an update, an event, or a
-              simple message to connect with those who need it most. Every word
-              makes a difference!"
+              Share your thoughts, experiences, or a photo with the community!
             </Text>
             <TouchableOpacity
               style={styles.emptyButton}
@@ -389,10 +495,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#F0F0F0",
   },
+  headerTitleContainer: {
+    width: "100%",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   headerTitle: {
     fontSize: 28,
     fontWeight: "bold",
     color: "#000",
+    marginBottom: 8,
   },
   feed: {
     backgroundColor: "#FFF",
@@ -416,13 +529,30 @@ const styles = StyleSheet.create({
   postHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     paddingRight: 8,
+  },
+  nameContainer: {
+    flex: 1,
   },
   name: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#000",
+  },
+  myPostBadge: {
+    backgroundColor: "#000",
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    alignSelf: "flex-start",
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  myPostBadgeText: {
+    color: "#FFF",
+    fontSize: 10,
+    fontWeight: "bold",
   },
   timestamp: {
     fontSize: 14,
@@ -484,6 +614,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   // Modal
   modalContainer: {
@@ -531,7 +665,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-  // New empty state styles
+  // Empty state styles
   emptyContainer: {
     flex: 1,
     justifyContent: "center",

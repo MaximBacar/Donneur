@@ -11,7 +11,7 @@ class SubscriptionController:
         class OrganizationNotFound  (Exception) :pass
 
     def subscribe ( receiver_id : str, organization_id : str ) -> None:
-
+        print("SUB")
         receiver        : Receiver      = Receiver      ( receiver_id )
         organization    : Organization  = Organization  ( organization_id )
         if not receiver.exist():
@@ -22,7 +22,7 @@ class SubscriptionController:
         db.reference(SubscriptionController.BASE_TABLE).child(receiver.id).child(organization.id).set(True)
 
     def unsubscribe( receiver_id : str, organization_id : str ) -> None:
-
+        print("UNSUB")
         receiver        : Receiver      = Receiver      ( receiver_id )
         organization    : Organization  = Organization  ( organization_id )
         if not receiver.exist():

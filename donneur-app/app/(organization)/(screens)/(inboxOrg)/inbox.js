@@ -37,7 +37,7 @@ export default function Inbox() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState("all"); // all, direct, channels
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const router = useRouter();
 
   // ------------------------------------------------------
@@ -51,6 +51,8 @@ export default function Inbox() {
       // ============================
       //      FETCH DIRECT MESSAGES
       // ============================
+      console.log("user_idddd", user.uid);
+      console.log("user_Data,", userData.name);
       const chatQuery = query(
         collection(database, "chat"),
         where("users", "array-contains", user.uid)
@@ -70,6 +72,10 @@ export default function Inbox() {
                 // Get other user's name
                 const otherUserName =
                   chat.userNames?.[otherUserId] || "Unknown User";
+                console.log("otherUserIDDD", otherUserId);
+
+                const otherUserData = chat.userDetails?.[otherUserId] || null;
+                console.log("Other User Data:", otherUserData);
 
                 // Fetch the last message
                 const messagesRef = collection(
@@ -397,6 +403,7 @@ export default function Inbox() {
   const markChannelAsRead = async (channelId) => {
     try {
       // Get the latest message timestamp
+
       const messagesRef = collection(
         database,
         "channels",
