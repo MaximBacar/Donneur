@@ -62,13 +62,17 @@ class PaymentController():
         if not payment:
             return
         
-        reference.set({'confirmed' : True})
-        reference.set({'confirmation_date' : datetime.now().isoformat()})
+        reference.child('confirmed').set(True)
+        reference.child('confirmation_date').set(datetime.now().isoformat())
         
         receiver_id = payment.get('receiver_id')
         amount = payment.get('amount')
         IP = payment.get('IP')
+        
 
+        receiver : Receiver = Receiver(receiver_id)
+
+        receiver.deposit(amount)
 
         Transaction.create_transaction( 
             receiver_id = receiver_id,

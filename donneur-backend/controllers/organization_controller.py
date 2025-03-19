@@ -30,7 +30,37 @@ class OrganizationController:
     def get_occupancy ( organization_id : str) -> int:
         organization : Organization = Organization( organization_id )
         return organization.get_occupancy()
+    
+    def set_info( 
+        org_id: str, 
+        phone: str,
+        name: str ,
+        description: str, 
+        street: str,
+        city: str, 
+        state: str,
+        postalcode: str,
+        max_occupancy: int,
+        apt: str = ""
+    ):
+        org: Organization = Organization(org_id)
 
+        if not org.exist():
+            raise ValueError("OrgNotFound")
+
+        org.set_address(street, postalcode, city, state, 'Canada', apt)
+
+        ref = db.reference(f'/organizations/{org_id}')
+
+
+        ref.child('phone').set(phone)
+        ref.child('name').set(name)
+        ref.child('description').set(description)
+        ref.child('max_occupancy').set(max_occupancy)
+
+
+
+        
     def create_organization(
             email           : str,
             password        : str,

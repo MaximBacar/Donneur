@@ -1,0 +1,8 @@
+2025-03-19 01:46:03,387 - INFO - message='Request to Stripe api' method=post url=https://api.stripe.com/v1/payment_method_domains
+2025-03-19 01:46:03,612 - INFO - message='Stripe API response' path=https://api.stripe.com/v1/payment_method_domains response_code=200
+2025-03-19 01:46:03,630 - WARNING -  * Debugger is active!
+2025-03-19 01:46:03,647 - INFO -  * Debugger PIN: 807-196-923
+2025-03-19 01:46:11,633 - INFO - 127.0.0.1 - - [19/Mar/2025 01:46:11] "POST /organization/set_info HTTP/1.1" 200 -
+2025-03-19 01:46:16,507 - INFO - 127.0.0.1 - - [19/Mar/2025 01:46:16] "GET /receiver/get_balance HTTP/1.1" 200 -
+2025-03-19 01:46:16,708 - INFO - 127.0.0.1 - - [19/Mar/2025 01:46:16] "GET /transaction/get HTTP/1.1" 200 -
+2025-03-19 01:46:23,124 - INFO - 127.0.0.1 - - [19/Mar/2025 01:46:23] "GET /transaction/get HTTP/1.1" 200 -

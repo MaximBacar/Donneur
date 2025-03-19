@@ -1,1 +1,1 @@
-export const BACKEND_URL = 'https://f126-2607-fa49-ad41-de00-4122-28e6-6030-7a2a.ngrok-free.app'
+export const BACKEND_URL = 'https://api.donneur.ca'

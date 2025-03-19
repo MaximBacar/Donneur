@@ -45,18 +45,16 @@ class VerifyLinkResource(Resource):
 
     def get(self):
         parser = reqparse.RequestParser()
-        parser.add_argument( 'receiver_id', type=str, required=True, help="No receiver_id provided" )
+        parser.add_argument( 'receiver_id', type=str, required=True, location='args', help="No receiver_id provided" )
         data = parser.parse_args()
 
         try:
-            valid = ReceiverController.verify_account_creation_link( 
-                data.get('receiver_id'), 
-            )
+            valid = ReceiverController.verify_account_creation_link(receiver_id = data.get('receiver_id'))
             if valid:
                 return {'status' : 'ok'}, 200
-            return {'status' : 'disabled'}, 400
+            return {'status' : 'disabled'}, 200
         except Exception as e:
-            return {'error' : str(e)}, 400
+            return {'error' : f'{str(e)} {data.get("receiver_id")}'}, 400
         
 class CreateAppAccountResource(Resource):
 

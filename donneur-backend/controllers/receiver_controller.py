@@ -4,6 +4,7 @@ from    utils           import SendMail
 from    models          import Receiver
 from    datetime        import datetime
 from    firebase_admin  import db, auth
+import logging
 
 
 class ReceiverError(Exception):
@@ -46,22 +47,26 @@ class ReceiverController():
         return receiver
     
     def update_email( receiver_id : str, email : str ) -> None:
-        
+        logging.info(f'UPDATING EMAIL RECEIVER : {receiver_id}')
         receiver : Receiver = Receiver( receiver_id )
         receiver.set_email( email )
 
         ReceiverController.send_account_creation_link( receiver_id )
     
     def send_account_creation_link( receiver_id : str ):
-        
+        print(f'SEND ACCOUNT LINK RECEIVER : {receiver_id}')
+        logging.info(f'SEND ACCOUNT LINK RECEIVER : {receiver_id}')
         receiver        : Receiver  = Receiver( receiver_id )
         receiver_data   : dict      = receiver.get()
 
         email           : str       = receiver_data.get('email')
 
-        SendMail.send_password_creation_email( email, f'https://www.donneur.ca/create_account/{receiver.id}')
+        print(f'SEND ACCOUNT LINK EMAIL : {email}')
+        logging.info(f'SEND ACCOUNT LINK EMAIL : {email}')
 
-    def verify_account_creation_link ( self, receiver_id : str ) -> bool:
+        SendMail.send_password_creation_email( email, f'https://www.donneur.ca/setPassword?id={receiver.id}')
+
+    def verify_account_creation_link ( receiver_id : str ) -> bool:
         
         receiver : Receiver = Receiver ( receiver_id )
         if receiver.has_app():

@@ -10,7 +10,7 @@ from routes.payments        import CreateDonationResource, ConfirmDonationResour
 from routes.receivers       import CreateReceiverResource, AddEmailResource, VerifyLinkResource, CreateAppAccountResource, DonationProfileResource, GetReceiverResource, GetBalanceResource, GetReceiverProfile
 from routes.transactions    import GetTransactionsResource, SendFundsResource, WithdrawFundsResource
 from routes.subscriptions   import SubscribeResource, UnsubscribeResource, GetSubscriptionsResource
-from routes.organizations   import GetOrganizationsResource, GetCurrentOccupancy, SetCurrentOccupancy
+from routes.organizations   import GetOrganizationsResource, GetCurrentOccupancy, SetCurrentOccupancy, SetData
 from routes.authentication  import AuthenticationResource
 from routes.medias          import IdDocumentUploadResource, IdPictureUploadResource, BannerUploadResource, LogoUploadResource
 
@@ -50,6 +50,7 @@ api.add_resource(   GetReceiverProfile,         '/receiver/profile'             
 api.add_resource(   GetOrganizationsResource,   '/organization/get'             )
 api.add_resource(   SetCurrentOccupancy,        '/organization/set_occupancy'   )
 api.add_resource(   GetCurrentOccupancy,        '/organization/get_occupancy'   )
+api.add_resource(   SetData,                    '/organization/set_info'        )
 
 api.add_resource(   CreateDonationResource,     '/donation/create'              )
 api.add_resource(   CancelDonationResource,     '/donation/cancel'              )
