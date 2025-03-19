@@ -29,6 +29,7 @@ export default function ExplorePage() {
   const [showList, setShowList] = useState(true);
   const [selectedSortOption, setSelectedSortOption] = useState("distance");
   const [modalPosition, setModalPosition] = useState("half"); // "half", "minimized"
+  const [selectedPickupOnly, setSelectedPickupOnly] = useState(false); // Filter for pickup points only
   
   // Initialize modal at half-screen position
   useEffect(() => {
@@ -49,8 +50,8 @@ export default function ExplorePage() {
   const modalY = useRef(new Animated.Value(halfScreenPosition)).current;
   
   // Glow Animation
-  const glowSize = useRef(new Animated.Value(50)).current;
-  const glowOpacity = useRef(new Animated.Value(0.8)).current;
+  const glowSize = useRef(new Animated.Value(40)).current; // Reduced from 50
+  const glowOpacity = useRef(new Animated.Value(0.7)).current; // Slightly less opacity
   
   // Pan Responder for dragging the modal
   const panResponder = useRef(
@@ -120,12 +121,12 @@ export default function ExplorePage() {
       Animated.loop(
         Animated.sequence([
           Animated.timing(glowSize, {
-            toValue: 50,
+            toValue: 40, // Reduced from 50
             duration: 2000,
             useNativeDriver: false,
           }),
           Animated.timing(glowSize, {
-            toValue: 120,
+            toValue: 70, // Reduced from 120
             duration: 2000,
             useNativeDriver: false,
           }),
@@ -135,12 +136,12 @@ export default function ExplorePage() {
       Animated.loop(
         Animated.sequence([
           Animated.timing(glowOpacity, {
-            toValue: 0.8,
+            toValue: 0.7, // Reduced from 0.8
             duration: 2002,
             useNativeDriver: false,
           }),
           Animated.timing(glowOpacity, {
-            toValue: 0,
+            toValue: 0.1, // Increased from 0 for less dramatic effect
             duration: 2002,
             useNativeDriver: false,
           }),
@@ -192,6 +193,13 @@ export default function ExplorePage() {
           const { address } = shelter;
           console.log(address);
           const fullAddress = `${address.street}, ${address.city}, ${address.state}, ${address.postalcode}`;
+          
+          // TEMPORARY: For testing, randomly set some shelters as pickup points if is_pickup_point is not provided
+          // In production, this should come from the backend
+          const isPickupPoint = shelter.is_pickup_point !== undefined 
+            ? shelter.is_pickup_point 
+            : parseInt(id) % 3 === 0; // Every third shelter will be a pickup point for testing
+          
           shelterMarkers.push({
             id,
             name: shelter.name,
@@ -199,7 +207,7 @@ export default function ExplorePage() {
             address: fullAddress,
             description: shelter.description,
             type: shelter.type || "Shelter",
-            isOpen: true, // Default value, can be updated with actual data
+            isOpen: !isPickupPoint, // If it's a pickup point, set isOpen to false
             distance: 0, // Will be calculated later
             latitude: address.latitude,
             longitude: address.longitude,
@@ -260,10 +268,17 @@ export default function ExplorePage() {
 
   const filteredShelters = shelters.filter((shelter) => {
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = (
       shelter.name.toLowerCase().includes(query) ||
       shelter.city.toLowerCase().includes(query)
     );
+    
+    // Apply pickup-only filter if selected
+    if (selectedPickupOnly) {
+      return matchesSearch && !shelter.isOpen; // isOpen false means it's a pickup point
+    }
+    
+    return matchesSearch;
   });
 
   // Sort shelters by selected option
@@ -361,10 +376,18 @@ export default function ExplorePage() {
         resizeMode="cover"
       />
       <View style={styles.shelterInfo}>
-        <Text style={styles.shelterName}>{item.name}</Text>
+        <View style={styles.shelterNameRow}>
+          <Text style={styles.shelterName}>{item.name}</Text>
+          {!item.isOpen && (
+            <View style={styles.pickupBadge}>
+              <Icon name="money" size={10} color="white" />
+              <Text style={styles.pickupBadgeText}>Withdraw</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.shelterDistance}>{formatDistance(item.distance)} · {item.type}</Text>
         <Text style={styles.shelterAddress}>{item.address}</Text>
-        <Text style={styles.shelterStatus}>{item.isOpen ? "Open 24 hours" : "Closed"}</Text>
+        <Text style={styles.shelterStatus}>Open 24 hours</Text>
       </View>
       <TouchableOpacity 
         style={styles.shelterTime}
@@ -402,6 +425,7 @@ export default function ExplorePage() {
         showsUserLocation={true}
         showsMyLocationButton={false}
       >
+        {/* Display only the filtered shelters on the map */}
         {filteredShelters.map((shelter) => (
           <Marker
             key={shelter.id}
@@ -423,10 +447,9 @@ export default function ExplorePage() {
                       height: glowSize,
                       backgroundColor: glowOpacity.interpolate({
                         inputRange: [0.5, 1],
-                        outputRange: [
-                          "rgba(154, 255, 1, 0.5)",
-                          "rgba(154, 255, 1, 1)",
-                        ],
+                        outputRange: shelter.isOpen ? 
+                          ["rgba(154, 255, 1, 0.5)", "rgba(154, 255, 1, 1)"] : 
+                          ["rgba(255, 140, 0, 0.5)", "rgba(255, 140, 0, 1)"],
                       }),
                     },
                   ]}
@@ -473,7 +496,9 @@ export default function ExplorePage() {
             bottom: 0,
           }}
         />
-        <Text style={styles.shelterButtonText}>See Shelters</Text>
+        <Text style={styles.shelterButtonText}>
+          {selectedPickupOnly ? "See Pickup Points" : "See Shelters"}
+        </Text>
         <Icon name="angle-up" size={16} color="white" style={{marginLeft: 8}} />
       </TouchableOpacity>
 
@@ -497,7 +522,7 @@ export default function ExplorePage() {
             {modalPosition === "minimized" && (
               <View style={styles.minimizedTitleContainer}>
                 <Text style={styles.minimizedTitle}>
-                  {filteredShelters.length} Shelters Nearby
+                  {filteredShelters.length} {selectedPickupOnly ? "Pickup Points" : "Shelters"} Nearby
                 </Text>
               </View>
             )}
@@ -523,11 +548,16 @@ export default function ExplorePage() {
               </View>
               <View style={styles.shelterListHeader}>
                 <View style={styles.shelterCountContainer}>
-                  <View style={styles.shelterIconCircle}>
-                    <Icon name="home" size={16} color="white" />
+                  <View style={[
+                    styles.shelterIconCircle, 
+                    {backgroundColor: selectedPickupOnly ? '#FF8C00' : '#FF6347'}
+                  ]}>
+                    <Icon name={selectedPickupOnly ? "money" : "home"} size={16} color="white" />
                   </View>
                   <View>
-                    <Text style={styles.shelterListTitle}>Shelters</Text>
+                    <Text style={styles.shelterListTitle}>
+                      {selectedPickupOnly ? "Pickup Points" : "Shelters"}
+                    </Text>
                     <Text style={styles.shelterCount}>{filteredShelters.length} found</Text>
                   </View>
                 </View>
@@ -552,19 +582,17 @@ export default function ExplorePage() {
           {modalPosition === "half" && (
             <View style={{flex: 1, flexDirection: 'column'}}>
               <View style={styles.filterOptions}>
-                <TouchableOpacity style={styles.filterButton}>
-                  <Icon name="clock-o" size={14} color="#007AFF" style={{marginRight: 5}} />
-                  <Text style={styles.filterButtonText}>Open Now</Text>
+                
+                <TouchableOpacity 
+                  style={[styles.filterButton, {backgroundColor: !selectedPickupOnly ? '#f0f8ff' : '#007AFF'}]}
+                  onPress={() => setSelectedPickupOnly(!selectedPickupOnly)}
+                >
+                  <Icon name="money" size={14} color={!selectedPickupOnly ? '#007AFF' : 'white'} style={{marginRight: 5}} />
+                  <Text style={[styles.filterButtonText, {color: !selectedPickupOnly ? '#007AFF' : 'white'}]}>
+                    Pickup Only
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.filterButton}>
-                  <Icon name="check-circle" size={14} color="#007AFF" style={{marginRight: 5}} />
-                  <Text style={styles.filterButtonText}>Spots Avail.</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.sortButton}>
-                  <Icon name="sort" size={14} color="#007AFF" style={{marginRight: 5}} />
-                  <Text style={styles.filterButtonText}>Distance</Text>
-                  <Icon name="chevron-down" size={10} color="#007AFF" style={styles.sortIcon} />
-                </TouchableOpacity>
+                
               </View>
 
               <FlatList
@@ -599,37 +627,39 @@ const styles = StyleSheet.create({
     height: Dimensions.get("window").height,
   },
   markerBox: {
-    width: 120,
-    height: 120,
+    width: 80, // Reduced from 120
+    height: 80, // Reduced from 120
     alignItems: "center",
     justifyContent: "center",
   },
   markerInside: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 50, // Reduced from 70
+    height: 50, // Reduced from 70
+    borderRadius: 25, // Adjusted for new size
     backgroundColor: "#d6d6d6",
   },
   markerImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 50, // Reduced from 70
+    height: 50, // Reduced from 70
+    borderRadius: 25, // Adjusted for new size
     borderWidth: 2,
     borderColor: "white",
   },
   markerGlow: {
-    borderRadius: 75,
+    borderRadius: 50, // Reduced from 75
     display: 'flex',
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 1,
   },
   marker: {
-    width: 120,
-    height: 130,
+    width: 80, // Reduced from 120
+    height: 90, // Reduced from 130
     display:'flex',
     flexDirection: 'column',
     alignItems: "center",
     justifyContent: "center",
+    transform: [{scale: 0.8}], // Scale down markers
   },
   locationButtonInner: {
     width: 44,
@@ -860,10 +890,29 @@ const styles = StyleSheet.create({
   shelterInfo: {
     flex: 1,
   },
+  shelterNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   shelterName: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginRight: 8,
+  },
+  pickupBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF8C00',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  pickupBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginLeft: 3,
   },
   shelterDistance: {
     fontSize: 14,
