@@ -6,8 +6,6 @@ class TransactionController:
 
     def send( sender_id : str, receiver_id : str, amount : float ) :
 
-        
-
         sender : Receiver = Receiver( sender_id )
         receiver : Receiver = Receiver( receiver_id )
 
