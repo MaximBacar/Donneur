@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Dimensions,
   Image,
   Animated,
+  RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import IconSymbol from "../../../components/ui/IconSymbol";
@@ -33,8 +35,8 @@ export default function DashboardScreen() {
   const [shelter, setShelter] = useState(null);
   const [currentOccupancy, setCurrentOccupancy] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  
   const getData = async () => {
     setLoading(true);
     try{
@@ -56,6 +58,12 @@ export default function DashboardScreen() {
     }
     
   }
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await getData();
+    setRefreshing(false);
+  }, [donneurID]);
+
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour < 12) setGreeting("Good morning");
@@ -95,7 +103,10 @@ export default function DashboardScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text>Loading...</Text>  {/* You can replace this with a more complex loading indicator */}
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.light.tint} />
+          <Text style={styles.loadingText}>Loading dashboard...</Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -105,6 +116,13 @@ export default function DashboardScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[Colors.light.tint]}
+          />
+        }
       >
         {/* ============== WELCOME SECTION ============== */}
         <Animated.View
@@ -592,5 +610,18 @@ const styles = StyleSheet.create({
   notificationTime: {
     fontSize: 12,
     color: "#94a3b8",
+  },
+
+  // ===== Loading State =====
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#94A3B8',
+    marginTop: 12,
   },
 });

@@ -5,7 +5,7 @@ import { UserProvider } from './withdrawalContext'
 const WithdrawalLayout = () => {
   return (
     <UserProvider>
-      <Stack options={{ headerShown: false }}>
+      <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="withdrawal"             options={{ headerShown: false }} />
         <Stack.Screen name="qrcode"                 options={{ headerShown: false }} />
         <Stack.Screen name="idConfirmation"         options={{ headerShown: false }} />

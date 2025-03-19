@@ -6,10 +6,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-// import BackHeader from '../../../../components/header';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
 import { useUser } from './withdrawalContext'
 
@@ -17,10 +18,18 @@ const screenWidth = Dimensions.get('window').width;
 
 export default function WithdrawalScreen() {
   const router = useRouter();
+
   const {setUserID} = useUser()
+
+  const insets = useSafeAreaInsets();
+
 
   const handleNavigate = () => {
     router.push('/qrcode');
+  };
+
+  const handleGoBack = () => {
+    router.back();
   };
 
   const readNfc = async () => {
@@ -53,10 +62,23 @@ export default function WithdrawalScreen() {
     };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* <BackHeader title="" /> */}
+    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F9F9F9" />
+      
+      {/* Custom Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleGoBack}
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Withdrawal</Text>
+        <View style={{ width: 24 }} />
+      </View>
+      
       <View style={styles.content}>
-        <View style={styles.header}>
+        <View style={styles.titleContainer}>
           <Text style={styles.title}>Withdrawal</Text>
           <Text style={styles.subtitle}>Begin a new withdrawal</Text>
         </View>
@@ -92,13 +114,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+  },
   content: {
     flex: 1,                   // fill remaining space
     justifyContent: 'center',  // center vertically
     alignItems: 'center',      // center horizontally
     paddingHorizontal: 20,
   },
-  header: {
+  titleContainer: {
     alignItems: 'center',
     marginBottom: 40,
   },

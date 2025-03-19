@@ -3,7 +3,7 @@ import { Stack } from "expo-router";
 const EditProfileLayout = () => {
   return(
 
-       <Stack options={{ headerShown: false }}>
+       <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="editProfile" options={{ headerShown: false }} />
         </Stack>
    

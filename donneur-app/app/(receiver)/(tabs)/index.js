@@ -620,7 +620,7 @@ export default function DashboardScreen() {
         >
           <View style={styles.historyCard}>
             <View style={styles.chartHeaderRow}>
-              <Text style={styles.cardTitle}>Activity Overview</Text>
+              <Text style={styles.cardTitle}>Activity</Text>
               <Animated.View 
                 style={styles.timeRangeSelector}
                 entering={FadeInDown.delay(450).duration(600).springify()}
