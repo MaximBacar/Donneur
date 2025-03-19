@@ -153,7 +153,10 @@ export default function FriendsScreen() {
         <Text style={styles.headerTitle}>Friends</Text>
         <TouchableOpacity 
           style={styles.addButton}
-          onPress={() => router.push("./addFriend")}
+          onPress={() => router.push({
+            pathname: "./addFriend",
+            params: { fromFriends: true }
+          })}
           activeOpacity={0.7}
         >
           <Ionicons name="add" size={24} color="#FFFFFF" />

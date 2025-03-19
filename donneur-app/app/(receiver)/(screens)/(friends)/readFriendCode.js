@@ -11,6 +11,7 @@ const ReadFriendCode = () => {
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing]             = useState('back');
   const router = useRouter();
+  const { fromFriends } = router.params || {};
 
   const {setNewFriendID} = useFriend()
 
@@ -37,7 +38,10 @@ const ReadFriendCode = () => {
         console.log(data);
         console.log(id);
         setNewFriendID(id);
-        router.push('/confirmAddFriend');
+        router.push({
+          pathname: '/confirmAddFriend',
+          params: { fromFriends }
+        });
       }
       
     }}/>
