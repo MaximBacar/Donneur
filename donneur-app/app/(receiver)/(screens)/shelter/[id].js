@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ImageBackground, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ImageBackground, ActivityIndicator, Image } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -152,7 +152,7 @@ export default function ShelterDetail() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Hero Section */}
       <ImageBackground
-        source={{ uri: 'https://via.placeholder.com/400x200' }}
+        source={{ uri: shelter.image_url || 'https://via.placeholder.com/400x200' }}
         style={styles.heroImage}
       >
         <View style={styles.heroOverlay}>
@@ -173,9 +173,16 @@ export default function ShelterDetail() {
       {/* Profile Info */}
       <View style={styles.profileContainer}>
         <View style={styles.logoContainer}>
-          <View style={styles.logo}>
-            <Text style={styles.logoText}>{getInitials()}</Text>
-          </View>
+          {shelter.image_url ? (
+            <Image 
+              source={{ uri: shelter.image_url }} 
+              style={styles.logo}
+            />
+          ) : (
+            <View style={styles.logo}>
+              <Text style={styles.logoText}>{getInitials()}</Text>
+            </View>
+          )}
         </View>
         <Text style={styles.shelterName}>{shelter.name || 'Shelter Name'}</Text>
         <Text style={styles.shelterSubtitle}>{shelter.description || 'No description available'}</Text>
