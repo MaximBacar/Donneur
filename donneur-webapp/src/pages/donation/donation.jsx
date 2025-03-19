@@ -77,7 +77,7 @@ export default function Donation(){
 
         const data = await response.json();  // Parse the response to JSON
         console.log("Payment successful: ", data);
-        setClientSecret(data.clientSecret);
+        setClientSecret(data.client_secret);
         } catch (error) {
           console.error("Error sending payment: ", error);
         }
