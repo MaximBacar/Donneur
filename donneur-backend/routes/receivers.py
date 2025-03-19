@@ -52,7 +52,7 @@ class VerifyLinkResource(Resource):
             valid = ReceiverController.verify_account_creation_link(receiver_id = data.get('receiver_id'))
             if valid:
                 return {'status' : 'ok'}, 200
-            return {'status' : 'disabled'}, 400
+            return {'status' : 'disabled'}, 200
         except Exception as e:
             return {'error' : f'{str(e)} {data.get("receiver_id")}'}, 400
         
