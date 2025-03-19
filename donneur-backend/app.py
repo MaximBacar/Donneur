@@ -1,6 +1,7 @@
 from flask                  import Flask
 from controllers            import Controller
 from flask_restful          import Api
+from flask_cors             import CORS
 # from flask_socketio         import join_room, leave_room, send, SocketIO
 
 from routes.feed            import GetFeedResource, ReplyToPostResource, CreatePostResource, DeletePostResource, GetPostResource, GetUserPostsResource
@@ -24,6 +25,7 @@ app             = Flask(__name__)
 app.secret_key  = Controller.flask_secret
 
 api             = Api(app)
+CORS(app)
 # socketio        = SocketIO(app, cors_allowed_origins="*")
 
 
