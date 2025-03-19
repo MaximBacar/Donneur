@@ -27,26 +27,26 @@ export default function Index() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  // Fetch shelter locations and extract the first address.
-  useEffect(() => {
-    (async () => {
-      try {
-        const response = await fetch(
-          "https://api.donneur.ca/get_shelter_locations"
-        );
-        const data = await response.json();
-        const shelterEntries = Object.entries(data);
-        if (shelterEntries.length > 0) {
-          const firstShelter = shelterEntries[0][1];
-          const addrObj = firstShelter.address;
-          const fullAddress = `${addrObj.address}, ${addrObj.city}, ${addrObj.province}, ${addrObj.zip}`;
-          setShelterAddress(fullAddress);
-        }
-      } catch (error) {
-        console.error("Error fetching shelter locations:", error);
-      }
-    })();
-  }, []);
+  // // Fetch shelter locations and extract the first address.
+  // useEffect(() => {
+  //   (async () => {
+  //     try {
+  //       const response = await fetch(
+  //         "https://api.donneur.ca/get_shelter_locations"
+  //       );
+  //       const data = await response.json();
+  //       const shelterEntries = Object.entries(data);
+  //       if (shelterEntries.length > 0) {
+  //         const firstShelter = shelterEntries[0][1];
+  //         const addrObj = firstShelter.address;
+  //         const fullAddress = `${addrObj.address}, ${addrObj.city}, ${addrObj.province}, ${addrObj.zip}`;
+  //         setShelterAddress(fullAddress);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching shelter locations:", error);
+  //     }
+  //   })();
+  // }, []);
 
   // Opens the maps app using the native maps for each platform.
   const openMapsForAddress = (address) => {

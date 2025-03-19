@@ -541,7 +541,7 @@ export default function ExplorePage() {
 
           {/* Only show filter options and list when not minimized */}
           {modalPosition === "half" && (
-            <>
+            <View style={{flex: 1, flexDirection: 'column'}}>
               <View style={styles.filterOptions}>
                 <TouchableOpacity style={styles.filterButton}>
                   <Icon name="clock-o" size={14} color="#007AFF" style={{marginRight: 5}} />
@@ -563,8 +563,17 @@ export default function ExplorePage() {
                 renderItem={renderShelterItem}
                 keyExtractor={(item) => item.id}
                 style={styles.shelterList}
+                contentContainerStyle={{ 
+                  paddingBottom: 380,
+                  flexGrow: 1,
+                }}
+                showsVerticalScrollIndicator={true}
+                scrollEnabled={true}
+                initialNumToRender={24}
+                maxToRenderPerBatch={24}
+                removeClippedSubviews={false}
               />
-            </>
+            </View>
           )}
         </Animated.View>
       )}
@@ -685,12 +694,13 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
     height: Dimensions.get('window').height,
+    maxHeight: Dimensions.get('window').height,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    paddingBottom: 380, // For safe area
+    overflow: 'hidden',
   },
   dragHandle: {
     width: '100%',
@@ -821,6 +831,9 @@ const styles = StyleSheet.create({
   },
   shelterList: {
     flex: 1,
+    height: '100%',
+    marginTop: 0,
+    marginBottom: 0,
   },
   shelterItem: {
     flexDirection: 'row',
