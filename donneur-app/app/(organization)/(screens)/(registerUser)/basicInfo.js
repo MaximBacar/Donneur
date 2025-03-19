@@ -11,12 +11,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert
+  Alert,
+  StatusBar
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from './registerContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BACKEND_URL } from '../../../../constants/backend';
 import { useAuth } from '../../../../context/authContext';
@@ -25,6 +27,7 @@ const screenWidth = Dimensions.get('window').width;
 
 export default function BasicInfoScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const lastNameRef = useRef(null);
   const dobRef = useRef(null);
 
@@ -35,13 +38,11 @@ export default function BasicInfoScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-
   // Validation state
   const [firstNameError, setFirstNameError] = useState('');
   const [lastNameError, setLastNameError] = useState('');
   const [dobError, setDobError] = useState('');
   const {token} = useAuth()
-
 
   const { setUserID } = useUser();
 
@@ -94,6 +95,10 @@ export default function BasicInfoScreen() {
     return isValid;
   };
 
+  const handleGoBack = () => {
+    router.back();
+  };
+
   const handleContinue = async () => {
     if (!validateForm()) {
       return;
@@ -106,11 +111,9 @@ export default function BasicInfoScreen() {
       const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       
       const body = JSON.stringify({
-
         first_name: firstName,
         last_name: lastName,
         dob: dob
-
       });
 
       const response = await fetch(`${BACKEND_URL}/receiver/create`, {
@@ -118,7 +121,7 @@ export default function BasicInfoScreen() {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning' : 'remove-later'
+          'ngrok-skip-browser-warning': 'remove-later'
         },
         body: body,
       });
@@ -172,15 +175,29 @@ export default function BasicInfoScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F9F9F9" />
+      
+      {/* Custom Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleGoBack}
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Registration</Text>
+        <View style={{ width: 24 }} />
+      </View>
+      
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
       >
         <ScrollView contentContainerStyle={styles.scrollView}>
-          {/* Content area with header and form */}
+          {/* Content area with section title and form */}
           <View style={styles.content}>
-            <View style={styles.header}>
+            <View style={styles.sectionTitleContainer}>
               <Text style={styles.title}>Registration</Text>
               <Text style={styles.subtitle}>Begin the registration of a new user</Text>
             </View>
@@ -304,20 +321,39 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  backButton: {
+    padding: 8,
+  },
   keyboardAvoidingView: {
     flex: 1,
   },
   scrollView: {
     flexGrow: 1,
   },
-  // Content area: header and form with horizontal padding
+  // Content area: section title and form with horizontal padding
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 30,
+    paddingTop: 20,
     paddingBottom: 20,
   },
-  header: {
+  sectionTitleContainer: {
     marginBottom: 20,
   },
   title: {

@@ -5,7 +5,7 @@ import { UserProvider } from './registerContext'
 const RegisterLayout = () => {
   return (
     <UserProvider>
-      <Stack options={{ headerShown: false }}>
+      <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="basicInfo"                options={{ headerShown: false }}/>
           <Stack.Screen name="idDocument"               options={{ headerShown: false }}/>
           <Stack.Screen name="idPicture"                options={{ headerShown: false }}/>

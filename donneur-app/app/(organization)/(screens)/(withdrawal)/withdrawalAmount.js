@@ -7,19 +7,21 @@ import {
   SafeAreaView,
   Dimensions,
   Alert,
+  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from './withdrawalContext';
-// import BackHeader from '../../../../components/header';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function WithdrawalAmountScreen() {
   const router = useRouter();
   const [amount, setAmount] = useState('0.00');
+  const insets = useSafeAreaInsets();
 
-  const {userID, balance, setWithdrawAmount} = useUser()
-
+  const {userID, balance, setWithdrawAmount} = useUser();
 
   // Numeric keypad values
   const keypadValues = [
@@ -56,6 +58,10 @@ export default function WithdrawalAmountScreen() {
     });
   };
 
+  const handleGoBack = () => {
+    router.back();
+  };
+
   const handleConfirm = () => {
     console.log(`Confirming withdrawal of $${amount}`);
     // Navigate to withdrawalConfirmation.js
@@ -72,13 +78,24 @@ export default function WithdrawalAmountScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Optional BackHeader */}
-      {/* <BackHeader title="" /> */}
+    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F9F9F9" />
+      
+      {/* Custom Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleGoBack}
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Enter Amount</Text>
+        <View style={{ width: 24 }} />
+      </View>
 
       {/* Title and Subtitle */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Withdrawal</Text>
+      <View style={styles.titleContainer}>
+        <Text style={styles.sectionTitle}>Withdrawal</Text>
         <Text style={styles.headerSubtitle}>Enter the amount to withdraw by the user</Text>
       </View>
 
@@ -122,10 +139,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    width: '100%',
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  titleContainer: {
     marginTop: 20,
     alignItems: 'center',
   },
-  headerTitle: {
+  sectionTitle: {
     fontSize: 22,
     fontWeight: '600',
     marginBottom: 4,

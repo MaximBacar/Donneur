@@ -62,27 +62,7 @@ export default function WithdrawScreen() {
         {/* Options */}
         <View style={styles.optionsContainer}>
           {/* Option 1: Interac e-Transfer */}
-          <TouchableOpacity
-            style={styles.optionCard}
-            onPress={() => handleOptionPress('interac')}
-          >
-            <LinearGradient
-              colors={['#0070BA', '#1546A0']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.iconContainer}
-            >
-              <MaterialCommunityIcons name="bank-transfer" size={28} color="#FFFFFF" />
-            </LinearGradient>
-            <View style={styles.optionTextContainer}>
-              <Text style={styles.optionTitle}>Interac e-Transfer</Text>
-              <Text style={styles.optionDescription}>
-                Transfer funds directly to your bank account
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color="#CCCCCC" />
-          </TouchableOpacity>
-          
+       
           {/* Option 2: Cash */}
           <TouchableOpacity
             style={styles.optionCard}
