@@ -48,6 +48,18 @@ export default function EditProfileScreen() {
 
   const { user, token, donneurID } = useAuth();
 
+  // Function to handle phone number input - digits only, max 10
+  const handlePhoneChange = (text) => {
+    // Remove any non-digit characters
+    const digitsOnly = text.replace(/\D/g, '');
+    
+    // Limit to 10 digits
+    const limitedDigits = digitsOnly.substring(0, 10);
+    
+    // Update state with digits only
+    setPhoneNumber(limitedDigits);
+  };
+
   // Fetch organization data to populate the form
   useEffect(() => {
     const fetchOrgData = async () => {
@@ -85,7 +97,13 @@ export default function EditProfileScreen() {
             setZip(data.address.postalcode || "");
           }
           
-          setPhoneNumber(data.phone || "");
+          // For phone, make sure we only keep the digits (up to 10)
+          if (data.phone) {
+            const digitsOnly = data.phone.replace(/\D/g, '').substring(0, 10);
+            setPhoneNumber(digitsOnly);
+          } else {
+            setPhoneNumber("");
+          }
           
           // Capacity info
           setMaxOccupancy(data.max_occupancy ? data.max_occupancy.toString() : "");
@@ -276,6 +294,13 @@ export default function EditProfileScreen() {
         return;
       }
       
+      // Check for exactly 10 digits in phone number
+      if (phoneNumber.length !== 10) {
+        Alert.alert("Error", "Phone number must be exactly 10 digits");
+        setIsLoading(false);
+        return;
+      }
+      
       // Prepare the data to send - NOT in address nested object based on backend error
       const organizationData = {
         name,
@@ -284,7 +309,7 @@ export default function EditProfileScreen() {
         city,
         state: province,
         postalcode: zip,
-        phone: phoneNumber,
+        phone: phoneNumber, // Already 10 digits only
         max_occupancy: parseInt(maxOccupancy, 10) || 0,
         current_occupancy: parseInt(currentOccupancy, 10) || 0,
         is_24_hours: is24Hours,
@@ -315,7 +340,14 @@ export default function EditProfileScreen() {
       Alert.alert(
         "Profile Updated",
         "Your changes have been saved successfully.",
-        [{ text: "OK", onPress: () => router.back() }]
+        [{ 
+          text: "OK", 
+          onPress: () => {
+            // Simply go back to the previous screen
+            // The profile screen will refresh on focus due to useFocusEffect
+            router.back();
+          } 
+        }]
       );
     } catch (error) {
       console.error("Error saving profile data:", error);
@@ -462,7 +494,6 @@ export default function EditProfileScreen() {
               </View>
             </View>
 
-
             <Text style={styles.label}>Postal Code</Text>
             <TextInput
               style={styles.input}
@@ -471,13 +502,14 @@ export default function EditProfileScreen() {
               placeholder="Enter postal code"
             />
 
-            <Text style={styles.label}>Phone Number</Text>
+            <Text style={styles.label}>Phone Number (10 digits)</Text>
             <TextInput
               style={styles.input}
               value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              placeholder="Enter phone number"
-              keyboardType="phone-pad"
+              onChangeText={handlePhoneChange}
+              placeholder="Enter phone number (10 digits)"
+              keyboardType="numeric"
+              maxLength={10}
             />
           </View>
 
@@ -493,8 +525,6 @@ export default function EditProfileScreen() {
               placeholder="Enter maximum capacity"
               keyboardType="numeric"
             />
-
-            
 
             <View style={styles.switchRow}>
               <Text style={styles.switchLabel}>24/7 Operation</Text>
