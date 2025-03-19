@@ -18,7 +18,7 @@ import {
   getDownloadURL,
   updateMetadata,
 } from "firebase/storage";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router"; // Added useFocusEffect
 import * as ImagePicker from "expo-image-picker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome";
@@ -81,130 +81,142 @@ export default function OrgProfileScreen() {
     }
   };
 
-  // Fetch organization data for the current authenticated user
+  // Fetch organization data function
+  const fetchOrgData = async () => {
+    if (!donneurID) {
+      setError("User not authenticated");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const url = `${BACKEND_URL}/organization/get?id=${donneurID}`;
+      console.log("Fetching organization data for user ID:", donneurID);
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      setShelter(data);
+      
+      // Initialize occupancy from organization data
+      setCurrentOccupancy(data.current_occupancy || 0);
+
+      // Set banner using banner_file if available
+      if (data.banner_file) {
+        setBanner(data.banner_file);
+      } else {
+        setBanner("https://via.placeholder.com/600x200/ACACAC.png");
+      }
+
+      // Set profile pic
+      if (data.logo_file) {
+        setProfilePic(data.logo_file);
+      } else {
+        // Use placeholder for profile pic if logo_file is not available
+        setProfilePic("https://via.placeholder.com/100/4A90E2/FFFFFF.png?text=CM");
+      }
+      
+      // After setting initial data from the organization, 
+      // fetch the latest occupancy separately
+      fetchCurrentOccupancy();
+    } catch (error) {
+      console.error("Error fetching organization data:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial data fetch
   useEffect(() => {
-    const fetchOrgData = async () => {
-      if (!donneurID) {
-        setError("User not authenticated");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const url = `${BACKEND_URL}/organization/get?id=${donneurID}`;
-        console.log("Fetching organization data for user ID:", donneurID);
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const data = await response.json();
-        setShelter(data);
-        
-        // Initialize occupancy from organization data
-        setCurrentOccupancy(data.current_occupancy || 0);
-
-        // Set banner using banner_file if available
-        if (data.banner_file) {
-          setBanner(data.banner_file);
-        } else {
-          setBanner("https://via.placeholder.com/600x200/ACACAC.png");
-        }
-
-        // Set profile pic
-        if (data.logo_file) {
-          setProfilePic(data.logo_file);
-        } else {
-          // Use placeholder for profile pic if logo_file is not available
-          setProfilePic("https://via.placeholder.com/100/4A90E2/FFFFFF.png?text=CM");
-        }
-        
-        // After setting initial data from the organization, 
-        // fetch the latest occupancy separately
-        fetchCurrentOccupancy();
-      } catch (error) {
-        console.error("Error fetching organization data:", error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchOrgData();
   }, [donneurID]);
 
-  const handleOccupancyChange = async (newOccupancy) => {
-    // Update local state immediately for UI responsiveness
-    setCurrentOccupancy(newOccupancy);
-    console.log(`Occupancy updated to ${newOccupancy}`);
+  // Add useFocusEffect to refresh data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      console.log("Profile screen came into focus - refreshing data");
+      fetchOrgData();
+      return () => {
+        // Optional cleanup function
+      };
+    }, [donneurID, token])
+  );
+
+const handleOccupancyChange = async (newOccupancy) => {
+  // Update local state immediately for UI responsiveness
+  setCurrentOccupancy(newOccupancy);
+  console.log(`Occupancy updated to ${newOccupancy}`);
+  
+  // Added: Enhanced debug logging to identify missing values
+  console.log("Debug data for occupancy update:", {
+    shelterId: shelter?._id,
+    donneurId: donneurID,
+    hasToken: Boolean(token),
+    tokenLength: token ? token.length : 0
+  });
+  
+  // Skip the API call if we're missing any of these values
+  if (!donneurID) {
+    console.warn('Missing donneurID - cannot update occupancy on server');
+    Alert.alert(
+      "Warning",
+      "User ID is missing. Please try logging out and logging back in."
+    );
+    return;
+  }
+  
+  if (!token) {
+    console.warn('Missing authentication token - cannot update occupancy on server');
+    Alert.alert(
+      "Warning",
+      "Authentication token is missing. Please try logging out and logging back in."
+    );
+    return;
+  }
+  
+  // Even if shelter ID is missing, we can still try to update with user ID only
+  try {
+    setIsLoading(true); // Show loading indicator while updating
     
-    // Added: Enhanced debug logging to identify missing values
-    console.log("Debug data for occupancy update:", {
-      shelterId: shelter?._id,
-      donneurId: donneurID,
-      hasToken: Boolean(token),
-      tokenLength: token ? token.length : 0
+    const response = await fetch(`${BACKEND_URL}/organization/set_occupancy`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'ngrok-skip-browser-warning': 'remove-later'
+      },
+      body: JSON.stringify({
+        occupancy: newOccupancy,
+        user_id: donneurID,
+        role: 'organization'
+      })
     });
-    
-    // Skip the API call if we're missing any of these values
-    if (!donneurID) {
-      console.warn('Missing donneurID - cannot update occupancy on server');
-      Alert.alert(
-        "Warning",
-        "User ID is missing. Please try logging out and logging back in."
-      );
-      return;
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to update occupancy: ${response.status} - ${errorText}`);
     }
+
+    const data = await response.json();
+    console.log('Occupancy updated successfully:', data);
     
-    if (!token) {
-      console.warn('Missing authentication token - cannot update occupancy on server');
-      Alert.alert(
-        "Warning",
-        "Authentication token is missing. Please try logging out and logging back in."
-      );
-      return;
-    }
+    // This alert is now shown by the OccupancyManager component
+    // Alert.alert("Success", "Occupancy updated successfully");
+  } catch (error) {
+    console.error('Error updating occupancy:', error);
     
-    // Even if shelter ID is missing, we can still try to update with user ID only
-    try {
-      setIsLoading(true); // Show loading indicator while updating
-      
-      const response = await fetch(`${BACKEND_URL}/organization/set_occupancy`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'ngrok-skip-browser-warning': 'remove-later'
-        },
-        body: JSON.stringify({
-          occupancy: newOccupancy,
-          user_id: donneurID,
-          role: 'organization'
-        })
-      });
-  
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to update occupancy: ${response.status} - ${errorText}`);
-      }
-  
-      const data = await response.json();
-      console.log('Occupancy updated successfully:', data);
-      
-      // Show success message
-      Alert.alert("Success", "Occupancy updated successfully");
-    } catch (error) {
-      console.error('Error updating occupancy:', error);
-      
-      // Alert the user of the error with more specific information
-      Alert.alert(
-        "Update Failed",
-        `Failed to update occupancy: ${error.message}. Please check your connection and try again.`
-      );
-    } finally {
-      setIsLoading(false); // Hide loading indicator
-    }
-  };
+    // Alert the user of the error with more specific information
+    Alert.alert(
+      "Update Failed",
+      `Failed to update occupancy: ${error.message}. Please check your connection and try again.`
+    );
+  } finally {
+    setIsLoading(false); // Hide loading indicator
+  }
+};
 
   const uploadImage = async (blob, isLogo = true) => {
     try {
@@ -361,8 +373,8 @@ export default function OrgProfileScreen() {
     setRefreshing(true);
     try {
       // Fetch fresh data
-      await fetchCurrentOccupancy();
-      console.log('Refreshed occupancy data');
+      await fetchOrgData();
+      console.log('Refreshed profile data');
     } catch (error) {
       console.error('Error refreshing data:', error);
     } finally {
@@ -443,6 +455,26 @@ export default function OrgProfileScreen() {
   };
 
   const occupancyColor = getOccupancyColor(occupancyPercentage);
+
+  // Format phone number as (XXX) XXX-XXXX
+const formatPhoneNumber = (phoneNumber) => {
+  if (!phoneNumber) return "No phone available";
+  
+  // Remove any non-digit characters
+  const cleaned = ('' + phoneNumber).replace(/\D/g, '');
+  
+  // Check if the input is valid
+  if (cleaned.length !== 10) {
+    return phoneNumber; // Return original if not 10 digits
+  }
+  
+  // Format as (XXX) XXX-XXXX
+  const areaCode = cleaned.substring(0, 3);
+  const prefix = cleaned.substring(3, 6);
+  const lineNumber = cleaned.substring(6, 10);
+  
+  return `(${areaCode}) ${prefix}-${lineNumber}`;
+};
 
   return (
     <ScrollView 
@@ -559,7 +591,7 @@ export default function OrgProfileScreen() {
             <View style={styles.contactText}>
               <Text style={styles.contactLabel}>Phone</Text>
               <Text style={styles.contactValue}>
-                {shelter?.phone || "No phone available"}
+              {shelter?.phone ? formatPhoneNumber(shelter.phone) : "No phone available"}
               </Text>
             </View>
             <MaterialCommunityIcons
@@ -602,39 +634,7 @@ export default function OrgProfileScreen() {
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
 
-        {shelter?.max_occupancy && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Current Occupancy</Text>
-            <View style={styles.occupancyContainer}>
-              <View
-                style={[
-                  styles.occupancyCircle,
-                  { backgroundColor: occupancyColor },
-                ]}
-              >
-                <Text style={styles.occupancyPercentage}>
-                  {occupancyPercentage}%
-                </Text>
-                <Text style={styles.occupancyLabel}>Occupied</Text>
-              </View>
-              <View style={styles.occupancyStats}>
-                <View style={styles.occupancyStat}>
-                  <Text style={styles.occupancyStatValue}>
-                    {currentOccupancy || "0"}
-                  </Text>
-                  <Text style={styles.occupancyStatLabel}>Current</Text>
-                </View>
-                <View style={styles.occupancyStatDivider} />
-                <View style={styles.occupancyStat}>
-                  <Text style={styles.occupancyStatValue}>
-                    {shelter.max_occupancy}
-                  </Text>
-                  <Text style={styles.occupancyStatLabel}>Maximum</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
+        
 
         {/* Additional Info Section (if available) */}
         {shelter?.additional_info && (
@@ -646,51 +646,6 @@ export default function OrgProfileScreen() {
           </View>
         )}
 
-        {/* Debug Section - Keep this for development */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Debug Information</Text>
-          <View style={styles.debugContainer}>
-            <Text style={styles.debugHeader}>Available Organization Data:</Text>
-            <View style={styles.idDebugContainer}>
-              <Text style={styles.debugLabel}>User UID:</Text>
-              <Text style={styles.debugValue}>
-                {user?.uid || "Not available"}
-              </Text>
-            </View>
-            <View style={styles.idDebugContainer}>
-              <Text style={styles.debugLabel}>Donneur ID:</Text>
-              <Text style={styles.debugValue}>
-                {donneurID || "Not available"}
-              </Text>
-            </View>
-            {shelter && shelter._id && (
-              <View style={styles.idDebugContainer}>
-                <Text style={styles.debugLabel}>Organization ID:</Text>
-                <Text style={styles.debugValue}>{shelter._id}</Text>
-              </View>
-            )}
-            <ScrollView style={styles.debugScrollView}>
-              <Text style={styles.debugText}>
-                {JSON.stringify(shelter, null, 2)}
-              </Text>
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.debugButton}
-              onPress={() => {
-                console.log("Full organization data:", shelter);
-                console.log("Organization ID:", shelter?._id);
-                console.log("User UID:", user?.uid);
-                console.log("Donneur ID:", donneurID);
-                Alert.alert(
-                  "Data Logged",
-                  "Full organization data has been logged to the console"
-                );
-              }}
-            >
-              <Text style={styles.debugButtonText}>Log Data to Console</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
       </View>
     </ScrollView>
   );
