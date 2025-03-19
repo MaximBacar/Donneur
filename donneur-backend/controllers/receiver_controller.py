@@ -47,19 +47,21 @@ class ReceiverController():
         return receiver
     
     def update_email( receiver_id : str, email : str ) -> None:
-        
+        logging.INFO(f'UPDATING EMAIL RECEIVER : {receiver_id}')
         receiver : Receiver = Receiver( receiver_id )
         receiver.set_email( email )
 
         ReceiverController.send_account_creation_link( receiver_id )
     
     def send_account_creation_link( receiver_id : str ):
+        print(f'SEND ACCOUNT LINK RECEIVER : {receiver_id}')
         logging.INFO(f'SEND ACCOUNT LINK RECEIVER : {receiver_id}')
         receiver        : Receiver  = Receiver( receiver_id )
         receiver_data   : dict      = receiver.get()
 
         email           : str       = receiver_data.get('email')
 
+        print(f'SEND ACCOUNT LINK EMAIL : {email}')
         logging.INFO(f'SEND ACCOUNT LINK EMAIL : {email}')
 
         SendMail.send_password_creation_email( email, f'https://www.donneur.ca/set_password/{receiver.id}')
