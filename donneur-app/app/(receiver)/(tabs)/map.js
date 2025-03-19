@@ -13,6 +13,7 @@ import {
   FlatList,
   PanResponder,
 } from "react-native";
+import { LinearGradient } from 'expo-linear-gradient';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useRouter } from "expo-router";
@@ -438,25 +439,33 @@ export default function ExplorePage() {
         ))}
       </MapView>
 
-      <View style={styles.zoomControls}>
-        <TouchableOpacity style={styles.zoomButton} onPress={zoomIn}>
-          <Text style={styles.zoomText}>+</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.zoomButton} onPress={zoomOut}>
-          <Text style={styles.zoomText}>-</Text>
-        </TouchableOpacity>
-      </View>
-      
       <TouchableOpacity style={styles.recenterButton} onPress={recenterMap}>
-        <Icon name="location-arrow" size={20} color="white" />
+        <View style={styles.locationButtonInner}>
+          <Icon name="crosshairs" size={20} color="#007AFF" />
+        </View>
       </TouchableOpacity>
       
-      <TouchableOpacity style={styles.listToggleButton} onPress={toggleList}>
-        <Icon 
-          name={!showList ? "angle-up" : (modalPosition === "half" ? "angle-down" : "angle-up")} 
-          size={20} 
-          color="white" 
+      <TouchableOpacity 
+        style={styles.shelterButton} 
+        onPress={() => {
+          setShowList(true);
+          setTimeout(() => snapToPosition("half"), 10);
+        }}
+      >
+        <LinearGradient
+          colors={['#0055b3', '#003380']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+          }}
         />
+        <Text style={styles.shelterButtonText}>See Shelters</Text>
+        <Icon name="angle-up" size={16} color="white" style={{marginLeft: 8}} />
       </TouchableOpacity>
 
       {showList && (
@@ -604,32 +613,50 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  zoomControls: {
-    position: "absolute",
-    bottom: 40,
-    right: 20,
-    flexDirection: "column",
-  },
-  zoomButton: {
-    width: 40,
-    height: 40,
+  locationButtonInner: {
+    width: 44,
+    height: 44,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#007AFF",
-    marginVertical: 5,
-    borderRadius: 8,
+    backgroundColor: "white",
+    borderRadius: 22,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    borderWidth: 0.5,
+    borderColor: '#f0f0f0',
   },
-  zoomText: {
-    fontSize: 24,
-    fontWeight: "bold",
+  shelterButton: {
+    position: "absolute",
+    bottom: 40,
+    left: 20,
+    right: 20,
+    overflow: 'hidden',
+    height: 56,
+    borderRadius: 16,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  shelterButtonText: {
     color: "white",
+    fontSize: 17,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   searchBar: {
     backgroundColor: "white",
     padding: 8,
     borderRadius: 10,
     marginHorizontal: 16,
-    marginVertical: 6,
+    marginVertical: 2,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
@@ -642,27 +669,12 @@ const styles = StyleSheet.create({
   },
   recenterButton: {
     position: 'absolute',
-    bottom: 140,
+    top: 60,
     right: 20,
-    width: 40, 
-    height: 40, 
+    width: 44, 
+    height: 44, 
     justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: '#007AFF', 
-    marginVertical: 5, 
-    borderRadius: 8
-  },
-  listToggleButton: {
-    position: 'absolute',
-    bottom: 195,
-    right: 20,
-    width: 40, 
-    height: 40, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: '#007AFF', 
-    marginVertical: 5, 
-    borderRadius: 8
+    alignItems: 'center',
   },
   shelterListContainer: {
     position: 'absolute',
@@ -678,7 +690,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    paddingBottom: 40, // For safe area
+    paddingBottom: 380, // For safe area
   },
   dragHandle: {
     width: '100%',
