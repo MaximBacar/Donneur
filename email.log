@@ -86,3 +86,39 @@
 2025-03-19 04:08:03,601 - INFO - 127.0.0.1 - - [19/Mar/2025 04:08:03] "GET /transaction/get HTTP/1.1" 200 -
 2025-03-19 04:08:33,541 - INFO - 127.0.0.1 - - [19/Mar/2025 04:08:33] "GET /receiver/get_balance HTTP/1.1" 200 -
 2025-03-19 04:08:33,591 - INFO - 127.0.0.1 - - [19/Mar/2025 04:08:33] "GET /transaction/get HTTP/1.1" 200 -
+2025-03-19 04:09:03,496 - INFO - 127.0.0.1 - - [19/Mar/2025 04:09:03] "GET /receiver/get_balance HTTP/1.1" 200 -
+2025-03-19 04:09:03,634 - INFO - 127.0.0.1 - - [19/Mar/2025 04:09:03] "GET /transaction/get HTTP/1.1" 200 -
+2025-03-19 04:09:33,530 - INFO - 127.0.0.1 - - [19/Mar/2025 04:09:33] "GET /receiver/get_balance HTTP/1.1" 200 -
+2025-03-19 04:09:33,615 - INFO - 127.0.0.1 - - [19/Mar/2025 04:09:33] "GET /transaction/get HTTP/1.1" 200 -
+2025-03-19 04:10:03,550 - INFO - 127.0.0.1 - - [19/Mar/2025 04:10:03] "GET /receiver/get_balance HTTP/1.1" 200 -
+2025-03-19 04:10:03,618 - INFO - 127.0.0.1 - - [19/Mar/2025 04:10:03] "GET /transaction/get HTTP/1.1" 200 -
+2025-03-19 04:10:33,518 - INFO - 127.0.0.1 - - [19/Mar/2025 04:10:33] "GET /receiver/get_balance HTTP/1.1" 200 -
+2025-03-19 04:10:33,619 - INFO - 127.0.0.1 - - [19/Mar/2025 04:10:33] "GET /transaction/get HTTP/1.1" 200 -
+2025-03-19 04:10:38,686 - INFO - 127.0.0.1 - - [19/Mar/2025 04:10:38] "GET /organization/get HTTP/1.1" 200 -
+2025-03-19 04:10:39,327 - INFO - 127.0.0.1 - - [19/Mar/2025 04:10:39] "GET /organization/get HTTP/1.1" 200 -
+2025-03-19 04:11:03,526 - INFO - 127.0.0.1 - - [19/Mar/2025 04:11:03] "GET /receiver/get_balance HTTP/1.1" 200 -
+2025-03-19 04:11:03,602 - INFO - 127.0.0.1 - - [19/Mar/2025 04:11:03] "GET /transaction/get HTTP/1.1" 200 -
+2025-03-19 04:11:21,314 - INFO - friend : {'id': '-OLWAVhYVPHyFxcWA7FA', 'last_name': 'Doe', 'first_name': 'John', 'picture_id': 'https://thispersondoesnotexist.com/', 'friends_since': 'March 18, 2025', 'friendship_id': '-OLfrqsN8QkA7_oi4Hpz'}
+2025-03-19 04:11:21,410 - INFO - friend : {'id': '-OLWAVhYVPHyFxcWA7FA', 'last_name': 'Doe', 'first_name': 'John', 'picture_id': 'https://thispersondoesnotexist.com/', 'friends_since': 'March 18, 2025', 'friendship_id': '-OLfrqsN8QkA7_oi4Hpz'}
+2025-03-19 04:11:21,629 - INFO - 127.0.0.1 - - [19/Mar/2025 04:11:21] "GET /feed/get_user_posts HTTP/1.1" 200 -
+2025-03-19 04:11:24,950 - INFO - 127.0.0.1 - - [19/Mar/2025 04:11:24] "GET /feed HTTP/1.1" 200 -
+2025-03-19 04:11:25,027 - INFO - 127.0.0.1 - - [19/Mar/2025 04:11:25] "GET /feed HTTP/1.1" 200 -
+2025-03-19 04:11:26,022 - INFO - 127.0.0.1 - - [19/Mar/2025 04:11:26] "GET /feed/get_user_posts HTTP/1.1" 200 -
+2025-03-19 04:11:33,569 - INFO - 127.0.0.1 - - [19/Mar/2025 04:11:33] "GET /receiver/get_balance HTTP/1.1" 200 -
+2025-03-19 04:11:33,619 - INFO - 127.0.0.1 - - [19/Mar/2025 04:11:33] "GET /transaction/get HTTP/1.1" 200 -
+2025-03-19 04:12:03,676 - INFO - 127.0.0.1 - - [19/Mar/2025 04:12:03] "GET /receiver/get_balance HTTP/1.1" 200 -
+2025-03-19 04:12:03,756 - INFO - 127.0.0.1 - - [19/Mar/2025 04:12:03] "GET /transaction/get HTTP/1.1" 200 -
+2025-03-19 04:12:33,578 - INFO - 127.0.0.1 - - [19/Mar/2025 04:12:33] "GET /receiver/get_balance HTTP/1.1" 200 -
+2025-03-19 04:12:33,655 - INFO - 127.0.0.1 - - [19/Mar/2025 04:12:33] "GET /transaction/get HTTP/1.1" 200 -
+2025-03-19 04:13:06,789 - INFO - 127.0.0.1 - - [19/Mar/2025 04:13:06] "GET /receiver/get_balance HTTP/1.1" 200 -
+2025-03-19 04:13:06,837 - INFO - 127.0.0.1 - - [19/Mar/2025 04:13:06] "GET /transaction/get HTTP/1.1" 200 -
+2025-03-19 04:16:15,018 - INFO -  * Detected change in '/Users/maximbacar/Developer/capstone_donneur/Donneur/donneur-backend/models/transaction.py', reloading
+2025-03-19 04:16:16,121 - INFO - message='Request to Stripe api' method=post url=https://api.stripe.com/v1/payment_method_domains
+2025-03-19 04:16:16,367 - INFO - message='Stripe API response' path=https://api.stripe.com/v1/payment_method_domains response_code=200
+2025-03-19 04:16:16,377 - WARNING -  * Debugger is active!
+2025-03-19 04:16:16,385 - INFO -  * Debugger PIN: 807-196-923
+2025-03-19 04:17:38,711 - INFO - 127.0.0.1 - - [19/Mar/2025 04:17:38] "GET /receiver/get_balance HTTP/1.1" 200 -
+2025-03-19 04:17:38,782 - INFO - 127.0.0.1 - - [19/Mar/2025 04:17:38] "GET /transaction/get HTTP/1.1" 200 -
+2025-03-19 04:18:10,108 - INFO - 127.0.0.1 - - [19/Mar/2025 04:18:10] "GET /authenticate HTTP/1.1" 200 -
+2025-03-19 04:18:12,361 - INFO - 127.0.0.1 - - [19/Mar/2025 04:18:12] "GET /feed/get_user_posts HTTP/1.1" 200 -
+2025-03-19 04:18:12,380 - INFO - 127.0.0.1 - - [19/Mar/2025 04:18:12] "GET /feed/get_user_posts HTTP/1.1" 200 -

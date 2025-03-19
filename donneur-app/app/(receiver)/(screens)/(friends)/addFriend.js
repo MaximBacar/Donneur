@@ -8,12 +8,10 @@ import {
   View,
   StatusBar
 } from 'react-native';
-import { Camera, CameraType, requestCameraPermissionsAsync } from 'expo-camera';
+// import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../../../context/authContext';
-import { addDoc, collection } from 'firebase/firestore';
-import { database } from '../../../../config/firebase';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRouter } from 'expo-router';
@@ -27,86 +25,47 @@ export default function AddFriendScreen() {
   const [isScanning, setIsScanning] = useState(false);
   const insets = useSafeAreaInsets();
 
-  // Request camera permissions when the component mounts.
-  useEffect(() => {
-    (async () => {
-      const { status } = await requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-      console.log("Camera permission granted:", status === 'granted');
-    })();
-  }, []);
 
-  const handleGoBack = () => {
-    navigation.goBack();
+  const readNfc = async () => {
+    try {
+      const isSupported = await NfcManager.isSupported();
+      if (!isSupported) {
+        Alert.alert('NFC not supported on this device');
+        return;
+      }
+      
+      await NfcManager.requestTechnology(NfcTech.Ndef);
+      const tag = await NfcManager.getTag();
+      console.log('NFC Tag:', tag);
+
+      if (tag?.ndefMessage) {
+        const message = tag.ndefMessage[0]; // Get first record
+        const decoded = Ndef.text.decodePayload(message.payload);
+
+        let id = decoded.split("donneur.ca/")[1];
+        setNewFriendID(id);
+        router.push('/confirmAddFriend');
+      } else {
+        Alert.alert('No NDEF data found');
+      }
+    } catch (error) {
+      console.warn('Error reading NFC:', error);
+    } finally {
+      NfcManager.cancelTechnologyRequest();
+    }
   };
 
-  // This function is called when a QR code is scanned.
-  // The encoded string from the QR code is available in the "data" property.
-  const handleBarcodeScanned = async ({ type, data }) => {
-    setScanned(true);
-    console.log(`QR code scanned, data: ${data}`);
+  const handleNFC = () => {
 
-    if (!user) {
-      Alert.alert("Error", "No current user found.");
-      setIsScanning(false);
-      return;
-    }
-
-    try {
-      
-      Alert.alert("Success", "Friend request sent!");
-      navigation.navigate('Friends');
-    } catch (error) {
-      console.error("Error adding friend:", error);
-      Alert.alert("Error", "Failed to send friend request.");
-    } finally {
-      setIsScanning(false);
-    }
+  }
+  const handleGoBack = () => {
+    navigation.goBack();
   };
 
   const onPressScanQRCode = async () => {
     router.push('./readFriendCode')
     
   };
-
-  // If we're in scanning mode, render the camera view.
-  if (isScanning && hasPermission) {
-    return (
-      <View style={styles.container}>
-        <Camera
-          style={StyleSheet.absoluteFillObject}
-          type={CameraType.back}
-          onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
-          ratio="16:9"
-          barCodeScannerSettings={{
-            barCodeTypes: ['qr'],
-          }}
-        >
-          <View style={styles.overlay}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setIsScanning(false)}
-            >
-              <Ionicons name="close" size={24} color="#fff" />
-            </TouchableOpacity>
-            
-            <View style={styles.scanFrame} />
-
-            {scanned && (
-              <TouchableOpacity
-                style={styles.scanAgainButton}
-                onPress={() => setScanned(false)}
-              >
-                <Text style={styles.scanAgainText}>Tap to Scan Again</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </Camera>
-      </View>
-    );
-  }
-
-  // Normal view when not scanning.
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -131,7 +90,7 @@ export default function AddFriendScreen() {
         {/* NFC Button */}
         <TouchableOpacity
           style={styles.buttonContainer}
-          onPress={() => console.log('Scan NFC Card pressed')}
+          onPress={readNfc}
         >
           <Ionicons name="scan" size={24} color="#000" style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Scan NFC Card</Text>

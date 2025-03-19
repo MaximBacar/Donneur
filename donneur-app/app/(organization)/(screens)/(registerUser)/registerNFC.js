@@ -48,7 +48,7 @@
 //       }
 //       await NfcManager.requestTechnology(NfcTech.Ndef);
 //       const message = Ndef.encodeMessage([
-//         Ndef.uriRecord('https://give.donneur.ca')
+//         Ndef.uriRecord('https://give.donneur.ca/'+userID)
 //       ]);
 
 //       if (message) {

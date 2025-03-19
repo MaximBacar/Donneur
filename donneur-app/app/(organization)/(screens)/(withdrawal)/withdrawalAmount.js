@@ -60,7 +60,7 @@ export default function WithdrawalAmountScreen() {
     console.log(`Confirming withdrawal of $${amount}`);
     // Navigate to withdrawalConfirmation.js
     console.log('ammount', amount);
-    console.log('')
+
     let amount_flt = parseFloat(amount);
     if (amount_flt <= balance){
       setWithdrawAmount(amount_flt);

@@ -19,9 +19,6 @@ export default function ReceiveScreen() {
   const { user, donneurID } = useAuth();
   const insets = useSafeAreaInsets();
 
-  // Use the user's uid as the unique QR code value.
-  const uniqueValue = user ? user.uid : '';
-
   const handleGoBack = () => {
     router.back();
   };
@@ -29,8 +26,7 @@ export default function ReceiveScreen() {
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      {/* Header */}
+
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}

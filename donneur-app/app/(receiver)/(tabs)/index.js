@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown, FadeOut, Layout } from 'react-native-reanimated';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { LineChart } from "react-native-chart-kit";
-
+import QRCode from 'react-native-qrcode-svg';
 import { BACKEND_URL } from "../../../constants/backend";
 
 // Import UI components and constants
@@ -739,9 +739,12 @@ export default function DashboardScreen() {
             </View>
             
             <View style={styles.qrContainer}>
-              <View style={styles.qrPlaceholder}>
-                <Text style={styles.qrPlaceholderText}>QR Code</Text>
-              </View>
+            <QRCode
+              value={'https://give.donneur.ca/'+donneurID}
+              size={200}
+              color="black"
+              backgroundColor="white"
+            />
             </View>
             
             <TouchableOpacity
