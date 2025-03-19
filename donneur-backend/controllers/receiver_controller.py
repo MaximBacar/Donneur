@@ -55,14 +55,14 @@ class ReceiverController():
     
     def send_account_creation_link( receiver_id : str ):
         print(f'SEND ACCOUNT LINK RECEIVER : {receiver_id}')
-        logging.INFO(f'SEND ACCOUNT LINK RECEIVER : {receiver_id}')
+        logging.info(f'SEND ACCOUNT LINK RECEIVER : {receiver_id}')
         receiver        : Receiver  = Receiver( receiver_id )
         receiver_data   : dict      = receiver.get()
 
         email           : str       = receiver_data.get('email')
 
         print(f'SEND ACCOUNT LINK EMAIL : {email}')
-        logging.INFO(f'SEND ACCOUNT LINK EMAIL : {email}')
+        logging.info(f'SEND ACCOUNT LINK EMAIL : {email}')
 
         SendMail.send_password_creation_email( email, f'https://www.donneur.ca/set_password/{receiver.id}')
 
