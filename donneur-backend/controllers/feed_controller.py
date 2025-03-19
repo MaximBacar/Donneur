@@ -48,7 +48,6 @@ class FeedController:
     
 
     def __get_author( author_id : str ):
-        print('author ' + author_id)
         user = Receiver(author_id)
         if not user.exist():
             user = Organization( author_id )
@@ -108,7 +107,7 @@ class FeedController:
         friend_and_subsciption_posts = friend_posts | organization_posts
 
         followed_posts = [key for key, _ in sorted((friend_and_subsciption_posts).items(), key=lambda x: datetime.fromisoformat(x[1]))]
-        #followed_posts.reverse()
+
         feed = []
 
         chunk_size : int  = 5
@@ -116,8 +115,6 @@ class FeedController:
         
         for i in range(0, len(followed_posts)):
             feed.append(followed_posts[i])
-
-            print(followed_posts[i])
 
             if i % chunk_size == 0 and i != 0:
                 
@@ -139,7 +136,7 @@ class FeedController:
 
     def get_feed( receiver_id : str, page : int = 0):
 
-        result_per_page = 20
+        result_per_page = 40
 
         feed : dict = FeedController.feed_cache.get(receiver_id)
 
@@ -183,12 +180,12 @@ class FeedController:
         return reply_post
     
     def get_user_posts ( receiver_id : str ):
-        print('hello')
+   
         posts = Post.get_posts( receiver_id )
         posts : list = [key for key, _ in sorted((posts).items(), key=lambda x: datetime.fromisoformat(x[1]))]
 
         author = FeedController.__get_author( receiver_id )
-        print('youpi')
+
         user_posts = []
 
         for post_id in posts:
