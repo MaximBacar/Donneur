@@ -11,14 +11,16 @@ import {
   SafeAreaView
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import { auth, database } from '../../../../config/firebase';
 import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { useFriend } from './friendContext';
 import { BACKEND_URL } from '../../../../constants/backend';
 import { useAuth } from '../../../../context/authContext';
+import { Colors } from '../../../../constants/colors';
 export default function FriendProfile() {
   const { id } = useLocalSearchParams(); // Friend's UID
   const router = useRouter();
@@ -84,7 +86,7 @@ export default function FriendProfile() {
 
     return (
       <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <StatusBar barStyle="dark-content" backgroundColor="#F9F9F9" />
         
         {/* Header */}
         <View style={styles.header}>
@@ -104,7 +106,7 @@ export default function FriendProfile() {
         </View>
   
         <View style={styles.content}>
-          <View style={styles.profileContainer}>
+          <View style={styles.profileCard}>
             <View style={styles.imageWrapper}>
               {pictureUrl ? (
                 <>
@@ -123,7 +125,14 @@ export default function FriendProfile() {
                   />
                 </>
               ) : (
-                <View style={[styles.profileImage, styles.placeholder]} />
+                <LinearGradient
+                  colors={['#0070BA', '#1546A0']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[styles.profileImage, styles.placeholder]}
+                >
+                  <FontAwesome5 name="user-alt" size={80} color="#FFFFFF" />
+                </LinearGradient>
               )}
             </View>
             <Text style={styles.displayName}>{displayName}</Text>
@@ -132,30 +141,51 @@ export default function FriendProfile() {
             </Text>
           </View>
   
-          <View style={styles.buttonsRow}>
+          <View style={styles.actionsContainer}>
+            <Text style={styles.sectionTitle}>Actions</Text>
+            
+            {/* Send Money Option */}
             <TouchableOpacity
-              style={styles.balanceButton}
+              style={styles.actionCard}
               onPress={() => router.push(`/send/SendMoney?id=${friendProfile.id}`)}
             >
-              <Ionicons
-                name="paper-plane-outline"
-                size={20}
-                color="#222222"
-                style={styles.buttonIcon}
-              />
-              <Text style={styles.balanceButtonText}>Send</Text>
+              <LinearGradient
+                colors={['#4CAF50', '#2E7D32']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.iconContainer}
+              >
+                <Ionicons name="paper-plane" size={28} color="#FFFFFF" />
+              </LinearGradient>
+              <View style={styles.actionTextContainer}>
+                <Text style={styles.actionTitle}>Send Money</Text>
+                <Text style={styles.actionDescription}>
+                  Send funds directly to {friendProfile.first_name}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="#CCCCCC" />
             </TouchableOpacity>
+            
+            {/* Chat Option */}
             <TouchableOpacity
-              style={styles.balanceButton}
+              style={styles.actionCard}
               // onPress={() => router.push('/inbox')}
             >
-              <Ionicons
-                name="chatbubble-ellipses-outline"
-                size={20}
-                color="#222222"
-                style={styles.buttonIcon}
-              />
-              <Text style={styles.balanceButtonText}>Chat</Text>
+              <LinearGradient
+                colors={['#FF9800', '#F57C00']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.iconContainer}
+              >
+                <Ionicons name="chatbubble-ellipses" size={28} color="#FFFFFF" />
+              </LinearGradient>
+              <View style={styles.actionTextContainer}>
+                <Text style={styles.actionTitle}>Send Message</Text>
+                <Text style={styles.actionDescription}>
+                  Chat with {friendProfile.first_name}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="#CCCCCC" />
             </TouchableOpacity>
           </View>
         </View>
@@ -169,12 +199,19 @@ export default function FriendProfile() {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
-              <FontAwesome5 
-                name="exclamation-triangle" 
-                size={30} 
-                color="red" 
-                style={styles.modalIcon} 
-              />
+              <LinearGradient
+                colors={['#FF3B30', '#FF3B30']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.modalIconContainer}
+              >
+                <FontAwesome5 
+                  name="exclamation-triangle" 
+                  size={30} 
+                  color="white" 
+                />
+              </LinearGradient>
+              <Text style={styles.modalTitle}>Remove Friend</Text>
               <Text style={styles.modalText}>
                 Are you sure you want to remove {friendProfile.first_name} from your friend list?
               </Text>
@@ -192,7 +229,14 @@ export default function FriendProfile() {
                     setModalVisible(false);
                   }}
                 >
-                  <Text style={styles.modalRemoveText}>Remove</Text>
+                  <LinearGradient
+                    colors={['#FF3B30', '#CC2F26']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.modalRemoveGradient}
+                  >
+                    <Text style={styles.modalRemoveText}>Remove</Text>
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
             </View>
@@ -205,7 +249,7 @@ export default function FriendProfile() {
   const styles = StyleSheet.create({
     container: { 
       flex: 1, 
-      backgroundColor: '#FFFFFF',
+      backgroundColor: '#F9F9F9',
     },
     header: {
       flexDirection: 'row',
@@ -213,7 +257,7 @@ export default function FriendProfile() {
       justifyContent: 'space-between',
       paddingHorizontal: 16,
       paddingVertical: 12,
-      backgroundColor: '#FFFFFF',
+      backgroundColor: '#F9F9F9',
       borderBottomWidth: 1,
       borderBottomColor: '#F0F0F0',
     },
@@ -227,7 +271,7 @@ export default function FriendProfile() {
     },
     content: {
       flex: 1,
-      padding: 16,
+      padding: 24,
     },
     removeButton: {
       padding: 8,
@@ -239,18 +283,31 @@ export default function FriendProfile() {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+      backgroundColor: '#F9F9F9',
     },
-    profileContainer: {
+    profileCard: {
       alignItems: 'center',
-      marginTop: 12,
-      marginBottom: 20,
+      marginBottom: 24,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 16,
+      padding: 24,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
     },
     imageWrapper: {
-      width: 240,
-      height: 240,
-      borderRadius: 16,
+      width: 180,
+      height: 180,
+      borderRadius: 90,
       overflow: 'hidden',
-      marginBottom: 12,
+      marginBottom: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
     },
     profileImage: {
       width: '100%',
@@ -258,7 +315,9 @@ export default function FriendProfile() {
       resizeMode: 'cover',
     },
     placeholder: {
-      backgroundColor: '#ccc',
+      backgroundColor: '#0070BA',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     imageLoading: {
       position: 'absolute',
@@ -269,48 +328,62 @@ export default function FriendProfile() {
       marginTop: -12,
     },
     displayName: {
-      fontSize: 22,
+      fontSize: 24,
       fontWeight: '600',
       color: '#000',
-      marginTop: 36,
+      marginTop: 8,
     },
     memberSince: {
       fontSize: 14,
-      color: '#666',
+      color: '#666666',
       marginTop: 4,
     },
-    buttonsRow: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      marginTop: 20,
+    actionsContainer: {
+      marginTop: 8,
     },
-    balanceButton: {
-      backgroundColor: '#FFF',
-      paddingHorizontal: 48,
-      paddingVertical: 12,
-      borderRadius: 32,
-      marginHorizontal: 16,
-      marginTop: 64,
-      borderWidth: 1,
-      borderColor: '#989898',
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: '#000000',
+      marginBottom: 16,
+      paddingHorizontal: 4,
+    },
+    actionCard: {
+      backgroundColor: '#FFFFFF',
+      borderRadius: 16,
+      padding: 20,
+      marginBottom: 16,
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 3,
-      elevation: 4,
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
     },
-    balanceButtonText: {
-      fontSize: 14,
-      color: '#222222',
+    iconContainer: {
+      width: 56,
+      height: 56,
+      borderRadius: 16,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 16,
+    },
+    actionTextContainer: {
+      flex: 1,
+    },
+    actionTitle: {
+      fontSize: 18,
       fontWeight: '600',
-      textAlign: 'center',
+      color: '#000000',
+      marginBottom: 4,
     },
-    buttonIcon: {
-      marginRight: 6,
+    actionDescription: {
+      fontSize: 14,
+      color: '#666666',
+      lineHeight: 20,
     },
+    
     // Modal styles
     modalOverlay: {
       flex: 1,
@@ -319,20 +392,32 @@ export default function FriendProfile() {
       alignItems: 'center',
     },
     modalContainer: {
-      width: '80%',
+      width: '85%',
       backgroundColor: '#fff',
-      borderRadius: 10,
-      padding: 20,
+      borderRadius: 16,
+      padding: 24,
       alignItems: 'center',
     },
-    modalIcon: {
-      marginBottom: 12,
+    modalIconContainer: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: '#000000',
+      marginBottom: 8,
     },
     modalText: {
       fontSize: 16,
-      color: '#333',
+      color: '#666666',
       textAlign: 'center',
-      marginBottom: 20,
+      marginBottom: 24,
+      lineHeight: 22,
     },
     modalButtons: {
       flexDirection: 'row',
@@ -341,32 +426,31 @@ export default function FriendProfile() {
     },
     modalCancelButton: {
       flex: 1,
-      backgroundColor: '#fff',
-      borderWidth: 1,
-      borderColor: 'gray',
-      borderRadius: 8,
-      paddingVertical: 10,
+      backgroundColor: '#F2F2F2',
+      borderRadius: 12,
+      paddingVertical: 14,
       marginRight: 8,
       alignItems: 'center',
     },
     modalCancelText: {
-      color: 'gray',
-      fontSize: 14,
+      color: '#666666',
+      fontSize: 16,
       fontWeight: '600',
     },
     modalRemoveButton: {
       flex: 1,
-      backgroundColor: '#fff',
-      borderWidth: 1,
-      borderColor: 'red',
-      borderRadius: 8,
-      paddingVertical: 10,
+      borderRadius: 12,
       marginLeft: 8,
+      overflow: 'hidden',
+    },
+    modalRemoveGradient: {
+      paddingVertical: 14,
       alignItems: 'center',
+      justifyContent: 'center',
     },
     modalRemoveText: {
-      color: 'red',
-      fontSize: 14,
+      color: '#FFFFFF',
+      fontSize: 16,
       fontWeight: '600',
     },
   });
