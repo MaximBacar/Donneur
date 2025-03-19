@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Linking,
   ActivityIndicator,
   Image,
+  RefreshControl,
 } from "react-native";
 import {
   ref,
@@ -21,7 +22,7 @@ import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome";
-import OccupancyManager from "../../../components/OccupancyManager"; // Adjust path as needed
+import OccupancyManager from "../../../components/OccupancyManager";
 import { storage } from "../../../config/firebase";
 import { BACKEND_URL } from "../../../constants/backend";
 import { useAuth } from "../../../context/authContext";
@@ -36,12 +37,48 @@ export default function OrgProfileScreen() {
   const [banner, setBanner] = useState(null);
   const [currentOccupancy, setCurrentOccupancy] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Function to generate a unique filename without using uuid
   const generateUniqueFilename = () => {
     const timestamp = new Date().getTime();
     const randomStr = Math.random().toString(36).substring(2, 10);
     return `image_${timestamp}_${randomStr}.png`;
+  };
+
+  const fetchCurrentOccupancy = async () => {
+    if (!donneurID || !token) {
+      console.warn('Missing required data to fetch occupancy');
+      return;
+    }
+
+    try {
+      // Create URL with query parameters for GET request
+      const url = `${BACKEND_URL}/organization/get_occupancy?user_id=${donneurID}&role=organization`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'remove-later',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Fetched occupancy data:', data);
+      
+      // Update the state with the returned occupancy
+      if (data && data.occupancy !== undefined) {
+        setCurrentOccupancy(data.occupancy);
+      }
+    } catch (error) {
+      console.error('Error fetching current occupancy:', error);
+      // Don't alert the user here, as this is a background fetch
+    }
   };
 
   // Fetch organization data for the current authenticated user
@@ -63,6 +100,8 @@ export default function OrgProfileScreen() {
         }
         const data = await response.json();
         setShelter(data);
+        
+        // Initialize occupancy from organization data
         setCurrentOccupancy(data.current_occupancy || 0);
 
         // Set banner using banner_file if available
@@ -79,6 +118,10 @@ export default function OrgProfileScreen() {
           // Use placeholder for profile pic if logo_file is not available
           setProfilePic("https://via.placeholder.com/100/4A90E2/FFFFFF.png?text=CM");
         }
+        
+        // After setting initial data from the organization, 
+        // fetch the latest occupancy separately
+        fetchCurrentOccupancy();
       } catch (error) {
         console.error("Error fetching organization data:", error);
         setError(error.message);
@@ -90,38 +133,76 @@ export default function OrgProfileScreen() {
     fetchOrgData();
   }, [donneurID]);
 
-  const handleOccupancyChange = (newOccupancy) => {
+  const handleOccupancyChange = async (newOccupancy) => {
     // Update local state immediately for UI responsiveness
     setCurrentOccupancy(newOccupancy);
     console.log(`Occupancy updated to ${newOccupancy}`);
     
-    // Here you would typically update your backend with the new occupancy
-    if (shelter && shelter._id) {
-      // Example API call (uncomment and modify when ready to implement):
-      /*
-      fetch(`${BACKEND_URL}/organization/update-occupancy`, {
+    // Added: Enhanced debug logging to identify missing values
+    console.log("Debug data for occupancy update:", {
+      shelterId: shelter?._id,
+      donneurId: donneurID,
+      hasToken: Boolean(token),
+      tokenLength: token ? token.length : 0
+    });
+    
+    // Skip the API call if we're missing any of these values
+    if (!donneurID) {
+      console.warn('Missing donneurID - cannot update occupancy on server');
+      Alert.alert(
+        "Warning",
+        "User ID is missing. Please try logging out and logging back in."
+      );
+      return;
+    }
+    
+    if (!token) {
+      console.warn('Missing authentication token - cannot update occupancy on server');
+      Alert.alert(
+        "Warning",
+        "Authentication token is missing. Please try logging out and logging back in."
+      );
+      return;
+    }
+    
+    // Even if shelter ID is missing, we can still try to update with user ID only
+    try {
+      setIsLoading(true); // Show loading indicator while updating
+      
+      const response = await fetch(`${BACKEND_URL}/organization/set_occupancy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'remove-later'
         },
         body: JSON.stringify({
-          organizationId: shelter._id,
-          currentOccupancy: newOccupancy
+          occupancy: newOccupancy,
+          user_id: donneurID,
+          role: 'organization'
         })
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to update occupancy');
-        return response.json();
-      })
-      .then(data => {
-        console.log('Occupancy updated successfully');
-      })
-      .catch(error => {
-        console.error('Error updating occupancy:', error);
-        // Optionally revert the UI if the API call fails
-        // setCurrentOccupancy(shelter.current_occupancy);
       });
-      */
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update occupancy: ${response.status} - ${errorText}`);
+      }
+  
+      const data = await response.json();
+      console.log('Occupancy updated successfully:', data);
+      
+      // Show success message
+      Alert.alert("Success", "Occupancy updated successfully");
+    } catch (error) {
+      console.error('Error updating occupancy:', error);
+      
+      // Alert the user of the error with more specific information
+      Alert.alert(
+        "Update Failed",
+        `Failed to update occupancy: ${error.message}. Please check your connection and try again.`
+      );
+    } finally {
+      setIsLoading(false); // Hide loading indicator
     }
   };
 
@@ -275,6 +356,19 @@ export default function OrgProfileScreen() {
     );
   };
   
+  // Add this function to handle pull-to-refresh
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      // Fetch fresh data
+      await fetchCurrentOccupancy();
+      console.log('Refreshed occupancy data');
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [donneurID, token]);
 
   // Get initials for logo
   const getInitials = () => {
@@ -351,7 +445,18 @@ export default function OrgProfileScreen() {
   const occupancyColor = getOccupancyColor(occupancyPercentage);
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#4A90E2']}
+          tintColor={'#4A90E2'}
+        />
+      }
+    >
       {isLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#FFFFFF" />

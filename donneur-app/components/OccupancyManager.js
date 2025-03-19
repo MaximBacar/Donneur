@@ -13,19 +13,34 @@ import { LinearGradient } from "expo-linear-gradient";
 import Slider from "@react-native-community/slider"; // Make sure to install this package
 
 const OccupancyManager = ({
-  initialOccupancy,
-  maxOccupancy,
+  initialOccupancy = 0,  // Default value if null
+  maxOccupancy = 1,      // Default value if null
   onOccupancyChange,
 }) => {
-  const [currentOccupancy, setCurrentOccupancy] = useState(initialOccupancy);
+  // Ensure initialOccupancy is a number and not null
+  const safeInitialOccupancy = initialOccupancy !== null && initialOccupancy !== undefined 
+    ? Number(initialOccupancy) 
+    : 0;
+  
+  // Ensure maxOccupancy is a number, not null, and at least 1
+  const safeMaxOccupancy = maxOccupancy !== null && maxOccupancy !== undefined 
+    ? Math.max(Number(maxOccupancy), 1) 
+    : 1;
+
+  const [currentOccupancy, setCurrentOccupancy] = useState(safeInitialOccupancy);
   const [animation] = useState(new Animated.Value(0));
   const [isEditing, setIsEditing] = useState(false);
-  const [inputValue, setInputValue] = useState(initialOccupancy.toString());
+  const [inputValue, setInputValue] = useState(String(safeInitialOccupancy));
 
   useEffect(() => {
     // Update local state if prop changes externally
-    setCurrentOccupancy(initialOccupancy);
-    setInputValue(initialOccupancy.toString());
+    // Ensure we handle null values safely
+    const newOccupancy = initialOccupancy !== null && initialOccupancy !== undefined 
+      ? Number(initialOccupancy) 
+      : 0;
+    
+    setCurrentOccupancy(newOccupancy);
+    setInputValue(String(newOccupancy));
   }, [initialOccupancy]);
 
   useEffect(() => {
@@ -41,7 +56,7 @@ const OccupancyManager = ({
   }, [currentOccupancy]);
 
   const increaseOccupancy = () => {
-    if (currentOccupancy < maxOccupancy) {
+    if (currentOccupancy < safeMaxOccupancy) {
       const newOccupancy = currentOccupancy + 1;
       updateOccupancy(newOccupancy);
     } else {
@@ -59,10 +74,12 @@ const OccupancyManager = ({
   };
 
   const updateOccupancy = (value) => {
-    const newValue = Math.min(Math.max(0, Math.round(value)), maxOccupancy);
+    const newValue = Math.min(Math.max(0, Math.round(value)), safeMaxOccupancy);
     setCurrentOccupancy(newValue);
-    setInputValue(newValue.toString());
-    onOccupancyChange(newValue);
+    setInputValue(String(newValue));
+    if (onOccupancyChange) {
+      onOccupancyChange(newValue);
+    }
   };
 
   // This function updates in real-time as the slider moves
@@ -79,14 +96,15 @@ const OccupancyManager = ({
     setIsEditing(false);
     const numValue = parseInt(inputValue);
     if (isNaN(numValue)) {
-      setInputValue(currentOccupancy.toString());
+      setInputValue(String(currentOccupancy));
     } else {
       updateOccupancy(numValue);
     }
   };
 
   const calculatePercentage = () => {
-    return (currentOccupancy / maxOccupancy) * 100;
+    // Avoid division by zero
+    return safeMaxOccupancy > 0 ? (currentOccupancy / safeMaxOccupancy) * 100 : 0;
   };
 
   const getOccupancyGradient = () => {
@@ -106,7 +124,7 @@ const OccupancyManager = ({
     outputRange: [1, 1.2, 1],
   });
 
-  const availableBeds = maxOccupancy - currentOccupancy;
+  const availableBeds = safeMaxOccupancy - currentOccupancy;
 
   return (
     <View style={styles.container}>
@@ -184,7 +202,7 @@ const OccupancyManager = ({
           <Slider
             style={styles.slider}
             minimumValue={0}
-            maximumValue={maxOccupancy}
+            maximumValue={safeMaxOccupancy}
             value={currentOccupancy}
             onValueChange={handleSliderChange}
             minimumTrackTintColor={getOccupancyGradient()[0]}
@@ -192,7 +210,7 @@ const OccupancyManager = ({
             thumbTintColor={getOccupancyGradient()[0]}
             step={1}
           />
-          <Text style={styles.sliderValue}>{maxOccupancy}</Text>
+          <Text style={styles.sliderValue}>{safeMaxOccupancy}</Text>
         </View>
       </View>
 
@@ -210,9 +228,9 @@ const OccupancyManager = ({
         <View style={styles.progressLabels}>
           <Text style={styles.progressLabel}>0</Text>
           <Text style={styles.progressLabel}>
-            {Math.floor(maxOccupancy / 2)}
+            {Math.floor(safeMaxOccupancy / 2)}
           </Text>
-          <Text style={styles.progressLabel}>{maxOccupancy}</Text>
+          <Text style={styles.progressLabel}>{safeMaxOccupancy}</Text>
         </View>
       </View>
 
@@ -239,7 +257,7 @@ const OccupancyManager = ({
           <View style={styles.statIcon}>
             <MaterialCommunityIcons name="bed" size={28} color="#4A90E2" />
           </View>
-          <Text style={styles.statValue}>{maxOccupancy}</Text>
+          <Text style={styles.statValue}>{safeMaxOccupancy}</Text>
           <Text style={styles.statLabel}>TOTAL CAPACITY</Text>
         </LinearGradient>
       </View>
@@ -257,6 +275,7 @@ const OccupancyManager = ({
     </View>
   );
 };
+export default OccupancyManager;
 
 const styles = StyleSheet.create({
   container: {
@@ -433,5 +452,3 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-
-export default OccupancyManager;
