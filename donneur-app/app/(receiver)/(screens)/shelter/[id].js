@@ -5,7 +5,7 @@ import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { Linking } from 'react-native';
-
+import { useAuth } from '../../../../context/authContext';
 import { BACKEND_URL } from '../../../../constants/backend';
 
 export default function ShelterDetail() {
@@ -13,14 +13,68 @@ export default function ShelterDetail() {
   const [location, setLocation] = useState(null);
   const [region, setRegion] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
+
+  const { token } = useAuth();
   
   // Added from your code
   const [shelter, setShelter] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const handleFollowButton = async () => {
+    body = {
+      'organization_id' : id
+    }
+    let func = isFollowing ? 'unsubscribe' : 'subscribe';
+
+    const url = `${BACKEND_URL}/subscription/${func}`;
+
+    try{
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body)
+      });
+
+      setIsFollowing(!isFollowing)
+      if (!response.ok){
+        console.log(response.json());
+      }
+    }catch (err){
+      console.log(err);
+    }
+  }
+
   // Fetch shelter data
   useEffect(() => {
+    const fetchSubscriptions = async () => {
+      try {
+        const url = `${BACKEND_URL}/subscription/get`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`, 
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        let subs = data.subscriptions
+        if (subs.includes(id)) {
+          setIsFollowing(true);
+        }
+      }catch (error) {
+        console.error('Full error details:', error);
+        setError(error.message);
+      }
+    }
+
     const fetchShelterData = async () => {
       try {
         const url = `${BACKEND_URL}/organization/get?id=${id}`;
@@ -48,8 +102,9 @@ export default function ShelterDetail() {
         setLoading(false);
       }
     };
-    
+    fetchSubscriptions();
     fetchShelterData();
+   
   }, [id]);
 
   // Get user location
@@ -99,8 +154,8 @@ export default function ShelterDetail() {
   }
 
   // Calculate the occupancy percentage
-  const occupancyPercentage = shelter.current_occupancy && shelter.max_occupancy 
-    ? Math.round((shelter.current_occupancy / shelter.max_occupancy) * 100) 
+  const occupancyPercentage = shelter.occupancy && shelter.max_occupancy 
+    ? Math.round((shelter.occupancy / shelter.max_occupancy) * 100) 
     : 50; // Default if not available
   
   // Determine color based on occupancy
@@ -152,7 +207,7 @@ export default function ShelterDetail() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Hero Section */}
       <ImageBackground
-        source={{ uri: shelter.image_url || 'https://via.placeholder.com/400x200' }}
+        source={{ uri: shelter.banner_file || 'https://via.placeholder.com/400x200' }}
         style={styles.heroImage}
       >
         <View style={styles.heroOverlay}>
@@ -160,7 +215,7 @@ export default function ShelterDetail() {
            
             <TouchableOpacity 
               style={[styles.followButton, isFollowing && styles.followingButton]}
-              onPress={() => setIsFollowing(!isFollowing)}
+              onPress={() => handleFollowButton()}
             >
               <Text style={[styles.followButtonText, isFollowing && styles.followingButtonText]}>
                 {isFollowing ? 'Following' : 'Follow'}
@@ -173,9 +228,9 @@ export default function ShelterDetail() {
       {/* Profile Info */}
       <View style={styles.profileContainer}>
         <View style={styles.logoContainer}>
-          {shelter.image_url ? (
+          {shelter.logo_file ? (
             <Image 
-              source={{ uri: shelter.image_url }} 
+              source={{ uri: shelter.logo_file }} 
               style={styles.logo}
             />
           ) : (
@@ -192,7 +247,8 @@ export default function ShelterDetail() {
           <View style={styles.statItem}>
             <MaterialCommunityIcons name="bed" size={24} color="#4A90E2" />
             <Text style={styles.statValue}>
-              {shelter.current_occupancy || '?'}/{shelter.max_occupancy || '?'}
+              {console.log(shelter)}
+              {shelter.occupancy || '?'}/{shelter.max_occupancy || '?'}
             </Text>
             <Text style={styles.statLabel}>Beds Available</Text>
           </View>
@@ -256,7 +312,7 @@ export default function ShelterDetail() {
               </View>
               <View style={styles.occupancyStats}>
                 <View style={styles.occupancyStat}>
-                  <Text style={styles.occupancyStatValue}>{shelter.current_occupancy || '?'}</Text>
+                  <Text style={styles.occupancyStatValue}>{shelter.occupancy || '?'}</Text>
                   <Text style={styles.occupancyStatLabel}>Current</Text>
                 </View>
                 <View style={styles.occupancyStatDivider} />
