@@ -17,14 +17,10 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { BACKEND_URL } from '../../../constants/backend';
 
-const exampleOrg = {
-  banner: 'https://via.placeholder.com/600x200.png',
-};
 export default function PersonProfileScreen() {
   const { user, token, userData, donneurID } = useAuth();
   const router = useRouter();
   const windowWidth = Dimensions.get('window').width;
-  const [banner, setBanner] = useState(exampleOrg.banner);
   const [userBalance, setUserBalance] = useState(0);
   const [transactions, setTransactions] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -62,23 +58,41 @@ export default function PersonProfileScreen() {
         let data = await response.json();
         console.log("Transaction data:", data);
         
+        // Handle different response formats
+        if (!data) {
+          console.error("No data received");
+          setTransactions([]);
+          return;
+        }
+        
         // Check if data is an array
         if (!Array.isArray(data)) {
-          console.error("Expected array but got:", typeof data);
-          if (data.error) {
-            console.error("API error:", data.error);
-          }
+          console.log("Response is not an array, got:", typeof data);
           
-          // Check if data is an object with a 'transactions' property that's an array
-          if (data && typeof data === 'object' && Array.isArray(data.transactions)) {
-            console.log("Found transactions array in data object");
-            // Continue with the data.transactions array
-            data = data.transactions;
-          } else if (data && typeof data === 'object' && Array.isArray(data.data)) {
-            console.log("Found data array in data object");
-            // Continue with the data.data array
-            data = data.data;
+          // Check for common nested array patterns
+          if (typeof data === 'object') {
+            // Try to find an array in common properties
+            const possibleArrayProps = ['transactions', 'data', 'results', 'items'];
+            
+            for (const prop of possibleArrayProps) {
+              if (Array.isArray(data[prop])) {
+                console.log(`Found transactions in data.${prop}`);
+                data = data[prop];
+                break;
+              }
+            }
+            
+            // If we still don't have an array, check if there's a transaction object that should be wrapped in an array
+            if (!Array.isArray(data) && data.id) {
+              console.log("Found single transaction object, wrapping in array");
+              data = [data];
+            } else if (!Array.isArray(data)) {
+              console.log("Could not find transaction array in response");
+              setTransactions([]);
+              return;
+            }
           } else {
+            console.error("Unexpected response format");
             setTransactions([]);
             return;
           }
@@ -144,23 +158,6 @@ export default function PersonProfileScreen() {
     }
   }, [user]);
 
-  // Fallback to example data if loading or no user data
-  const examplePerson = {
-    type: 'person',
-    firstName: userData.firstName,
-    lastName: 'Doe',
-    bio: 'Passionate traveler, coffee enthusiast, and tech geek.',
-    balance: 42,
-    age: 30,
-    location: 'Toronto, ON',
-    banner: 'https://via.placeholder.com/600x200.png',
-    memberSince: 'March 2022',
-    interests: ['Travel', 'Photography', 'Technology'],
-    activity: [
-      { type: 'payment', amount: 15, date: '2 days ago', recipient: 'Sarah M.' },
-      { type: 'payment', amount: 28, date: '1 week ago', recipient: 'David K.' },
-    ]
-  };
 
   if (loading) {
     return (
@@ -175,18 +172,18 @@ export default function PersonProfileScreen() {
     if (userData) {
       return `${userData.first_name.charAt(0)}${userData.last_name.charAt(0)}`;
     }
-    return `${examplePerson.firstName.charAt(0)}${examplePerson.lastName.charAt(0)}`;
+    return '';
   };
 
   // Format full name
   const fullName = userData 
     ? `${userData.first_name} ${userData.last_name}` 
-    : `${examplePerson.firstName} ${examplePerson.lastName}`;
+    : '';
 
   // Get member since date
   const memberSince = userData 
     ? new Date(userData.creation_date).toLocaleDateString() 
-    : examplePerson.memberSince;
+    : '';
 
   const handleSendMoney = () => {
     router.push('/send-money');
@@ -203,7 +200,7 @@ export default function PersonProfileScreen() {
       
       {/* Header with Banner */}
       <View style={styles.headerContainer}>
-        <View source={{ uri: banner }} style={styles.banner} />
+        <View style={styles.banner} />
         <View style={styles.headerBottom}>
           {/* Profile circle with initials */}
           <View style={styles.initialsCircle}>
@@ -215,10 +212,12 @@ export default function PersonProfileScreen() {
             <Text style={styles.nameText}>{fullName}</Text>
           </View>
           
-          <Text style={styles.location}>
-            <Ionicons name="location-outline" size={14} color="#777" />
-            {' '}{examplePerson.location}
-          </Text>
+          {userData && userData.location && (
+            <Text style={styles.location}>
+              <Ionicons name="location-outline" size={14} color="#777" />
+              {' '}{userData.location}
+            </Text>
+          )}
         </View>
       </View>
 
@@ -227,7 +226,9 @@ export default function PersonProfileScreen() {
         {/* Bio Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
-          <Text style={styles.bio}>{examplePerson.bio}</Text>
+          {userData && userData.bio && (
+            <Text style={styles.bio}>{userData.bio}</Text>
+          )}
           <Text style={styles.memberSince}>Member since {memberSince}</Text>
         </View>
         
@@ -239,25 +240,13 @@ export default function PersonProfileScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>{userData.dob}</Text>
+            <Text style={styles.statValue}>{userData && userData.dob ? userData.dob : 'N/A'}</Text>
             <Text style={styles.statTitle}>Age</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>{examplePerson.interests.length}</Text>
-            <Text style={styles.statTitle}>Interests</Text>
-          </View>
-        </View>
-        
-        {/* Interests */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Interests</Text>
-          <View style={styles.interestsContainer}>
-            {examplePerson.interests.map((interest, index) => (
-              <View key={index} style={styles.interestTag}>
-                <Text style={styles.interestText}>{interest}</Text>
-              </View>
-            ))}
+            <Text style={styles.statValue}>N/A</Text>
+            <Text style={styles.statTitle}>Transactions</Text>
           </View>
         </View>
         
