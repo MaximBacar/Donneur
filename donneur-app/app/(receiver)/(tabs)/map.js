@@ -123,6 +123,7 @@ export default function ExplorePage() {
             distance: 0, // Will be calculated later
             latitude: address.latitude,
             longitude: address.longitude,
+            image_url: shelter.image_url || "https://via.placeholder.com/400x200", // Use image_url from DB or fallback
           });
         }
 
@@ -269,9 +270,14 @@ export default function ExplorePage() {
           }, 1000);
         }
         // Optionally navigate to details page
-        // router.push(`/shelter/${item.id}`);
+        router.push(`/shelter/${item.id}`);
       }}
     >
+      <Image 
+        source={{ uri: item.image_url }}
+        style={styles.shelterImage}
+        resizeMode="cover"
+      />
       <View style={styles.shelterInfo}>
         <Text style={styles.shelterName}>{item.name}</Text>
         <Text style={styles.shelterDistance}>{formatDistance(item.distance)} · {item.type}</Text>
@@ -331,7 +337,11 @@ export default function ExplorePage() {
                     },
                   ]}
                 >
-                  <View style={styles.markerInside} />
+                  <Image 
+                    source={{ uri: shelter.image_url }}
+                    style={styles.markerImage}
+                    resizeMode="cover"
+                  />
                 </Animated.View>
               </View>
               <Text
@@ -425,6 +435,13 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 35,
     backgroundColor: "#d6d6d6",
+  },
+  markerImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 2,
+    borderColor: "white",
   },
   markerGlow: {
     borderRadius: 75,
@@ -581,6 +598,12 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+  },
+  shelterImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 8,
+    marginRight: 12,
   },
   shelterInfo: {
     flex: 1,
