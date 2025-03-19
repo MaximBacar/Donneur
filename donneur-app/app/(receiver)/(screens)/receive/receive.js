@@ -11,8 +11,10 @@ import {
 import { useRouter } from 'expo-router';
 import QRCode from 'react-native-qrcode-svg';
 import { useAuth } from '../../../../context/authContext'; // adjust the path as needed
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Colors } from '../../../../constants/colors';
 
 export default function ReceiveScreen() {
   const router = useRouter();
@@ -25,7 +27,7 @@ export default function ReceiveScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F9F9F9" />
 
       <View style={styles.header}>
         <TouchableOpacity
@@ -34,47 +36,77 @@ export default function ReceiveScreen() {
         >
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Receive</Text>
+        <Text style={styles.headerTitle}>Receive Donations</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.contentContainer}>
-        {/* Subtitle */}
-        <Text style={styles.subtitle}>How to receive donations</Text>
+        <Text style={styles.subtitle}>Select a method to receive donations</Text>
 
-        {/* NFC Card Section */}
-        <Text style={styles.sectionHeader}>NFC Card</Text>
-        <Text style={styles.sectionBody}>
-          To receive donations, present your NFC card to someone wishing to send you money.
-        </Text>
+        <View style={styles.optionsContainer}>
+          {/* NFC Card Option */}
+          <View style={styles.optionCard}>
+            <LinearGradient
+              colors={['#0070BA', '#1546A0']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.iconContainer}
+            >
+              <MaterialCommunityIcons name="nfc" size={28} color="#FFFFFF" />
+            </LinearGradient>
+            <View style={styles.optionTextContainer}>
+              <Text style={styles.optionTitle}>NFC Card</Text>
+              <Text style={styles.optionDescription}>
+                Present your NFC card to someone wishing to send you money
+              </Text>
+            </View>
+          </View>
 
-        {/* QR Code Section */}
-        <Text style={styles.sectionHeader}>QR Code</Text>
-        <Text style={styles.sectionBody}>
-          Alternatively, you can display a QR code. Senders can scan this code with their smartphone to add you.
-        </Text>
-
-        {/* "Your code" Label */}
-        <Text style={styles.yourCodeLabel}>Your code</Text>
-
-        {/* QR Code generated using react-native-qrcode-svg */}
-        <View style={styles.qrContainer}>
-          <QRCode
-            value={'https://give.donneur.ca/'+donneurID}
-            size={200}
-            color="black"
-            backgroundColor="white"
-          />
+          {/* QR Code Option */}
+          <View style={styles.optionCard}>
+            <LinearGradient
+              colors={['#4CAF50', '#2E7D32']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.iconContainer}
+            >
+              <Ionicons name="qr-code" size={28} color="#FFFFFF" />
+            </LinearGradient>
+            <View style={styles.optionTextContainer}>
+              <Text style={styles.optionTitle}>QR Code</Text>
+              <Text style={styles.optionDescription}>
+                Display this QR code for senders to scan with their smartphone
+              </Text>
+            </View>
+          </View>
         </View>
 
-        {/* Export to Camera Roll Button */}
-        <TouchableOpacity style={styles.exportButton} onPress={() => console.log('Export tapped')}>
-          <Text style={styles.exportButtonText}>Export to Camera Roll</Text>
-        </TouchableOpacity>
+        {/* QR Code Section */}
+        <View style={styles.qrCodeSection}>
+          <Text style={styles.yourCodeLabel}>Your unique code</Text>
+          <View style={styles.qrContainer}>
+            <QRCode
+              value={'https://give.donneur.ca/'+donneurID}
+              size={200}
+              color="black"
+              backgroundColor="white"
+            />
+          </View>
+        </View>
 
         {/* "Got it!" Button */}
-        <TouchableOpacity style={styles.gotItButton} onPress={() => router.back()}>
-          <Text style={styles.gotItButtonText}>Got it!</Text>
+        <TouchableOpacity 
+          style={styles.gotItButton} 
+          onPress={() => router.back()}
+        >
+          <LinearGradient
+            colors={['#FF9800', '#F57C00']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gotItGradient}
+          >
+            <Text style={styles.gotItButtonText}>Got it!</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -84,7 +116,7 @@ export default function ReceiveScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9F9F9',
   },
   header: {
     flexDirection: 'row',
@@ -92,7 +124,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9F9F9',
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
@@ -108,58 +140,98 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 20,
+    fontSize: 16,
+    color: '#666666',
+    marginBottom: 24,
+    textAlign: 'center',
   },
-  sectionHeader: {
-    fontSize: 20,
-    fontWeight: '300',
+  optionsContainer: {
     marginTop: 8,
+    marginBottom: 24,
+  },
+  optionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  optionTextContainer: {
+    flex: 1,
+  },
+  optionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
     marginBottom: 4,
   },
-  sectionBody: {
+  optionDescription: {
     fontSize: 14,
-    color: '#333',
+    color: '#666666',
+    lineHeight: 20,
+  },
+  qrCodeSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   yourCodeLabel: {
-    marginTop: 20,
-    marginBottom: 4,
-    fontSize: 16,
-    fontWeight: '500',
-    alignItems: 'center',
-    alignSelf: 'center',
+    marginBottom: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    textAlign: 'center',
   },
   qrContainer: {
     alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  exportButton: {
-    alignSelf: 'center',
-    borderWidth: 1,
-    borderColor: '#999',
-    paddingHorizontal: 32,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginTop: 16,
-  },
-  exportButtonText: {
-    color: '#333',
-    fontSize: 14,
-    fontWeight: '600',
+    marginBottom: 8,
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 1,
   },
   gotItButton: {
-    backgroundColor: '#000',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
+    alignSelf: 'center',
+    borderRadius: 12,
     marginBottom: 20,
     marginTop: 24,
+    overflow: 'hidden',
+    width: '80%',
+  },
+  gotItGradient: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
   },
   gotItButtonText: {
-    color: '#fff',
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '600',
   },
 });
