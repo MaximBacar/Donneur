@@ -53,8 +53,11 @@ export default function IdConfirmationScreen() {
   const handleRefuse = () => {
     console.log('Transaction refused');
     // Navigate to /(tabsOrg)/dashboard
-    router.push('/');
-  };
+    router.replace({
+      pathname: '/(organization)/(tabs)',
+      params: { refresh: Date.now() } // Force a refresh with unique param
+    });
+    };
 
   if (loading) {
     return (
