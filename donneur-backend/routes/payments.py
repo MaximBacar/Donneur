@@ -1,6 +1,6 @@
 from flask_restful  import  Resource, reqparse
 from controllers    import  PaymentController
-
+import logging
 class CreateDonationResource(Resource):
 
     def post(self):
@@ -24,12 +24,14 @@ class ConfirmDonationResource(Resource):
         parser.add_argument(    'data',       type=dict, required = False    )
         args = parser.parse_args()
         try:
-            print(args)
+            logging.debug(args)
+            
             payment_intent = args['data']['object']
             PaymentController.confirm_payment( payment_intent )
             return {"status" : "ok"}, 200
         
         except Exception as e:
+            logging.error(str(e))
             return {'error' : str(e)}, 400
         
 class CancelDonationResource(Resource):
