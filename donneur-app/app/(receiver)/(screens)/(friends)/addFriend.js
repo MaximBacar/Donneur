@@ -15,6 +15,7 @@ import { useAuth } from '../../../../context/authContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRouter } from 'expo-router';
+import { useFriend } from './friendContext';
 
 export default function AddFriendScreen() {
   const router = useRouter();
@@ -25,6 +26,8 @@ export default function AddFriendScreen() {
   const [isScanning, setIsScanning] = useState(false);
   const insets = useSafeAreaInsets();
   const { fromFriends } = router.params || {};
+
+  const {setNewFriendID} = useFriend()
 
 
   const readNfc = async () => {
@@ -45,7 +48,10 @@ export default function AddFriendScreen() {
 
         let id = decoded.split("donneur.ca/")[1];
         setNewFriendID(id);
-        router.push('/confirmAddFriend');
+        router.push({
+          pathname: '/confirmAddFriend',
+          params: { fromFriends }
+        });
       } else {
         Alert.alert('No NDEF data found');
       }
@@ -56,9 +62,6 @@ export default function AddFriendScreen() {
     }
   };
 
-  const handleNFC = () => {
-
-  }
   const handleGoBack = () => {
     navigation.goBack();
   };

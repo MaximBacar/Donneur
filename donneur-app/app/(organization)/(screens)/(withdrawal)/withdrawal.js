@@ -11,11 +11,13 @@ import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 // import BackHeader from '../../../../components/header';
 // import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
+import { useUser } from './withdrawalContext'
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function WithdrawalScreen() {
   const router = useRouter();
+  const {setUserID} = useUser()
 
   const handleNavigate = () => {
     router.push('/qrcode');
