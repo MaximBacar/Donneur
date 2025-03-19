@@ -288,8 +288,8 @@ export default function ExplorePage() {
       if (mapRef.current) {
         mapRef.current.animateToRegion(
           {
-            latitude: firstShelter.latitude,
-            longitude: firstShelter.longitude,
+            latitude: Number(firstShelter.latitude),
+            longitude: Number(firstShelter.longitude),
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
           },
@@ -351,16 +351,7 @@ export default function ExplorePage() {
     <TouchableOpacity 
       style={styles.shelterItem}
       onPress={() => {
-        // Navigate to shelter details or center map on this shelter
-        if (mapRef.current) {
-          mapRef.current.animateToRegion({
-            latitude: item.latitude,
-            longitude: item.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }, 1000);
-        }
-        // Optionally navigate to details page
+        // Navigate to shelter details page
         router.push(`/shelter/${item.id}`);
       }}
     >
@@ -375,11 +366,29 @@ export default function ExplorePage() {
         <Text style={styles.shelterAddress}>{item.address}</Text>
         <Text style={styles.shelterStatus}>{item.isOpen ? "Open 24 hours" : "Closed"}</Text>
       </View>
-      <View style={styles.shelterTime}>
-        <View style={styles.timeCircle}>
-          <Text style={styles.timeText}>{getEstimatedTime(item.distance)}</Text>
+      <TouchableOpacity 
+        style={styles.shelterTime}
+        onPress={(e) => {
+          e.stopPropagation(); // Prevent triggering the parent's onPress
+          
+          // Navigate to shelter location on map
+          if (mapRef.current) {
+            mapRef.current.animateToRegion({
+              latitude: Number(item.latitude),
+              longitude: Number(item.longitude),
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }, 1000);
+          }
+          
+          // Close the modal
+          snapToPosition("minimized");
+        }}
+      >
+        <View style={styles.directionCircle}>
+          <Icon name="location-arrow" size={16} color="#007AFF" />
         </View>
-      </View>
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
@@ -397,8 +406,8 @@ export default function ExplorePage() {
           <Marker
             key={shelter.id}
             coordinate={{
-              latitude: shelter.latitude,
-              longitude: shelter.longitude,
+              latitude: Number(shelter.latitude),
+              longitude: Number(shelter.longitude),
             }}
             title={shelter.name}
             description={shelter.description}
@@ -882,6 +891,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  directionCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#f0f8ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e6f2ff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   timeText: {
     fontSize: 12,
