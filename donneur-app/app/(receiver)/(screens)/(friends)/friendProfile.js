@@ -20,33 +20,21 @@ import { useFriend } from './friendContext';
 import { BACKEND_URL } from '../../../../constants/backend';
 import { useAuth } from '../../../../context/authContext';
 export default function FriendProfile() {
-  const { friend_db_id } = useLocalSearchParams(); // Friend's UID
+  const { id } = useLocalSearchParams(); // Friend's UID
   const router = useRouter();
   const insets = useSafeAreaInsets();
-
-  const { friendProfile } = useFriend();
 
   const [loading, setLoading] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
 
+  const {friendProfile} = useFriend();
   const { token } = useAuth()
 
   const handleGoBack = () => {
     router.back();
   };
-  async function fetchUserData(uid) {
-    try {
-      const res = await fetch(`https://api.donneur.ca/get_user?uid=${uid}`);
-      const data = await res.json();
-      setFriendData(data);
-    } catch (err) {
-      console.error('Error fetching friend data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
+  
   async function removeFriend() {
     try {
       
@@ -140,14 +128,14 @@ export default function FriendProfile() {
             </View>
             <Text style={styles.displayName}>{displayName}</Text>
             <Text style={styles.memberSince}>
-              Member since: {friendData.member_since || '07-07-2002'}
+              Member since: {friendProfile.member_since || '07-07-2002'}
             </Text>
           </View>
   
           <View style={styles.buttonsRow}>
             <TouchableOpacity
               style={styles.balanceButton}
-              onPress={() => router.push(`/send/SendMoney?friend_db_id=${friend_db_id}`)}
+              onPress={() => router.push(`/send/SendMoney?id=${friendProfile.id}`)}
             >
               <Ionicons
                 name="paper-plane-outline"
@@ -188,7 +176,7 @@ export default function FriendProfile() {
                 style={styles.modalIcon} 
               />
               <Text style={styles.modalText}>
-                Are you sure you want to remove {friendData.first_name} from your friend list?
+                Are you sure you want to remove {friendProfile.first_name} from your friend list?
               </Text>
               <View style={styles.modalButtons}>
                 <TouchableOpacity 

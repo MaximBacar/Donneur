@@ -21,10 +21,11 @@ class CreateDonationResource(Resource):
 class ConfirmDonationResource(Resource):
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument(    'data',       type=dict, required = True    )
-        data = parser.parse_args()
+        parser.add_argument(    'data',       type=dict, required = False    )
+        args = parser.parse_args()
         try:
-            payment_intent = data['object']
+            print(args)
+            payment_intent = args['data']['object']
             PaymentController.confirm_payment( payment_intent )
             return {"status" : "ok"}, 200
         

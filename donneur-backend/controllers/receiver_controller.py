@@ -33,7 +33,7 @@ class ReceiverController():
             profile = {
                 'id' : receiver_id,
                 'name' : f'{receiver_data.get("first_name")} {receiver_data.get("last_name")[0]}.',
-                'image_url' : f'https://api.donneur.ca/image/{receiver_data.get("id_picture_file")}'
+                'image_url' : receiver_data.get("id_picture_file")
             }
             return profile
         raise ReceiverError.ReceiverNotFound('Receiver not found')
@@ -106,3 +106,22 @@ class ReceiverController():
     def get_receiver( receiver_id : str ) -> dict:
         receiver : Receiver = Receiver(receiver_id)
         return receiver.get()
+    
+    def get_profile( receiver_id : str ) -> dict:
+
+        def format_date(date_string):
+            date = datetime.fromisoformat(date_string)
+            return date.strftime("%B %Y")
+        receiver : Receiver = Receiver( receiver_id )
+
+        data = receiver.get()
+
+        if not data:
+            raise ValueError("receiver_not_found")
+        
+        profile = {
+            'picture_id' : data.get('id_picture_file'),
+            'name' : f"{data.get('first_name')} {data.get('last_name')}",
+            'member_since' : format_date(data.get('creation_date'))
+        }
+        return profile

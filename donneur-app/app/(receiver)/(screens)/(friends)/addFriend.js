@@ -16,7 +16,10 @@ import { addDoc, collection } from 'firebase/firestore';
 import { database } from '../../../../config/firebase';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useRouter } from 'expo-router';
+
 export default function AddFriendScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const navigation = useNavigation();
   const [hasPermission, setHasPermission] = useState(null);
@@ -50,14 +53,7 @@ export default function AddFriendScreen() {
     }
 
     try {
-      // For example, use the scanned encoded string to create a new friend request.
-      const docRef = await addDoc(collection(database, 'friends'), {
-        user1: user.uid,
-        user2: data, // This is the encoded string from your generated QR code.
-        u1: true,
-        u2: false,
-      });
-      console.log("Friend request created with ID:", docRef.id);
+      
       Alert.alert("Success", "Friend request sent!");
       navigation.navigate('Friends');
     } catch (error) {
@@ -69,24 +65,8 @@ export default function AddFriendScreen() {
   };
 
   const onPressScanQRCode = async () => {
-    if (hasPermission === null) {
-      Alert.alert('Requesting camera permission');
-      const { status } = await requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-      if (status === 'granted') {
-        setIsScanning(true);
-        setScanned(false);
-      }
-      return;
-    }
+    router.push('./readFriendCode')
     
-    if (hasPermission === false) {
-      Alert.alert('Permission Required', 'Camera access is needed to scan QR codes');
-      return;
-    }
-
-    setIsScanning(true);
-    setScanned(false);
   };
 
   // If we're in scanning mode, render the camera view.

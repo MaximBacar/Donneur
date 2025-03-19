@@ -6,6 +6,9 @@ from collections import deque
 from .friend_controller         import FriendController
 from .subscription_controller   import SubscriptionController
 
+
+import logging
+
 class FeedController:
 
     feed_cache : dict = {}
@@ -45,6 +48,7 @@ class FeedController:
     
 
     def __get_author( author_id : str ):
+        print('author ' + author_id)
         user = Receiver(author_id)
         if not user.exist():
             user = Organization( author_id )
@@ -90,7 +94,8 @@ class FeedController:
         
 
         for friend in friends:
-            friend_posts.update(Post.get_posts(friend.get('friend_id')))
+            logging.info(f'friend : {friend}')
+            friend_posts.update(Post.get_posts(friend.get('id')))
 
         for subscription in subscriptions:
             organization_posts.update(Post.get_posts(subscription))
@@ -159,6 +164,9 @@ class FeedController:
             feed_data.append(post_data)
 
         return { 'feed' : feed_data }
+    
+    def like_post ( receiver_id : str, post_id : str ):
+        pass
 
     def reply_to_post ( post_id : str, author : str, content : str, visibiliy_str : str ) -> Post:
 
@@ -175,15 +183,17 @@ class FeedController:
         return reply_post
     
     def get_user_posts ( receiver_id : str ):
+        print('hello')
         posts = Post.get_posts( receiver_id )
         posts : list = [key for key, _ in sorted((posts).items(), key=lambda x: datetime.fromisoformat(x[1]))]
 
         author = FeedController.__get_author( receiver_id )
-
+        print('youpi')
         user_posts = []
 
         for post_id in posts:
             post_data : dict = Post(post_id).get()
+            print(f'post_data : {post_data}')
             post_data['id'] = post_id
             post_data['author'] = author
 

@@ -17,7 +17,9 @@ class MediaController:
         VIDEO           = 'video'
 
     def upload_image(user_id: str, media_type: MediaType, firebase_link: str):
-    
+
+        print('user_id ' + user_id)
+        print(firebase_link)
         match media_type:
             case MediaController.MediaType.ID_DOCUMENT:
                 path = f'/receivers/{user_id}/id_document_file'
@@ -25,7 +27,6 @@ class MediaController:
                 path = f'/receivers/{user_id}/id_picture_file'
             case MediaController.MediaType.LOGO:
                 path = f'/organizations/{user_id}/logo_file'
-       
             case MediaController.MediaType.BANNER:
                 path = f'/organizations/{user_id}/banner_file'
             
