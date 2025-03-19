@@ -2,7 +2,7 @@ name: Deploy application to VPS
 on:
   push:
     branches:
-      - main
+      - maxim
 
 jobs:
   deploy:

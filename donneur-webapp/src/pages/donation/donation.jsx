@@ -32,7 +32,7 @@ export default function Donation(){
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/receiver/donation_profile?id=${id}`);
+        const response = await fetch(`${API_BASE_URL}/receiver/donation_profile?receiver_id=${id}`);
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
