@@ -11,7 +11,7 @@ import { ActivityIndicator } from 'react-native'
 import { BACKEND_URL } from '../../../../constants/backend';
 export default function ConfirmAddFriend(){
 
-    const {newFriendID} = useFriend();
+    const {newFriendID, setNewFriendID} = useFriend();
     const [friendData, setFriendData] = useState(null);
     const { user, token } = useAuth();
     const router = useRouter();
@@ -51,6 +51,8 @@ export default function ConfirmAddFriend(){
     }
 
     const cancel = () => {
+      // Also clear the friend ID when canceling
+      setNewFriendID(null);
       router.replace('(friends)/friends')
     }
     
@@ -71,6 +73,9 @@ export default function ConfirmAddFriend(){
             body:JSON.stringify(body)
           });
           const data = await response.json();
+          
+          // Clear the newFriendID from context
+          setNewFriendID(null);
                 
           Alert.alert("Success", "Friend request sent!");
           router.replace('(friends)/friends')
