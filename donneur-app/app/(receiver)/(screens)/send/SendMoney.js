@@ -56,6 +56,7 @@ export default function SendMoney() {
         throw new Error(`Server responded with status: ${response.status}`);
       }
       const data = await response.json();
+      console.log('user ', data);
       setFriendData(data);
   
     } catch (err) {
@@ -66,11 +67,39 @@ export default function SendMoney() {
     }
   }
 
-  const handleSend = () => {
-    // We'll implement the API call here later
-    console.log('Sending amount:', amount, 'to:', id, 'Note:', note);
-    alert(`Money sent successfully! (This is just a placeholder - no real transaction)`);
-    router.back();
+  const handleSend = async () => {
+    try {
+      setLoading(true);
+      console.log('Sending to receiver_id:', id, 'Amount:', parseFloat(amount));
+      
+      const payload = {
+        receiver_id: id,
+        amount: parseFloat(amount)
+      };
+      
+      const response = await fetch(`${BACKEND_URL}/transaction/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Server response:', errorText);
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+      
+      alert(`Money sent successfully to ${friendData.name}!`);
+      router.back();
+    } catch (error) {
+      console.error('Error sending money:', error);
+      alert(`Failed to send money: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleKeyPress = (key) => {
@@ -139,9 +168,7 @@ export default function SendMoney() {
   }
 
   // Format name: first name + first letter of last name (if exists)
-  const displayName = friendData.last_name 
-    ? `${friendData.first_name} ${friendData.last_name[0]}.`
-    : friendData.first_name;
+  const displayName = friendData?.name || 'N/A';
 
   // Build the profile picture URL (if available)
   const pictureUrl = friendData?.picture_id  || '';
@@ -186,7 +213,7 @@ export default function SendMoney() {
             </>
           ) : (
             <View style={[styles.avatar, styles.placeholder]}>
-              <Text style={styles.placeholderInitial}>{friendData.first_name?.[0]}</Text>
+              <Text style={styles.placeholderInitial}>{friendData.name?.[0]}</Text>
             </View>
           )}
         </View>

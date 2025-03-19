@@ -21,7 +21,12 @@ class SendFundsResource(Resource):
         parser.add_argument( 'amount', type=float, required=True, help="No amount provided" )
         args = parser.parse_args()
 
-        TransactionController.send(args.get('receiver_id'), user_id, args.get('amount'))
+        receiver = args.get('receiver_id')
+        amount = args.get('amount')
+
+
+        TransactionController.send(user_id, receiver, amount)
+        print('helloooo')
 
 class GetTransactionsResource(Resource):
     @auth_required
