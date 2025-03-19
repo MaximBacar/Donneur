@@ -64,7 +64,7 @@ class ReceiverController():
         print(f'SEND ACCOUNT LINK EMAIL : {email}')
         logging.info(f'SEND ACCOUNT LINK EMAIL : {email}')
 
-        SendMail.send_password_creation_email( email, f'https://www.donneur.ca/set_password/{receiver.id}')
+        SendMail.send_password_creation_email( email, f'https://www.donneur.ca/setPassword?id={receiver.id}')
 
     def verify_account_creation_link ( self, receiver_id : str ) -> bool:
         

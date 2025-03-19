@@ -49,9 +49,7 @@ class VerifyLinkResource(Resource):
         data = parser.parse_args()
 
         try:
-            valid = ReceiverController.verify_account_creation_link( 
-                data.get('receiver_id'), 
-            )
+            valid = ReceiverController.verify_account_creation_link(data.get('receiver_id'))
             if valid:
                 return {'status' : 'ok'}, 200
             return {'status' : 'disabled'}, 400
