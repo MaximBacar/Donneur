@@ -341,7 +341,7 @@ const handleOccupancyChange = async (newOccupancy) => {
 
   const handleEditProfile = () => {
     router.push({
-      pathname: "/(editProfile)",
+      pathname: "/(editProfile)/editProfile",
       params: { id: donneurID },
     });
   };

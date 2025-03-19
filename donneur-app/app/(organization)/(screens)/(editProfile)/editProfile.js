@@ -17,7 +17,6 @@ import {
   ActivityIndicator,
 } from "react-native";
 // Replace uuid with a different approach
-
 import { ref, uploadBytes, getDownloadURL, updateMetadata } from "firebase/storage";
 import { storage } from "../../../../config/firebase";
 import { useAuth } from "../../../../context/authContext";
@@ -27,11 +26,6 @@ export default function EditProfileScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const orgId = params.id;
-
-
-  const params = useLocalSearchParams();
-  const orgId = params.id;
-
   
   const [profilePic, setProfilePic] = useState(
     "https://via.placeholder.com/100/4A90E2/FFFFFF.png?text=CM"
@@ -57,109 +51,6 @@ export default function EditProfileScreen() {
   // Function to handle phone number input - digits only, max 10
   const handlePhoneChange = (text) => {
     // Remove any non-digit characters
-
-    const digitsOnly = text.replace(/\D/g, "");
-
-    // Limit to 10 digits
-    const limitedDigits = digitsOnly.substring(0, 10);
-
-    // Update state with digits only
-    setPhoneNumber(limitedDigits);
-  };
-
-  // Fetch organization data to populate the form
-  useEffect(() => {
-    const fetchOrgData = async () => {
-      setIsFetching(true);
-      try {
-        const id = orgId || donneurID;
-        if (!id) {
-          console.error("No organization ID available");
-          setIsFetching(false);
-          return;
-        }
-
-        const url = `${BACKEND_URL}/organization/get?id=${id}`;
-        console.log("Fetching organization data for ID:", id);
-
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch organization data: ${response.status}`
-          );
-        }
-
-        const data = await response.json();
-        console.log("Fetched organization data:", data);
-
-        // Populate form fields with organization data
-        if (data) {
-          // Basic info
-          setName(data.name || "");
-          setDescription(data.description || "");
-
-          // Contact info
-          if (data.address) {
-            setAddress(data.address.street || "");
-            setCity(data.address.city || "");
-            setProvince(data.address.state || "");
-            setZip(data.address.postalcode || "");
-          }
-
-          // For phone, make sure we only keep the digits (up to 10)
-          if (data.phone) {
-            const digitsOnly = data.phone.replace(/\D/g, "").substring(0, 10);
-            setPhoneNumber(digitsOnly);
-          } else {
-            setPhoneNumber("");
-          }
-
-          // Capacity info
-          setMaxOccupancy(
-            data.max_occupancy ? data.max_occupancy.toString() : ""
-          );
-          setCurrentOccupancy(
-            data.current_occupancy ? data.current_occupancy.toString() : ""
-          );
-          setIs24Hours(
-            data.is_24_hours !== undefined ? data.is_24_hours : true
-          );
-
-          // Images
-          if (data.logo_file) {
-            setProfilePic(data.logo_file);
-          }
-
-          if (data.banner_file) {
-            setBanner(data.banner_file);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching organization data:", error);
-        Alert.alert(
-          "Error",
-          "Failed to load organization data. Please try again."
-        );
-      } finally {
-        setIsFetching(false);
-      }
-    };
-
-    fetchOrgData();
-  }, [orgId, donneurID]);
-
-  // Function to generate a unique filename without using uuid
-  const generateUniqueFilename = () => {
-    const timestamp = new Date().getTime();
-    const randomStr = Math.random().toString(36).substring(2, 10);
-    return `image_${timestamp}_${randomStr}.png`;
-  };
-
-  const uploadImage = async (blob, isLogo = true) => {
-  // Function to handle phone number input - digits only, max 10
-  const handlePhoneChange = (text) => {
-    // Remove any non-digit characters
-
     const digitsOnly = text.replace(/\D/g, '');
     
     // Limit to 10 digits
@@ -274,7 +165,6 @@ export default function EditProfileScreen() {
     } catch (error) {
       console.error("Error in uploadImage:", error);
       throw error; // Re-throw the error to be caught by the caller
-
     }
   };
 
@@ -286,9 +176,6 @@ export default function EditProfileScreen() {
         user_id: donneurID,
       });
 
-      // Choose the correct endpoint based on whether it's a logo or banner
-      const endpoint = isLogo ? "set_logo" : "set_banner";
-      console.log(`Sending to backend: ${endpoint}`, body);
       // Choose the correct endpoint based on whether it's a logo or banner
       const endpoint = isLogo ? 'set_logo' : 'set_banner';
       console.log(`Sending to backend: ${endpoint}`, body);
@@ -319,9 +206,6 @@ export default function EditProfileScreen() {
   const pickImage = async (setImage, aspect = [1, 1], isLogo = true) => {
     try {
       // Use the correct API for MediaTypeOptions
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      // Use the correct API for MediaTypeOptions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         Alert.alert(
@@ -351,31 +235,8 @@ export default function EditProfileScreen() {
 
           // Pass the isLogo flag to the uploadImage function
           const imageUrl = await uploadImage(blob, isLogo);
-          console.log(
-            `Upload complete (${isLogo ? "logo" : "banner"}), URL:`,
-            imageUrl
-          );
-          // Pass the isLogo flag to the uploadImage function
-          const imageUrl = await uploadImage(blob, isLogo);
           console.log(`Upload complete (${isLogo ? 'logo' : 'banner'}), URL:`, imageUrl);
 
-          Alert.alert(
-            "Success",
-            `${isLogo ? "Logo" : "Banner"} uploaded successfully`
-          );
-        } catch (error) {
-          console.error(
-            `Error uploading ${isLogo ? "logo" : "banner"}:`,
-            error
-          );
-          Alert.alert(
-            "Upload Error",
-            `Failed to upload ${isLogo ? "logo" : "banner"}: ${
-              error.message
-            }. Please try again.`
-          );
-        } finally {
-          setIsLoading(false);
           Alert.alert("Success", `${isLogo ? 'Logo' : 'Banner'} uploaded successfully`);
         } catch (error) {
           console.error(`Error uploading ${isLogo ? 'logo' : 'banner'}:`, error);
@@ -392,112 +253,6 @@ export default function EditProfileScreen() {
       Alert.alert("Error", `Image picker error: ${error.message}`);
     }
   };
-
-  const saveProfileData = async () => {
-    setIsLoading(true);
-    try {
-      // Check if required fields are filled
-      if (!name.trim()) {
-        Alert.alert("Error", "Organization name is required");
-        setIsLoading(false);
-        return;
-      }
-      if (!description.trim()) {
-        Alert.alert("Error", "Description is required");
-        setIsLoading(false);
-        return;
-      }
-      if (!address.trim()) {
-        Alert.alert("Error", "Street address is required");
-        setIsLoading(false);
-        return;
-      }
-      if (!city.trim()) {
-        Alert.alert("Error", "City is required");
-        setIsLoading(false);
-        return;
-      }
-      if (!province.trim()) {
-        Alert.alert("Error", "Province/State is required");
-        setIsLoading(false);
-        return;
-      }
-      if (!zip.trim()) {
-        Alert.alert("Error", "Postal code is required");
-        setIsLoading(false);
-        return;
-      }
-      if (!phoneNumber.trim()) {
-        Alert.alert("Error", "Phone number is required");
-        setIsLoading(false);
-        return;
-      }
-
-      // Check for exactly 10 digits in phone number
-      if (phoneNumber.length !== 10) {
-        Alert.alert("Error", "Phone number must be exactly 10 digits");
-        setIsLoading(false);
-        return;
-      }
-
-      // Prepare the data to send - NOT in address nested object based on backend error
-      const organizationData = {
-        name,
-        description,
-        street: address,
-        city,
-        state: province,
-        postalcode: zip,
-        phone: phoneNumber, // Already 10 digits only
-        max_occupancy: parseInt(maxOccupancy, 10) || 0,
-        current_occupancy: parseInt(currentOccupancy, 10) || 0,
-        is_24_hours: is24Hours,
-        user_id: donneurID,
-      };
-
-      console.log("Saving organization data:", organizationData);
-
-      // Make the API call to update the organization
-      console.log("Sending data to API:", JSON.stringify(organizationData));
-      const response = await fetch(`${BACKEND_URL}/organization/set_info`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "remove-later",
-        },
-        body: JSON.stringify(organizationData),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Failed to update organization:", errorText);
-        throw new Error("Failed to update organization");
-      }
-
-      console.log("Organization data updated successfully");
-      Alert.alert(
-        "Profile Updated",
-        "Your changes have been saved successfully.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              // Simply go back to the previous screen
-              // The profile screen will refresh on focus due to useFocusEffect
-              router.back();
-            },
-          },
-        ]
-      );
-    } catch (error) {
-      console.error("Error saving profile data:", error);
-      Alert.alert("Error", "Failed to save profile data. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
 
   const saveProfileData = async () => {
     setIsLoading(true);
