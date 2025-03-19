@@ -370,7 +370,7 @@ export default function FinanceScreen() {
           </View>
         </View>
         
-        <Text style={styles.transactionNotes} numberOfLines={1}>{item.notes}</Text>
+        {/* <Text style={styles.transactionNotes} numberOfLines={1}>{item.notes}</Text> */}
       </View>
     </TouchableOpacity>
   );
