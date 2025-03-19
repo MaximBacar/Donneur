@@ -47,7 +47,7 @@ class ReceiverController():
         return receiver
     
     def update_email( receiver_id : str, email : str ) -> None:
-        logging.INFO(f'UPDATING EMAIL RECEIVER : {receiver_id}')
+        logging.info(f'UPDATING EMAIL RECEIVER : {receiver_id}')
         receiver : Receiver = Receiver( receiver_id )
         receiver.set_email( email )
 
