@@ -11,6 +11,7 @@ import {
   ScrollView,
   Image,
   FlatList,
+  PanResponder,
 } from "react-native";
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -26,13 +27,91 @@ export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showList, setShowList] = useState(true);
   const [selectedSortOption, setSelectedSortOption] = useState("distance");
+  const [modalPosition, setModalPosition] = useState("half"); // "half", "minimized"
+  
+  // Initialize modal at half-screen position
+  useEffect(() => {
+    if (showList) {
+      snapToPosition("half");
+    }
+  }, []);
   const router = useRouter();
   const isRegionSet = useRef(false);
   const mapRef = useRef(null);
-
+  
+  // Screen dimensions for modal calculations
+  const screenHeight = Dimensions.get("window").height;
+  const minimizedPosition = screenHeight - 60; // Just the drag handle visible 
+  const halfScreenPosition = screenHeight * 0.5; // Half screen
+  
+  // Modal Animation
+  const modalY = useRef(new Animated.Value(halfScreenPosition)).current;
+  
   // Glow Animation
   const glowSize = useRef(new Animated.Value(50)).current;
   const glowOpacity = useRef(new Animated.Value(0.8)).current;
+  
+  // Pan Responder for dragging the modal
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        // Store the current position when touch starts
+        modalY.setOffset(modalY._value - (modalPosition === "half" ? halfScreenPosition : minimizedPosition));
+        modalY.setValue(modalPosition === "half" ? halfScreenPosition : minimizedPosition);
+      },
+      onPanResponderMove: (event, gesture) => {
+        // Allow dragging only within limits
+        const newPosition = Math.max(
+          halfScreenPosition, 
+          Math.min(minimizedPosition, gesture.dy + (modalPosition === "half" ? halfScreenPosition : minimizedPosition))
+        );
+        modalY.setValue(newPosition - modalY._offset);
+      },
+      onPanResponderRelease: (event, gesture) => {
+        // Clear the offset
+        modalY.flattenOffset();
+        
+        // Threshold for determining snap position
+        const threshold = (halfScreenPosition + minimizedPosition) / 2;
+        
+        // Determine where to snap based on the velocity and position
+        if (gesture.vy > 0.5 || modalY._value > threshold) {
+          // Snap to minimized position
+          snapToPosition("minimized");
+        } else {
+          // Snap to half screen
+          snapToPosition("half");
+        }
+      },
+    })
+  ).current;
+  
+  // Function to animate the modal to a specific position
+  const snapToPosition = (position, cb) => {
+    const toValue = position === "half" ? halfScreenPosition : minimizedPosition;
+    
+    // Make sure we reset any offsets before animating
+    modalY.flattenOffset();
+    
+    const animation = Animated.spring(modalY, {
+      toValue,
+      useNativeDriver: true,
+      bounciness: 4,
+      speed: 12,
+    });
+    
+    // Set the modal position state
+    setModalPosition(position);
+    
+    // Start the animation and handle completion
+    if (cb && typeof cb === 'function') {
+      animation.start(cb);
+    } else {
+      animation.start();
+    }
+  };
 
 
   useEffect(() => {
@@ -253,7 +332,18 @@ export default function ExplorePage() {
   };
 
   const toggleList = () => {
-    setShowList(!showList);
+    if (!showList) {
+      setShowList(true);
+      // Use a small delay to ensure state update before animation
+      setTimeout(() => snapToPosition("half"), 10);
+    } else {
+      // If list is already showing, toggle between half and minimized
+      if (modalPosition === "half") {
+        snapToPosition("minimized");
+      } else {
+        snapToPosition("half");
+      }
+    }
   };
 
   const renderShelterItem = ({ item }) => (
@@ -302,7 +392,7 @@ export default function ExplorePage() {
       />
       <MapView
         ref={mapRef}
-        style={[styles.map, showList && styles.mapWithList]}
+        style={styles.map}
         region={region}
         onRegionChangeComplete={setRegion}
         showsUserLocation={true}
@@ -368,46 +458,89 @@ export default function ExplorePage() {
       </TouchableOpacity>
       
       <TouchableOpacity style={styles.listToggleButton} onPress={toggleList}>
-        <Icon name={showList ? "angle-down" : "angle-up"} size={20} color="white" />
+        <Icon 
+          name={!showList ? "angle-up" : (modalPosition === "half" ? "angle-down" : "angle-up")} 
+          size={20} 
+          color="white" 
+        />
       </TouchableOpacity>
 
       {showList && (
-        <View style={styles.shelterListContainer}>
-          <View style={styles.shelterListHeader}>
-            <View style={styles.shelterCountContainer}>
-              <View style={styles.shelterIconCircle}>
-                <Icon name="home" size={20} color="white" />
+        <Animated.View 
+          style={[
+            styles.shelterListContainer, 
+            {
+              transform: [{ translateY: modalY }]
+            }
+          ]}
+        >
+          {/* Drag handle */}
+          <View 
+            style={styles.dragHandle} 
+            {...panResponder.panHandlers}
+          >
+            <View style={styles.dragHandleBar} />
+            
+            {/* Show just the title in the handle when minimized */}
+            {modalPosition === "minimized" && (
+              <View style={styles.minimizedTitleContainer}>
+                <Text style={styles.minimizedTitle}>
+                  {filteredShelters.length} Shelters Nearby
+                </Text>
               </View>
-              <View>
-                <Text style={styles.shelterListTitle}>Shelters</Text>
-                <Text style={styles.shelterCount}>{filteredShelters.length} found · <Text style={styles.editSearch}>Edit Search</Text></Text>
+            )}
+          </View>
+          
+          {/* Only show the full header when not minimized */}
+          {modalPosition === "half" && (
+            <View style={styles.shelterListHeader}>
+              <View style={styles.shelterCountContainer}>
+                <View style={styles.shelterIconCircle}>
+                  <Icon name="home" size={20} color="white" />
+                </View>
+                <View>
+                  <Text style={styles.shelterListTitle}>Shelters</Text>
+                  <Text style={styles.shelterCount}>{filteredShelters.length} found · <Text style={styles.editSearch}>Edit Search</Text></Text>
+                </View>
               </View>
+              <TouchableOpacity 
+                style={styles.modalActionButton} 
+                onPress={() => {
+                  // Use a different approach - animate first, then use setTimeout
+                  snapToPosition("minimized");
+                  setTimeout(() => setShowList(false), 300);
+                }}
+              >
+                <Icon name="times" size={18} color="#777" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.closeButton} onPress={toggleList}>
-              <Icon name="times" size={18} color="#777" />
-            </TouchableOpacity>
-          </View>
+          )}
 
-          <View style={styles.filterOptions}>
-            <TouchableOpacity style={styles.filterButton}>
-              <Text style={styles.filterButtonText}>Open Now</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.filterButton}>
-              <Text style={styles.filterButtonText}>Spots Avail.</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.sortButton}>
-              <Text style={styles.filterButtonText}>Sort by Distance</Text>
-              <Icon name="chevron-down" size={12} color="#333" style={styles.sortIcon} />
-            </TouchableOpacity>
-          </View>
+          {/* Only show filter options and list when not minimized */}
+          {modalPosition === "half" && (
+            <>
+              <View style={styles.filterOptions}>
+                <TouchableOpacity style={styles.filterButton}>
+                  <Text style={styles.filterButtonText}>Open Now</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.filterButton}>
+                  <Text style={styles.filterButtonText}>Spots Avail.</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.sortButton}>
+                  <Text style={styles.filterButtonText}>Sort by Distance</Text>
+                  <Icon name="chevron-down" size={12} color="#333" style={styles.sortIcon} />
+                </TouchableOpacity>
+              </View>
 
-          <FlatList
-            data={sortedShelters}
-            renderItem={renderShelterItem}
-            keyExtractor={(item) => item.id}
-            style={styles.shelterList}
-          />
-        </View>
+              <FlatList
+                data={sortedShelters}
+                renderItem={renderShelterItem}
+                keyExtractor={(item) => item.id}
+                style={styles.shelterList}
+              />
+            </>
+          )}
+        </Animated.View>
       )}
     </View>
   );
@@ -420,9 +553,6 @@ const styles = StyleSheet.create({
   map: {
     width: Dimensions.get("window").width,
     height: Dimensions.get("window").height,
-  },
-  mapWithList: {
-    height: Dimensions.get("window").height * 0.55, // Adjust the height when list is shown
   },
   markerBox: {
     width: 120,
@@ -513,18 +643,49 @@ const styles = StyleSheet.create({
   },
   shelterListContainer: {
     position: 'absolute',
-    bottom: 0,
+    top: 0,
     left: 0,
     right: 0,
     backgroundColor: 'white',
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
-    height: Dimensions.get('window').height * 0.45,
+    height: Dimensions.get('window').height,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
+    paddingBottom: 40, // For safe area
+  },
+  dragHandle: {
+    width: '100%',
+    height: 40,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  dragHandleBar: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#ddd',
+    borderRadius: 5,
+  },
+  minimizedTitleContainer: {
+    position: 'absolute',
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 20,
+  },
+  minimizedTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalActionButton: {
+    padding: 10,
   },
   shelterListHeader: {
     flexDirection: 'row',
