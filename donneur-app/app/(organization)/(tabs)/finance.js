@@ -370,7 +370,6 @@ export default function FinanceScreen() {
           </View>
         </View>
         
-        <Text style={styles.transactionNotes} numberOfLines={1}>{item.notes}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -441,10 +440,10 @@ export default function FinanceScreen() {
                   </Animated.Text>
                 </View>
                 
-                <View style={styles.monthlyChangeBadge}>
+                {/* <View style={styles.monthlyChangeBadge}>
                   <IconSymbol name="arrow.up" size={12} color="#22C55E" />
                   <Text style={styles.monthlyChangeText}>{metrics.monthlyChange}%</Text>
-                </View>
+                </View> */}
               </View>
               
               <View style={styles.statsRow}>
