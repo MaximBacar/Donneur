@@ -1,7 +1,7 @@
 from firebase_admin     import db
 from models             import Model
 from utils              import GoogleMaps
-
+import logging
 class Organization(Model):
 
     BASE_TABLE : str = 'organizations'
@@ -11,6 +11,7 @@ class Organization(Model):
     
     def create( 
             name            : str, 
+            phone           : str   = None,
             street          : dict  = None, 
             apt             : str   = None,
             city            : str   = None, 
@@ -27,6 +28,8 @@ class Organization(Model):
 
         organization_data : dict = {
             'max_occupancy' : max_occupancy,
+            'occupancy'     : 0,
+            'phone'         : phone,
             'banner_file'   : banner_file,
             'description'   : description,
             'logo_file'     : logo_file,
@@ -69,7 +72,7 @@ class Organization(Model):
         try:
             address_data['latitude'], address_data['longitude'] = GoogleMaps.coordinates_from_address( address_line )
         except Exception as e:
-            print(e)
+            logging.error(str(e))
             
         self.reference.child('address').set(address_data)
 

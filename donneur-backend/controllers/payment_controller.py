@@ -68,7 +68,11 @@ class PaymentController():
         receiver_id = payment.get('receiver_id')
         amount = payment.get('amount')
         IP = payment.get('IP')
+        
 
+        receiver : Receiver = Receiver(receiver_id)
+
+        receiver.deposit(amount)
 
         Transaction.create_transaction( 
             receiver_id = receiver_id,

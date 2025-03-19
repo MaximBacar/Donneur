@@ -14,7 +14,7 @@ export default function ChangePassword() {
     console.log(receiver_id);
     async function getValidity(){
       try {
-        const response = await fetch('https://api.donneur.ca/is_password_link_valid?id='+receiver_id, {
+        const response = await fetch('https://api.donneur.ca/receiver/verify_link?receiver_id='+receiver_id, {
         });
         const result = await response.json();
         if (!response.ok) {
@@ -40,7 +40,7 @@ export default function ChangePassword() {
       return;
     }
     try {
-      const response = await fetch('https://api.donneur.ca/set_password', {
+      const response = await fetch('https://api.donneur.ca/receiver/create_app_account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

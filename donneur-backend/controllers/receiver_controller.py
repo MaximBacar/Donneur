@@ -59,7 +59,7 @@ class ReceiverController():
 
         email           : str       = receiver_data.get('email')
 
-        SendMail.send_password_creation_email( email, f'https://www.donneur.ca/create_account/{receiver.id}')
+        SendMail.send_password_creation_email( email, f'https://www.donneur.ca/set_password/{receiver.id}')
 
     def verify_account_creation_link ( self, receiver_id : str ) -> bool:
         

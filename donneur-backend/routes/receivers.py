@@ -45,7 +45,7 @@ class VerifyLinkResource(Resource):
 
     def get(self):
         parser = reqparse.RequestParser()
-        parser.add_argument( 'receiver_id', type=str, required=True, help="No receiver_id provided" )
+        parser.add_argument( 'receiver_id', type=str, required=True, location='args', help="No receiver_id provided" )
         data = parser.parse_args()
 
         try:
