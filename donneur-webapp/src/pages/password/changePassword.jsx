@@ -21,12 +21,12 @@ export default function ChangePassword() {
           setError(result.error || 'Error setting password');
         } else {
           if (result.validity != true){
-            window.location.href = 'https://www.google.com';
+            // window.location.href = 'https://www.google.com';
           }
         }
       } catch (err) {
         console.error(err);
-        window.location.href = 'https://www.google.com';
+        // window.location.href = 'https://www.google.com';
       }
     }
     getValidity()
