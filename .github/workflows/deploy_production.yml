@@ -17,7 +17,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 720
           script: |
-            cd /home/donneur-production/Donneur
+            cd /home/mb/donneur-production/Donneur
 
             # Fetch the latest code
             git pull origin maxim
