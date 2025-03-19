@@ -25,7 +25,7 @@ class SendMail:
         try:
             with smtplib.SMTP('localhost') as server:
                 server.send_message(msg, from_addr=SendMail.SENDER_EMAIL, to_addrs=user_email)
-                logging.debug(f'EMAIL SENT : TO[{user_email}]')
+                logging.warning(f'EMAIL SENT : TO[{user_email}]')
             print("Email sent successfully!")
         except Exception as e:
             logging.error(str(e))
