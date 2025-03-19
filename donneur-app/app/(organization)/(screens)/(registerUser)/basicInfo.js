@@ -230,7 +230,7 @@ export default function BasicInfoScreen() {
               <Text style={styles.label}>First name*</Text>
               <View style={[
                 styles.inputContainer,
-                firstNameError ? styles.inputContainerError : firstName ? styles.inputContainerSuccess : null
+                firstNameError ? styles.inputContainerError : null
               ]}>
                 <MaterialIcons 
                   name="person" 
@@ -252,9 +252,6 @@ export default function BasicInfoScreen() {
                   blurOnSubmit={false}
                   autoCorrect={false}
                 />
-                {firstName ? (
-                  <FontAwesome name="check-circle" size={18} color="#4CAF50" style={styles.validationIcon} />
-                ) : null}
               </View>
               {firstNameError ? (
                 <View style={styles.errorContainer}>
@@ -266,7 +263,7 @@ export default function BasicInfoScreen() {
               <Text style={styles.label}>Last name*</Text>
               <View style={[
                 styles.inputContainer,
-                lastNameError ? styles.inputContainerError : lastName ? styles.inputContainerSuccess : null
+                lastNameError ? styles.inputContainerError : null
               ]}>
                 <MaterialIcons 
                   name="person" 
@@ -289,9 +286,6 @@ export default function BasicInfoScreen() {
                   blurOnSubmit={false}
                   autoCorrect={false}
                 />
-                {lastName ? (
-                  <FontAwesome name="check-circle" size={18} color="#4CAF50" style={styles.validationIcon} />
-                ) : null}
               </View>
               {lastNameError ? (
                 <View style={styles.errorContainer}>
