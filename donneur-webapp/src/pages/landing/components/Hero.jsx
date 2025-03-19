@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import "./Hero.css";
 // Import assets directly using Vite's URL constructor
-const mockupDashImage = new URL('../assets/mockup dash.png', import.meta.url).href;
+const mockupDashImage = new URL('../assets/Hero.png', import.meta.url).href;
 
 const Hero = () => {
   const [ref, inView] = useInView({
@@ -67,15 +67,15 @@ const Hero = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            Donner n'a jamais été aussi simple
+            Tap, Give, Change Lives – Seamless Donations
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            Donneur is a platform that connects donors with organizations in need.
-            Making donations easier and more accessible for everyone.
+            Tap and give effortlessly—support those in need with secure, cashless donations. 
+            Every tap makes a difference, bringing transparency, trust, and real impact to charitable giving.
           </motion.p>
           
           {/* App Store Download Buttons */}

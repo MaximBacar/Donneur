@@ -59,121 +59,11 @@ const Footer = () => {
   
   return (
     <>
-      <section className="contact-section" id="contact" ref={ref}>
-        <div className="contact-bg-shape"></div>
-        <div className="container">
-          <motion.div 
-            className="contact-content"
-            initial={{ opacity: 0 }}
-            animate={inView ? { opacity: 1 } : { opacity: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <motion.div 
-              className="contact-text"
-              variants={itemVariants}
-              initial="hidden"
-              animate={inView ? "visible" : "hidden"}
-            >
-              <h2>Get in Touch</h2>
-              <div className="divider">
-                <span></span>
-              </div>
-              <p>Have questions about how Donneur can help your organization or how to get started? We'd love to hear from you!</p>
-              
-              <div className="contact-info">
-                <div className="contact-item">
-                  <div className="contact-icon">📍</div>
-                  <div>
-                    <h4>Our Location</h4>
-                    <p>1234 Donation Street, Montreal, QC</p>
-                  </div>
-                </div>
-                <div className="contact-item">
-                  <div className="contact-icon">📧</div>
-                  <div>
-                    <h4>Email Us</h4>
-                    <p>contact@donneur.ca</p>
-                  </div>
-                </div>
-                <div className="contact-item">
-                  <div className="contact-icon">📱</div>
-                  <div>
-                    <h4>Call Us</h4>
-                    <p>+1 (514) 123-4567</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-            
-            <motion.div 
-              className="contact-form-container"
-              variants={itemVariants}
-              initial="hidden"
-              animate={inView ? "visible" : "hidden"}
-              transition={{ delay: 0.3 }}
-            >
-              <form className="contact-form" onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label htmlFor="name">Your Name</label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    placeholder="John Doe"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="email">Your Email</label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    placeholder="john@example.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="message">Your Message</label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows="5"
-                    placeholder="How can we help you?"
-                    value={formData.message}
-                    onChange={handleChange}
-                    required
-                  ></textarea>
-                </div>
-                <motion.button 
-                  type="submit" 
-                  className="submit-btn"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Send Message
-                </motion.button>
-              </form>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
+      
     
       <footer className="footer">
-        <motion.div 
-          className="footer-wave"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
-            <path fill="#2C3E50" fillOpacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-          </svg>
-        </motion.div>
+        
+  
         
         <div className="container">
           <motion.div 
@@ -247,7 +137,7 @@ const Footer = () => {
               <ul>
                 <li>
                   <Link 
-                    to="home"
+                    to="About US"
                     spy={true}
                     smooth={true}
                     offset={-70}
@@ -278,17 +168,7 @@ const Footer = () => {
                     Features
                   </Link>
                 </li>
-                <li>
-                  <Link 
-                    to="contact"
-                    spy={true}
-                    smooth={true}
-                    offset={-70}
-                    duration={500}
-                  >
-                    Contact
-                  </Link>
-                </li>
+                
               </ul>
             </motion.div>
             
@@ -299,17 +179,12 @@ const Footer = () => {
               <h4>Resources</h4>
               <ul>
                 <li>
-                  <RouterLink to="/blog">Blog</RouterLink>
+                  <RouterLink to="/Privacy Policy">Blog</RouterLink>
                 </li>
                 <li>
-                  <RouterLink to="/faq">FAQ</RouterLink>
+                  <RouterLink to="/Terms & conditions">FAQ</RouterLink>
                 </li>
-                <li>
-                  <RouterLink to="/support">Support</RouterLink>
-                </li>
-                <li>
-                  <RouterLink to="/terms">Terms of Service</RouterLink>
-                </li>
+            
               </ul>
             </motion.div>
             
@@ -317,18 +192,7 @@ const Footer = () => {
               className="footer-newsletter"
               variants={itemVariants}
             >
-              <h4>Subscribe to our newsletter</h4>
-              <form className="newsletter-form" onSubmit={(e) => e.preventDefault()}>
-                <input type="email" placeholder="Your email address" />
-                <motion.button 
-                  type="submit" 
-                  className="btn btn-primary"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Subscribe
-                </motion.button>
-              </form>
+              
             </motion.div>
           </motion.div>
           

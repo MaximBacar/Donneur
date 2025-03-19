@@ -6,7 +6,7 @@ import { useInView } from "react-intersection-observer";
 import "./AboutUs.css";
 
 // Import organization logos using URL constructor for Vite
-const logoImage = new URL('../assets/logo-dans-la-rue_v2.jpg', import.meta.url).href;
+const logoImage = new URL('../assets/card tap noback copy 2.png', import.meta.url).href;
 const servImage = new URL('../assets/serv-aom.png.webp', import.meta.url).href;
 
 const AboutUs = () => {
@@ -17,9 +17,11 @@ const AboutUs = () => {
   });
   
   const aboutStats = [
-    { number: "10K+", label: "Donors" },
-    { number: "500+", label: "Organizations" },
-    { number: "$1.2M", label: "Donations" }
+    { number: "12K+", label: "Donors" },
+    { number: "28+", label: "Organizations" },
+    { number: "4k+", label: "Helped" },
+    { number: "5+", label: "Cities" }
+
   ];
   
   const textVariants = {
@@ -70,7 +72,7 @@ const AboutUs = () => {
             initial="hidden"
             animate={inView ? "visible" : "hidden"}
           >
-            <h2>About Donneur</h2>
+            <h2>Connecting Communities: From Shelters to Those in Need.</h2>
             <div className="divider">
               <span></span>
             </div>
@@ -80,10 +82,13 @@ const AboutUs = () => {
               donors and organizations.
             </p>
             <p>
-              Founded in 2023, Donneur has helped connect thousands of donors
-              with organizations across the country, facilitating impactful contributions
-              and creating meaningful change.
+            Our platform bridges the gap between shelters, donors, and individuals in need, enabling secure and transparent cashless giving. 
+            We empower communities one tap at a time.
             </p>
+
+            <div>
+      <h1>Our target numbers </h1>
+    </div>
             
             <div className="about-stats">
               {aboutStats.map((stat, index) => (
@@ -109,7 +114,6 @@ const AboutUs = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <RouterLink to="/about" className="btn btn-secondary">Learn More About Us</RouterLink>
             </motion.div>
           </motion.div>
           
@@ -130,16 +134,7 @@ const AboutUs = () => {
                   setImageError(true);
                 }}
               />
-              <img 
-                src={servImage} 
-                alt="Service AOA" 
-                className="org-logo"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.style.display = 'none';
-                  setImageError(true);
-                }}
-              />
+              
             </div>
             {imageError && (
               <div className="about-image-placeholder">

@@ -5,10 +5,10 @@ import { useInView } from 'react-intersection-observer';
 import './Features.css';
 
 // Import assets using URL constructor for Vite
-const cardTapImage = new URL('../assets/card tap noback copy.png', import.meta.url).href;
-const contactlessImage = new URL('../assets/contactless copy.png', import.meta.url).href;
-const webContentImage = new URL('../assets/web-content.png', import.meta.url).href;
-const messageImage = new URL('../assets/message.png', import.meta.url).href;
+const map = new URL('../assets/map.png', import.meta.url).href;
+const feed = new URL('../assets/feed.png', import.meta.url).href;
+const message = new URL('../assets/message.png', import.meta.url).href;
+const nowifi = new URL('../assets/nowifi.png', import.meta.url).href;
 const supportImage = new URL('../assets/support.png', import.meta.url).href;
 const securityImage = new URL('../assets/cyber-security copy.png', import.meta.url).href;
 
@@ -68,74 +68,33 @@ const Features = () => {
   const featuresList = [
     {
       id: 1,
-      icon: cardTapImage,
-      title: 'Effortless Donations',
-      description: 'Make a donation in just a few clicks and support causes you care about.',
-      color: '#FFD166'
+      icon: feed,
+      title: 'Creative Feed',
+      description: 'A live feed where shelters and individuals can post urgent needs, updates, and success stories—keeping donors informed and engaged in real time.',
+      color: '#fdc444'
     },
     {
       id: 2,
-      icon: webContentImage,
-      title: 'Every Shelter Dashboard',
-      description: 'A single unified dashboard for all shelters to manage their resources and donations.',
-      color: '#06D6A0'
+      icon: map,
+      title: 'Interactive map',
+      description: 'Locate nearby shelters, donation points, and areas where help is needed, making it easier to give and support your community.',
+      color: '#fdc444'
     },
     {
       id: 3,
-      icon: mapImage,
-      title: 'Interactive Map',
-      description: 'Discover nearby shelters and donation points with our interactive geolocation map.',
-      color: '#118AB2'
+      icon: nowifi,
+      title: 'Offline transactions',
+      description: 'Donations and transactions are saved when offline and automatically processed once a connection is available, ensuring uninterrupted giving.',
+      color: '#fdc444'
     },
     {
       id: 4,
-      icon: feedImage,
-      title: 'Creative Feed',
-      description: 'Stay updated with inspiring stories and see the impact of donations in real-time.',
-      color: '#EF476F'
-    },
-    {
-      id: 5,
-      icon: offlineImage,
-      title: 'Offline Transactions',
-      description: 'Continue making donations even without internet connection with our offline mode.',
-      color: '#073B4C'
-    },
-    {
-      id: 6,
-      icon: chatImage,
+      icon: message,
       title: 'Direct Messaging',
-      description: 'Connect directly with organizations through our secure in-app messaging system.',
-      color: '#9B5DE5'
+      description: 'Donors, shelters, and individuals can communicate instantly, allowing for personalized support, coordination, and real-tim assistance.',
+      color: '#fdc444'
     },
-    {
-      id: 7,
-      icon: contactlessImage,
-      title: 'Impact Tracking',
-      description: 'See exactly how your donations are making a difference in the community.',
-      color: '#F15BB5'
-    },
-    {
-      id: 8,
-      icon: messageImage,
-      title: 'Smart Notifications',
-      description: 'Receive timely, personalized updates about campaigns and opportunities.',
-      color: '#00BBF9'
-    },
-    {
-      id: 9,
-      icon: supportImage,
-      title: 'Accessible Design',
-      description: 'Inclusive experience designed for users of all abilities across any device.',
-      color: '#FB8B24'
-    },
-    {
-      id: 10,
-      icon: securityImage,
-      title: 'Secure Transactions',
-      description: 'Bank-level encryption and security protocols to protect your information.',
-      color: '#4361EE'
-    }
+
   ];
 
   // Key features highlighted separately
@@ -221,7 +180,7 @@ const Features = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
-          >Our Features</motion.h2>
+          >Key Features</motion.h2>
           <div className="divider">
             <motion.span
               initial={{ width: 0 }}
@@ -233,7 +192,8 @@ const Features = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.7, delay: 0.7, ease: "easeOut" }}
-          >Empowering sustainable donations through state-of-the-art technology</motion.p>
+          >Our platform bridges the gap between shelters, donors, and individuals in need, enabling secure and transparent cashless giving. 
+          We empower communities one tap at a time.</motion.p>
         </motion.div>
         
         <div className="features-highlight" ref={carouselRef}>
@@ -243,7 +203,6 @@ const Features = () => {
             initial="hidden"
             animate={highlightControls}
           >
-            Key Features
           </motion.h3>
           <motion.div 
             className="highlight-cards"
@@ -259,12 +218,12 @@ const Features = () => {
                 variants={itemVariants}
                 whileHover={{ 
                   scale: 1.05,
-                  boxShadow: '0 20px 30px rgba(0, 0, 0, 0.1)'
+                  boxShadow: '0 20px 30px rgba(162, 226, 144, 0)'
                 }}
                 whileTap={{ scale: 0.98 }}
                 style={{
-                  background: `linear-gradient(135deg, white 0%, white 80%, ${feature.color}20 100%)`,
-                  borderTop: `4px solid ${feature.color}`
+                  background: `linear-gradient(135deg, white 0%, white 95%,#a2e290`,
+                  borderTop: `3px solid ${feature.color}`
                 }}
               >
                 <div className="highlight-icon-wrapper" style={{ background: `${feature.color}15` }}>
@@ -309,11 +268,11 @@ const Features = () => {
                 delay: index * 0.1
               }}
             >
-              <div className="feature-icon-wrapper" style={{ background: `${feature.color}15` }}>
+              <div className="feature-icon-wrapper" style={{ background: tranparent }}>
                 <motion.img 
                   src={feature.icon} 
                   alt={feature.title} 
-                  className="feature-icon" 
+                  /*className="feature-icon" */
                   whileHover={{ rotate: 10 }}
                   transition={{ type: "spring", stiffness: 200 }}
                 />
@@ -336,14 +295,14 @@ const Features = () => {
           whileInView="visible"
           viewport={{ once: false, amount: 0.3 }}
         >
-          <h3>Ready to experience these features?</h3>
+          <h3>Ready to join our community?</h3>
           <motion.button 
             className="cta-button"
             whileHover={{ scale: 1.05, boxShadow: '0 5px 15px rgba(0, 0, 0, 0.1)' }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
-            Get Started Now
+            Join Us Now
           </motion.button>
         </motion.div>
       </div>

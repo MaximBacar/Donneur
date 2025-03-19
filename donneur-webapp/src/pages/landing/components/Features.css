@@ -55,12 +55,10 @@
 .section-header h2 {
   font-size: 48px;
   margin-bottom: 15px;
-  color: #2d3748;
+  color: #444;
   font-weight: 800;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #2C3E50 0%, #4A79a6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  background: transparent;
   background-clip: text;
 }
 
@@ -74,7 +72,7 @@
 .section-header .divider span {
   height: 4px;
   width: 80px;
-  background: linear-gradient(to right, #2C3E50, #a4c5f4);
+  background: linear-gradient(to right, #91d67d, #a2e290) !important; /* Slightly darker */
   display: block;
   margin: 0 auto;
   border-radius: 2px;
@@ -82,7 +80,7 @@
 
 .section-header p {
   font-size: 20px;
-  color: #4a5568;
+  color: #444;
   max-width: 700px;
   margin: 20px auto 0;
   line-height: 1.6;
@@ -118,12 +116,13 @@
   text-align: center;
   position: relative;
   overflow: hidden;
-  border: 1px solid #f0f0f0;
+  border: 0px solid #444;
   height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
+  
 }
 
 .highlight-card:hover {
@@ -133,7 +132,7 @@
 .highlight-icon-wrapper {
   width: 90px;
   height: 90px;
-  border-radius: 50%;
+  border-radius: 20% solid #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -141,6 +140,9 @@
   position: relative;
   z-index: 1;
   transition: all 0.3s ease;
+  background: transparent !important; /* Make background fully transparent */
+  border: none !important; /* Remove any border */
+  box-shadow: none !important; /* Remove any shadow if present */
 }
 
 .highlight-icon {
@@ -183,7 +185,7 @@
 
 .highlight-card p {
   font-size: 16px;
-  color: #4a5568;
+  color: #1a1a1a;
   line-height: 1.6;
   position: relative;
   z-index: 1;
@@ -201,13 +203,13 @@
 .feature-card {
   padding: 40px 30px;
   border-radius: 16px;
-  background-color: #ffffff;
+  background-color: #444;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   text-align: left;
   position: relative;
   overflow: hidden;
-  border: 1px solid #f0f0f0;
+  border: 1px solid #f0f0f0 !important;
   display: flex;
   flex-direction: column;
 }
@@ -244,7 +246,7 @@
 
 .feature-card p {
   font-size: 16px;
-  color: #4a5568;
+  color: #323232;
   line-height: 1.6;
   position: relative;
   z-index: 1;
@@ -260,6 +262,9 @@
   border-radius: 50%;
   transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
   z-index: 0;
+  background: transparent !important; /* Make background fully transparent */
+  border: none !important; /* Remove any border */
+  box-shadow: none !important; /* Remove any shadow if present */
 }
 
 .feature-card:hover .feature-hover-effect {
@@ -270,7 +275,7 @@
 /* CTA Section */
 .features-cta {
   text-align: center;
-  padding: 60px 0 20px;
+  padding: 20px 0 20px;
   position: relative;
 }
 
