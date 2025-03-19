@@ -7,7 +7,7 @@ from flask_cors             import CORS
 from routes.feed            import GetFeedResource, ReplyToPostResource, CreatePostResource, DeletePostResource, GetPostResource, GetUserPostsResource
 from routes.friends         import GetFriendsResource, AddFriendResource, RemoveFriendResource, ReplyFriendRequestResource
 from routes.payments        import CreateDonationResource, ConfirmDonationResource, CancelDonationResource
-from routes.receivers       import CreateReceiverResource, AddEmailResource, VerifyLinkResource, CreateAppAccountResource, DonationProfileResource, GetReceiverResource, GetBalanceResource, GetReceiverProfile
+from routes.receivers       import CreateReceiverResource, GetIDProfile, AddEmailResource, VerifyLinkResource, CreateAppAccountResource, DonationProfileResource, GetReceiverResource, GetBalanceResource, GetReceiverProfile
 from routes.transactions    import GetTransactionsResource, SendFundsResource, WithdrawFundsResource
 from routes.subscriptions   import SubscribeResource, UnsubscribeResource, GetSubscriptionsResource
 from routes.organizations   import GetOrganizationsResource, GetCurrentOccupancy, SetCurrentOccupancy, SetData
@@ -45,7 +45,7 @@ api.add_resource(   VerifyLinkResource,         '/receiver/verify_link'         
 api.add_resource(   CreateAppAccountResource,   '/receiver/create_app_account'  )
 api.add_resource(   DonationProfileResource,    '/receiver/donation_profile'    )
 api.add_resource(   GetReceiverProfile,         '/receiver/profile'             )
-
+api.add_resource(   GetIDProfile,               '/receiver/id_profile'          )
 
 api.add_resource(   GetOrganizationsResource,   '/organization/get'             )
 api.add_resource(   SetCurrentOccupancy,        '/organization/set_occupancy'   )

@@ -19,7 +19,7 @@ class Transaction(Model):
     class TransactionType(enum.Enum):
 
         DONATION    = 'donation'
-        WITHDRAW    = 'withdraw'
+        WITHDRAW    = 'withdrawal'
         SEND        = 'send' 
 
 
