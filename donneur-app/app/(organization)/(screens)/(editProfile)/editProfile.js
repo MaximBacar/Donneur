@@ -426,6 +426,7 @@ export default function EditProfileScreen() {
               </View>
             </View>
 
+
             <Text style={styles.label}>Postal Code</Text>
             <TextInput
               style={styles.input}

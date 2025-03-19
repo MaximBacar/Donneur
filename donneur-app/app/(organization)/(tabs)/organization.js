@@ -274,6 +274,7 @@ export default function OrgProfileScreen() {
       { cancelable: true }
     );
   };
+  
 
   // Get initials for logo
   const getInitials = () => {
