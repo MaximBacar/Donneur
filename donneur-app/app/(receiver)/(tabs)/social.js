@@ -35,13 +35,13 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, token, DonneurID } = useAuth();
 
-  const [myPosts, setMyPosts]                 = useState([]);
-  const [feedPosts, setFeedPosts]             = useState([]);
-  const [refreshing, setRefreshing]           = useState(false);
-  const [displayedPosts, setDisplayedPosts]   = useState([]);
+  const [myPosts, setMyPosts] = useState([]);
+  const [feedPosts, setFeedPosts] = useState([]);
+  const [allPosts, setAllPosts] = useState([]); // Combined feed posts and user posts
+  const [refreshing, setRefreshing] = useState(false);
+  const [displayedPosts, setDisplayedPosts] = useState([]);
   const [showOnlyMyPosts, setShowOnlyMyPosts] = useState(false);
-  const [firstLoad, setFirstLoad]             = useState(false);
-  
+  const [firstLoad, setFirstLoad] = useState(false);
 
   // Animation for filter button
   const filterButtonScale = useState(new Animated.Value(1))[0];
@@ -62,9 +62,8 @@ export default function HomeScreen() {
         setFirstLoad(true);
       }
     };
-  
+
     fetchData();
-  
   }, [firstLoad]);
 
   useEffect(() => {
@@ -72,29 +71,58 @@ export default function HomeScreen() {
     loadUserPosts();
   }, []);
 
+  // Update combined posts whenever feed or user posts change
+  useEffect(() => {
+    // Combine and deduplicate posts
+    const combinedPosts = [...feedPosts];
 
+    // Add any user posts that aren't already in the feed
+    myPosts.forEach((userPost) => {
+      const existsInFeed = combinedPosts.some(
+        (feedPost) => feedPost.id === userPost.id
+      );
+      if (!existsInFeed) {
+        // Make sure user posts are properly marked as the user's own posts
+        const enhancedUserPost = {
+          ...userPost,
+          author: {
+            ...userPost.author,
+            id: user.uid, // Ensure the ID matches what we check against
+          },
+        };
+        combinedPosts.push(enhancedUserPost);
+      }
+    });
+
+    // Sort by date (newest first)
+    combinedPosts.sort((a, b) => {
+      const dateA = Date.parse(a.created_at.split(".")[0]);
+      const dateB = Date.parse(b.created_at.split(".")[0]);
+      return dateB - dateA;
+    });
+
+    setAllPosts(combinedPosts);
+  }, [feedPosts, myPosts]);
 
   useEffect(() => {
     if (showOnlyMyPosts) {
       setDisplayedPosts(myPosts);
     } else {
-      setDisplayedPosts(feedPosts);
+      setDisplayedPosts(allPosts); // Use combined posts instead of just feedPosts
     }
-  }, [feedPosts, myPosts, showOnlyMyPosts]);
+  }, [allPosts, myPosts, showOnlyMyPosts]);
 
-
-  
   const loadPosts = async () => {
     setRefreshing(true);
     try {
       let url = `${BACKEND_URL}/feed`;
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning' : 'remove-later'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "remove-later",
+        },
       });
       const data = await response.json();
       console.log("feed : ",data)
@@ -105,23 +133,24 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
-
   const loadUserPosts = async () => {
     setRefreshing(true);
     try {
       let url = `${BACKEND_URL}/feed/get_user_posts`;
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning' : 'remove-later'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "remove-later",
+        },
       });
-      
+
       const data = await response.json();
+
       console.log('datas :', data.posts)
       setMyPosts(data.posts);
+
     } catch (error) {
       console.error("Error fetching posts:", error);
     }
@@ -133,7 +162,9 @@ export default function HomeScreen() {
     if (showOnlyMyPosts) {
       loadUserPosts();
     } else {
+      // Load both feeds when viewing the combined feed
       loadPosts();
+      loadUserPosts();
     }
   };
 
@@ -160,50 +191,166 @@ export default function HomeScreen() {
   // 3) DELETE POST
   const deletePost = async (post) => {
     try {
-      await removePost(post);
-      Alert.alert("Deleted", "Post has been removed.");
-      // We do NOT remove from feedPosts => user must refresh to see it gone
+      console.log("=== COMPREHENSIVE DELETE APPROACH ===");
+      console.log("Post ID:", post.id);
+      console.log("User ID:", user.uid);
+
+      // Try multiple field names that the backend might be expecting
+      const requestBody = JSON.stringify({
+        post_id: post.id,
+        postId: post.id,
+        id: post.id,
+        "post-id": post.id,
+        _id: post.id,
+        postID: post.id,
+        // Include some nested structures too
+        data: {
+          post_id: post.id,
+        },
+        params: {
+          post_id: post.id,
+        },
+      });
+
+      console.log("Sending with multiple field names:", requestBody);
+
+      // Make the request with careful attention to headers
+      const response = await fetch(`${BACKEND_URL}/feed/delete`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "ngrok-skip-browser-warning": "remove-later",
+          // Add cache control to prevent any caching issues
+          "Cache-Control": "no-cache, no-store",
+        },
+        body: requestBody,
+      });
+
+      console.log("Response status:", response.status);
+
+      let responseText;
+      try {
+        responseText = await response.text();
+        console.log("Response text:", responseText);
+      } catch (e) {
+        console.error("Error reading response:", e);
+      }
+
+      if (response.ok) {
+        console.log("Post deleted successfully!");
+        Alert.alert("Success", "Post has been deleted.");
+
+        // Update UI after successful deletion
+        setMyPosts((prev) => prev.filter((p) => p.id !== post.id));
+        setFeedPosts((prev) => prev.filter((p) => p.id !== post.id));
+        setAllPosts((prev) => prev.filter((p) => p.id !== post.id));
+
+        // Refresh feeds
+        setTimeout(() => {
+          loadPosts();
+          loadUserPosts();
+        }, 500);
+
+        return;
+      }
+
+      // Alternative approach: Try using a DELETE method
+      console.log("POST method failed, trying DELETE method...");
+
+      const deleteResponse = await fetch(
+        `${BACKEND_URL}/feed/delete?post_id=${encodeURIComponent(post.id)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "ngrok-skip-browser-warning": "remove-later",
+          },
+        }
+      );
+
+      console.log("DELETE method response status:", deleteResponse.status);
+
+      try {
+        const deleteResponseText = await deleteResponse.text();
+        console.log("DELETE response text:", deleteResponseText);
+
+        if (deleteResponse.ok) {
+          console.log("Post deleted successfully with DELETE method!");
+          Alert.alert("Success", "Post has been deleted.");
+
+          // Update UI after successful deletion
+          setMyPosts((prev) => prev.filter((p) => p.id !== post.id));
+          setFeedPosts((prev) => prev.filter((p) => p.id !== post.id));
+          setAllPosts((prev) => prev.filter((p) => p.id !== post.id));
+
+          // Refresh feeds
+          setTimeout(() => {
+            loadPosts();
+            loadUserPosts();
+          }, 500);
+
+          return;
+        }
+      } catch (e) {
+        console.error("Error reading DELETE response:", e);
+      }
+
+      // If we get here, all attempts failed
+      Alert.alert(
+        "Delete Failed",
+        `Could not delete post. Multiple approaches failed. Please check the console logs and contact the backend developer.`
+      );
     } catch (error) {
-      Alert.alert("Error", error.message);
+      console.error("Error in deletePost:", error);
+      Alert.alert(
+        "Error",
+        "An exception occurred while trying to delete the post."
+      );
     }
   };
 
-  // 3-dot menu
+  // For debugging purposes only
   const handleMorePress = (post) => {
-    if (post.name === user.uid) {
-      Alert.alert("Post Options", "Choose an action", [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => deletePost(post),
-        },
-      ]);
-    } else {
-      Alert.alert("Info", "You are not the owner of this post.");
-    }
+    Alert.alert("Post Options", "Choose an action", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete (Debug Mode)",
+        style: "destructive",
+        onPress: () => deletePost(post),
+      },
+    ]);
   };
 
   // ─────────────────────────────────────────────────────────
   // 4) TOGGLE LIKE => optional local update
   const handleToggleLike = async (post) => {
     try {
-      // local update
-      setFeedPosts((prev) =>
-        prev.map((p) => {
+      const isLiked = post.likedBy?.includes(user.uid);
+      let newLikedBy;
+
+      if (isLiked) {
+        newLikedBy = post.likedBy.filter((uid) => uid !== user.uid);
+      } else {
+        newLikedBy = [...(post.likedBy || []), user.uid];
+      }
+
+      // Update in all lists for immediate UI response
+      const updatePostInList = (postList) =>
+        postList.map((p) => {
           if (p.id === post.id) {
-            const isLiked = p.likedBy?.includes(user.uid);
-            let newLikedBy;
-            if (isLiked) {
-              newLikedBy = p.likedBy.filter((uid) => uid !== user.uid);
-            } else {
-              newLikedBy = [...(p.likedBy || []), user.uid];
-            }
             return { ...p, likedBy: newLikedBy };
           }
           return p;
-        })
-      );
+        });
+
+      setFeedPosts(updatePostInList(feedPosts));
+      setMyPosts(updatePostInList(myPosts));
+      setAllPosts(updatePostInList(allPosts));
+
       // Firestore
       await toggleLike(post);
     } catch (error) {
@@ -225,9 +372,15 @@ export default function HomeScreen() {
   // ─────────────────────────────────────────────────────────
   // 6) GO TO COMMENTS
   const handleCommentPress = (post) => {
+    // Check if this is the user's own post - simplified ownership check
+    const isOwnPost = post.author?.id === user.uid;
+
+    console.log("Navigating to post:", post.id);
+    console.log("Is own post:", isOwnPost);
+
     router.push({
-      pathname: "/(screens)/(feed)/"+post.id,
-      // params: { id: post.id },
+      pathname: "/(screens)/(feed)/" + post.id,
+      params: { isOwnPost: isOwnPost ? "true" : "false" },
     });
   };
 
@@ -253,6 +406,7 @@ export default function HomeScreen() {
       </View>
     );
   };
+
   const handleViewProfile = (postCreatorId) => {
     router.push({
       pathname: "/see_profile",
@@ -266,7 +420,9 @@ export default function HomeScreen() {
     const isLiked = post.likedBy?.includes(user.uid);
     const likeCount = post.likedBy?.length || 0;
     const commentCount = post.commentCount ?? 0;
-    const isOwnPost = post.author.id === DonneurID;
+
+    // Simplified ownership check focused on author.id only
+    const isOwnPost = post.author.id === user.uid;
 
     return (
       <View
@@ -282,14 +438,16 @@ export default function HomeScreen() {
         <View style={{ flex: 1 }}>
           <View style={styles.postHeader}>
             <View style={styles.nameContainer}>
-              <Text style={styles.name}>{isOwnPost ? "You" : post.author.name}</Text>
+              <Text style={styles.name}>
+                {isOwnPost ? "You" : post.author.name}
+              </Text>
               {isOwnPost && (
                 <View style={styles.myPostBadge}>
                   <Text style={styles.myPostBadgeText}>My Post</Text>
                 </View>
               )}
               <Text style={styles.timestamp}>
-                {moment(Date.parse(post.created_at.split('.')[0])).fromNow()}
+                {moment(Date.parse(post.created_at.split(".")[0])).fromNow()}
               </Text>
             </View>
 
@@ -310,7 +468,7 @@ export default function HomeScreen() {
 
           {post.image && (
             <TouchableOpacity
-              onPress={() => handleViewProfile(post.name)}
+              onPress={() => handleViewProfile(post.name || post.author.id)}
               activeOpacity={0.8}
             >
               <Image
@@ -350,7 +508,9 @@ export default function HomeScreen() {
                 <Text style={styles.countText}>{likeCount}</Text>
               </TouchableOpacity>
               <View style={styles.countItem}>
-                <Text style={styles.countText}>{commentCount} comments</Text>
+                <Text style={styles.countText}>
+                  {commentCount} {commentCount === 1 ? "comment" : "comments"}
+                </Text>
               </View>
             </View>
           </View>
@@ -362,8 +522,9 @@ export default function HomeScreen() {
   const ItemSeparator = () => <View style={styles.separator} />;
 
   if (firstLoad == false) {
-    return
+    return null;
   }
+
   return (
     <SafeAreaView style={styles.safeContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />

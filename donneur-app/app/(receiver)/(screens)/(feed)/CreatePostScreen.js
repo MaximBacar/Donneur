@@ -20,7 +20,6 @@ import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useAddPost } from "./postService";
 import { useAuth } from "../../../../context/authContext";
-
 import { BACKEND_URL } from "../../../../constants/backend";
 
 export default function CreatePostScreen() {
@@ -34,7 +33,7 @@ export default function CreatePostScreen() {
   const [fullScreenImage, setFullScreenImage] = useState(null);
   const [isPosting, setIsPosting] = useState(false);
 
-  // Reset text & image every time this screen is focused
+  // Reset text & image when this screen is focused
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
       setText("");
@@ -43,28 +42,25 @@ export default function CreatePostScreen() {
     return unsubscribe;
   }, [navigation]);
 
-
   const publishPost = async (text) => {
     let url = `${BACKEND_URL}/feed/create`;
     console.log(text);
     const payload = {
-      content : {'text' : text},
-      visibility : 'all'
+      content: { text: text },
+      visibility: "all",
     };
     const response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${token}`, 
-        'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning' : 'remove-later'
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "remove-later",
       },
-      body:JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
-    
     const data = await response.json();
     console.log(data);
-
-  }
+  };
 
   // Pick image from gallery
   const pickImage = async () => {
@@ -81,7 +77,6 @@ export default function CreatePostScreen() {
 
   // Cancel button logic
   const handleCancel = () => {
-    // If there's any text or image, ask for confirmation
     if (text.trim() || image) {
       Alert.alert(
         "Discard changes?",
@@ -91,12 +86,11 @@ export default function CreatePostScreen() {
           {
             text: "Yes",
             style: "destructive",
-            onPress: () => router.push("/(tabs)/social/"), // Go to feed
+            onPress: () => router.push("/(tabs)/social/"),
           },
         ]
       );
     } else {
-      // No text or image? Just go home
       router.push("/(tabs)/social/");
     }
   };
@@ -107,18 +101,15 @@ export default function CreatePostScreen() {
       Alert.alert("Post is empty!", "Write something or add an image.");
       return;
     }
-
     try {
       setIsPosting(true);
       // await addPost(text, image);
       await publishPost(text);
       setIsPosting(false);
-
-      // Show an Alert with an "OK" button
       Alert.alert("Post Created!", "Your post has been shared successfully.", [
         {
           text: "OK",
-          onPress: () => router.push("/(tabs)/social/"), // Navigate on "OK"
+          onPress: () => router.push("/(tabs)/social/"),
         },
       ]);
     } catch (error) {
@@ -140,7 +131,6 @@ export default function CreatePostScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          {/* Cancel button */}
           <TouchableOpacity
             style={styles.headerButton}
             onPress={handleCancel}
@@ -148,9 +138,7 @@ export default function CreatePostScreen() {
           >
             <Text style={styles.cancelButton}>Cancel</Text>
           </TouchableOpacity>
-
           <Text style={styles.headerTitle}>Create a new post</Text>
-
           <TouchableOpacity
             style={[
               styles.headerButton,
@@ -174,16 +162,17 @@ export default function CreatePostScreen() {
 
         {/* User info row */}
         <View style={styles.userInfoRow}>
-          <Image
-            source={{
-              uri: userData?.logo_id || userData?.id_picture_file || "https://i.pravatar.cc/300",
-            }}
-            style={styles.userAvatar}
-          />
-
+          {/* Always render a default white icon instead of a photo */}
+          <View style={[styles.userAvatar, styles.defaultAvatar]}>
+            <Ionicons name="person-outline" size={24} color="#fff" />
+          </View>
           <View style={styles.userNameContainer}>
-            {/* Replaced "John Doe" with user.uid */}
-            <Text style={styles.userName}>{userData?.name || userData?.first_name + " " + userData?.last_name || 'Loading error'}</Text>
+            <Text style={styles.userName}>
+              {userData?.name ||
+                (userData?.first_name && userData?.last_name
+                  ? `${userData.first_name} ${userData.last_name}`
+                  : "Loading error")}
+            </Text>
             <Text style={styles.timeText}>Now</Text>
           </View>
         </View>
@@ -194,7 +183,6 @@ export default function CreatePostScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Text Input */}
           <TextInput
             style={styles.textInput}
             placeholder="What's on your mind?"
@@ -205,18 +193,15 @@ export default function CreatePostScreen() {
             autoFocus
           />
 
-          {/* Image Preview (with remove & full-screen) */}
+          {/* Image Preview */}
           {image && (
             <View style={styles.imageContainer}>
-              {/* 'X' to remove image */}
               <TouchableOpacity
                 style={styles.removeImageButton}
                 onPress={() => setImage(null)}
               >
                 <Ionicons name="close-circle-sharp" size={24} color="white" />
               </TouchableOpacity>
-
-              {/* Tap image to view full-screen */}
               <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={() => setFullScreenImage(image)}
@@ -241,7 +226,7 @@ export default function CreatePostScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Full-Screen Image Modal (with X button) */}
+        {/* Full-Screen Image Modal */}
         {fullScreenImage && (
           <Modal visible={true} transparent={true} animationType="fade">
             <View style={styles.fullScreenContainer}>
@@ -255,8 +240,6 @@ export default function CreatePostScreen() {
                   style={styles.fullScreenImage}
                   resizeMode="contain"
                 />
-
-                {/* 'X' to close full-screen */}
                 <TouchableOpacity
                   style={styles.fullScreenClose}
                   onPress={() => setFullScreenImage(null)}
@@ -272,7 +255,6 @@ export default function CreatePostScreen() {
   );
 }
 
-// Styles
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -346,6 +328,11 @@ const styles = StyleSheet.create({
     marginRight: 12,
     borderWidth: 2,
     borderColor: "#000",
+  },
+  defaultAvatar: {
+    backgroundColor: "#000",
+    alignItems: "center",
+    justifyContent: "center",
   },
   userNameContainer: {
     flex: 1,
@@ -422,7 +409,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
   },
-  // Full-Screen
   fullScreenContainer: {
     flex: 1,
     backgroundColor: "#000000",

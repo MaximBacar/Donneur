@@ -37,7 +37,7 @@ export default function Inbox() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState("all"); // all, direct, channels
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const router = useRouter();
 
   // ------------------------------------------------------
@@ -51,11 +51,14 @@ export default function Inbox() {
       // ============================
       //      FETCH DIRECT MESSAGES
       // ============================
+      console.log("user_idddd", user.uid);
+      console.log("user_Data,", userData.displayName);
       const chatQuery = query(
         collection(database, "chat"),
         where("users", "array-contains", user.uid)
       );
 
+      console.log("useridddddddd:", user.uid);
       const unsubscribeChats = onSnapshot(
         chatQuery,
         async (snapshot) => {
