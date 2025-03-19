@@ -69,67 +69,67 @@ export default function ShelterDetail() {
       console.log(err);
     }
   }
-  useEffect(() => {
-    const fetchSubscriptions = async () => {
-      try {
-        const url = `${BACKEND_URL}/subscription/get`;
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`, 
-            'Content-Type': 'application/json',
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const data = await response.json();
-        let subs = data.subscriptions
-        if (subs.includes(id)) {
-          setIsFollowing(true);
-        }
-      }catch (error) {
-        console.error('Full error details:', error);
-        setError(error.message);
-      }
-    }
 
-    const fetchShelterData = async () => {
-      try {
-        const url = `${BACKEND_URL}/organization/get?id=${id}`;
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+  const fetchSubscriptions = async () => {
+    try {
+      const url = `${BACKEND_URL}/subscription/get`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
         }
-        const data = await response.json();
-        setShelter(data);
-        
-        console.log("addy",data.address.longitude)
-        let lat = data.address.latitude
-        let long = data.address.longitude
-        setRegion({
-            latitude: parseFloat(lat),
-            longitude: parseFloat(long),
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-        });
-      } catch (error) {
-        console.error('Full error details:', error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
-    };
+      const data = await response.json();
+      let subs = data.subscriptions
+      if (subs.includes(id)) {
+        setIsFollowing(true);
+      }
+    }catch (error) {
+      console.error('Full error details:', error);
+      setError(error.message);
+      setLoading(false);
+    }
+  }
+
+  const fetchShelterData = async () => {
+    try {
+      const url = `${BACKEND_URL}/organization/get?id=${id}`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      setShelter(data);
+      
+      console.log("addy",data.address.longitude)
+      let lat = data.address.latitude
+      let long = data.address.longitude
+      setRegion({
+          latitude: parseFloat(lat),
+          longitude: parseFloat(long),
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+      });
+    } catch (error) {
+      console.error('Full error details:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    
     fetchSubscriptions();
     fetchShelterData();
    
   }, [id]);
-  
-  useEffect(() => {
-    fetchShelterData();
-  }, [fetchShelterData]);
 
   // Get user location
   useEffect(() => {
@@ -158,6 +158,7 @@ export default function ShelterDetail() {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchShelterData();
+    setRefreshing(false);
   }, [fetchShelterData]);
 
   const handleGoBack = () => {
@@ -279,7 +280,7 @@ export default function ShelterDetail() {
       >
         {/* Hero Section */}
         <ImageBackground
-          source={{ uri: shelter.image_url || 'https://via.placeholder.com/400x200' }}
+          source={{ uri: shelter.banner_file || 'https://via.placeholder.com/400x200' }}
           style={styles.heroImage}
         >
           <LinearGradient
@@ -289,7 +290,7 @@ export default function ShelterDetail() {
             <View style={styles.headerActions}>
               <TouchableOpacity 
                 style={[styles.followButton, isFollowing && styles.followingButton]}
-                onPress={() => setIsFollowing(!isFollowing)}
+                onPress={() => handleFollowButton()}
               >
                 <Ionicons 
                   name={isFollowing ? "star" : "star-outline"} 
@@ -308,9 +309,9 @@ export default function ShelterDetail() {
         {/* Profile Info */}
         <View style={styles.profileContainer}>
           <View style={styles.logoContainer}>
-            {shelter.image_url ? (
+            {shelter.logo_file ? (
               <Image 
-                source={{ uri: shelter.image_url }} 
+                source={{ uri: shelter.logo_file }} 
                 style={styles.logo}
               />
             ) : (
@@ -330,7 +331,7 @@ export default function ShelterDetail() {
             <View style={styles.statItem}>
               <MaterialCommunityIcons name="bed" size={24} color="#4A90E2" />
               <Text style={styles.statValue}>
-                {shelter.current_occupancy || '?'}/{shelter.max_occupancy || '?'}
+                {shelter.occupancy || '?'}/{shelter.max_occupancy || '?'}
               </Text>
               <Text style={styles.statLabel}>Beds Available</Text>
             </View>
@@ -425,7 +426,7 @@ export default function ShelterDetail() {
                 </LinearGradient>
                 <View style={styles.occupancyStats}>
                   <View style={styles.occupancyStat}>
-                    <Text style={styles.occupancyStatValue}>{shelter.current_occupancy || '?'}</Text>
+                    <Text style={styles.occupancyStatValue}>{shelter.occupancy || '?'}</Text>
                     <Text style={styles.occupancyStatLabel}>Current</Text>
                   </View>
                   <View style={styles.occupancyStatDivider} />

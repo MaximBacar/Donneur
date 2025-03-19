@@ -16,7 +16,6 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from './registerContext';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
