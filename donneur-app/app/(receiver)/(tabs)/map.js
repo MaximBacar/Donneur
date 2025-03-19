@@ -42,7 +42,7 @@ export default function ExplorePage() {
   // Screen dimensions for modal calculations
   const screenHeight = Dimensions.get("window").height;
   const minimizedPosition = screenHeight - 60; // Just the drag handle visible 
-  const halfScreenPosition = screenHeight * 0.5; // Half screen
+  const halfScreenPosition = screenHeight * 0.35; // Half screen
   
   // Modal Animation
   const modalY = useRef(new Animated.Value(halfScreenPosition)).current;
@@ -384,12 +384,6 @@ export default function ExplorePage() {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.searchBar}
-        placeholder="Search shelters by name or city..."
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -493,27 +487,47 @@ export default function ExplorePage() {
           
           {/* Only show the full header when not minimized */}
           {modalPosition === "half" && (
-            <View style={styles.shelterListHeader}>
-              <View style={styles.shelterCountContainer}>
-                <View style={styles.shelterIconCircle}>
-                  <Icon name="home" size={20} color="white" />
-                </View>
-                <View>
-                  <Text style={styles.shelterListTitle}>Shelters</Text>
-                  <Text style={styles.shelterCount}>{filteredShelters.length} found · <Text style={styles.editSearch}>Edit Search</Text></Text>
-                </View>
+            <>
+            <View style={styles.searchBar}>
+                <Icon name="search" size={18} color="#999" style={{marginRight: 8}} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search shelters by name or city..."
+                  placeholderTextColor="#999"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery("")}>
+                    <Icon name="times-circle" size={16} color="#999" />
+                  </TouchableOpacity>
+                )}
               </View>
-              <TouchableOpacity 
-                style={styles.modalActionButton} 
-                onPress={() => {
-                  // Use a different approach - animate first, then use setTimeout
-                  snapToPosition("minimized");
-                  setTimeout(() => setShowList(false), 300);
-                }}
-              >
-                <Icon name="times" size={18} color="#777" />
-              </TouchableOpacity>
-            </View>
+              <View style={styles.shelterListHeader}>
+                <View style={styles.shelterCountContainer}>
+                  <View style={styles.shelterIconCircle}>
+                    <Icon name="home" size={16} color="white" />
+                  </View>
+                  <View>
+                    <Text style={styles.shelterListTitle}>Shelters</Text>
+                    <Text style={styles.shelterCount}>{filteredShelters.length} found</Text>
+                  </View>
+                </View>
+                {/* <TouchableOpacity 
+                  style={styles.closeButton} 
+                  onPress={() => {
+                    // Use a different approach - animate first, then use setTimeout
+                    snapToPosition("minimized");
+                    setTimeout(() => setShowList(false), 300);
+                  }}
+                >
+                  <View style={styles.closeButtonInner}>
+                    <Icon name="times" size={16} color="white" />
+                  </View>
+                </TouchableOpacity> */}
+              </View>
+              
+            </>
           )}
 
           {/* Only show filter options and list when not minimized */}
@@ -521,14 +535,17 @@ export default function ExplorePage() {
             <>
               <View style={styles.filterOptions}>
                 <TouchableOpacity style={styles.filterButton}>
+                  <Icon name="clock-o" size={14} color="#007AFF" style={{marginRight: 5}} />
                   <Text style={styles.filterButtonText}>Open Now</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.filterButton}>
+                  <Icon name="check-circle" size={14} color="#007AFF" style={{marginRight: 5}} />
                   <Text style={styles.filterButtonText}>Spots Avail.</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.sortButton}>
-                  <Text style={styles.filterButtonText}>Sort by Distance</Text>
-                  <Icon name="chevron-down" size={12} color="#333" style={styles.sortIcon} />
+                  <Icon name="sort" size={14} color="#007AFF" style={{marginRight: 5}} />
+                  <Text style={styles.filterButtonText}>Distance</Text>
+                  <Icon name="chevron-down" size={10} color="#007AFF" style={styles.sortIcon} />
                 </TouchableOpacity>
               </View>
 
@@ -608,14 +625,20 @@ const styles = StyleSheet.create({
     color: "white",
   },
   searchBar: {
-    position: "absolute",
-    top: 60,
-    left: 20,
-    right: 20,
     backgroundColor: "white",
-    padding: 15,
+    padding: 8,
     borderRadius: 10,
-    zIndex: 1,
+    marginHorizontal: 16,
+    marginVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#eeeeee',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   recenterButton: {
     position: 'absolute',
@@ -659,11 +682,10 @@ const styles = StyleSheet.create({
   },
   dragHandle: {
     width: '100%',
-    height: 40,
+    height: 30,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 8,
     paddingBottom: 8,
   },
   dragHandleBar: {
@@ -684,15 +706,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  modalActionButton: {
-    padding: 10,
-  },
   shelterListHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
@@ -701,54 +720,92 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   shelterIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#FF6347',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   shelterListTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
+    marginBottom: 1,
   },
   shelterCount: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
   },
   editSearch: {
     color: '#007AFF',
   },
   closeButton: {
-    padding: 5,
+    marginLeft: 10,
+  },
+  closeButtonInner: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#ff6347',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    padding: 0,
   },
   filterOptions: {
     flexDirection: 'row',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   filterButton: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    marginRight: 8,
-  },
-  sortButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    marginRight: 8,
+    backgroundColor: '#f0f8ff',
+    marginRight: 10,
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e6f2ff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  sortButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f0f8ff',
+    marginRight: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e6f2ff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   filterButtonText: {
     fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '500',
   },
   sortIcon: {
-    marginLeft: 5,
+    marginLeft: 4,
   },
   shelterList: {
     flex: 1,
