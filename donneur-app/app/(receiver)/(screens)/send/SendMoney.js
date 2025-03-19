@@ -15,13 +15,18 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { auth, database } from '../../../../config/firebase';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../../../../context/authContext';
+
+import { BACKEND_URL } from '../../../../constants/backend';
 
 const { width } = Dimensions.get('window');
 const keypadButtonSize = width / 4;
 
 export default function SendMoney() {
-  const { friend_db_id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams();
   const router = useRouter();
+
+  const { token } = useAuth();
   
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
@@ -31,18 +36,31 @@ export default function SendMoney() {
   const [showingNote, setShowingNote] = useState(false);
 
   useEffect(() => {
-    if (friend_db_id) {
-      fetchUserData(friend_db_id);
+    if (id) {
+      fetchUserData(id);
     }
-  }, [friend_db_id]);
+  }, [id]);
 
-  async function fetchUserData(uid) {
+  const fetchUserData = async (id) => {
     try {
-      const res = await fetch(`https://api.donneur.ca/get_user?uid=${uid}`);
-      const data = await res.json();
+      let url = `${BACKEND_URL}/receiver/profile?receiver_id=${id}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+      const data = await response.json();
       setFriendData(data);
+  
     } catch (err) {
       console.error('Error fetching friend data:', err);
+      Alert.alert('Error', 'Could not load friend data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -50,7 +68,7 @@ export default function SendMoney() {
 
   const handleSend = () => {
     // We'll implement the API call here later
-    console.log('Sending amount:', amount, 'to:', friend_db_id, 'Note:', note);
+    console.log('Sending amount:', amount, 'to:', id, 'Note:', note);
     alert(`Money sent successfully! (This is just a placeholder - no real transaction)`);
     router.back();
   };
@@ -126,9 +144,7 @@ export default function SendMoney() {
     : friendData.first_name;
 
   // Build the profile picture URL (if available)
-  const pictureUrl = friendData.picture_id 
-    ? `https://api.donneur.ca/image/${friendData.picture_id}`
-    : null;
+  const pictureUrl = friendData?.picture_id  || '';
 
   const isValidAmount = amount && parseFloat(amount) > 0;
 

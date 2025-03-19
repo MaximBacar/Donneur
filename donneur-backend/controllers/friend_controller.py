@@ -127,7 +127,7 @@ class FriendController:
                 if friendships[friendship_id].get('friends_since'):
                     friends.append(
                         {
-                            'friend_id'     : friendships[friendship_id][USERS[1]],
+                            'friend_id'     : friendships[friendship_id][USERS[1]] if user == USERS[0] else friendships[friendship_id][USERS[0]] ,
                             'friends_since' : friendships[friendship_id]['friends_since'],
                             'friendship_id' : friendship_id
                         }

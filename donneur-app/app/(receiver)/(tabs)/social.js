@@ -97,9 +97,8 @@ export default function HomeScreen() {
         }
       });
       const data = await response.json();
-      const dataList = Object.values(data.feed);
-
-      setFeedPosts(dataList);
+      console.log("feed : ",data)
+      setFeedPosts(data.feed);
     } catch (error) {
       console.error("Error fetching posts:", error);
     }
@@ -121,9 +120,8 @@ export default function HomeScreen() {
       });
       
       const data = await response.json();
-      const dataList = Object.values(data.posts);
-      console.log(dataList);
-      setMyPosts(dataList);
+      console.log('datas :', data.posts)
+      setMyPosts(data.posts);
     } catch (error) {
       console.error("Error fetching posts:", error);
     }

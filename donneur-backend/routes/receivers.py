@@ -79,7 +79,7 @@ class BanReceiverResource(Resource):
 class DonationProfileResource(Resource):
     def get(self):
         parser = reqparse.RequestParser()
-        parser.add_argument( 'receiver_id', type=str, required=True, help="No receiver_id provided" )
+        parser.add_argument( 'receiver_id', type=str, location='args', required=True, help="No receiver_id provided" )
         data = parser.parse_args()
 
         try:
@@ -106,3 +106,19 @@ class GetBalanceResource(Resource):
             return receiver, 200
         except Exception as e:
             return {'error' : str(e)}, 400
+        
+
+class GetReceiverProfile(Resource):
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument( 'receiver_id', type=str, required=True, location='args', help="No receiver_id provided" )
+        arg = parser.parse_args()
+        try:
+            profile = ReceiverController.get_profile(arg.get('receiver_id'))
+
+            return profile, 200
+            
+        except Exception as e:
+            logging.error(str(e))
+            return {'error': str(e)}, 400
+

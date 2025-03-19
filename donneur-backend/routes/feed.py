@@ -43,7 +43,7 @@ class GetPostResource(Resource):
 
     def get(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('post_id', type=dict, required=True, help="No post_id provided")
+        parser.add_argument('post_id', type=dict, location='args', required=True, help="No post_id provided")
         data = parser.parse_args()
         try:
             post = FeedController.get_post(data.get('post_id'))
@@ -84,7 +84,9 @@ class GetUserPostsResource(Resource):
     @auth_required
     def get(self, user_id : str, role : str):
         try:
+            print("USER POSTS")
             user_posts = FeedController.get_user_posts(user_id)
+            print(f"USER POSTS : {user_posts}")
             return user_posts, 200
         except Exception as e:
             logging.error(str(e))
