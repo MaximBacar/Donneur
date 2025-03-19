@@ -49,7 +49,7 @@ class Organization(Model):
 
     def set_occupancy(self, occupancy : int):
 
-        self.reference.set({'occupancy' : occupancy })
+        self.reference.child('occupancy').set(occupancy)
 
     def get_occupancy(self) -> int:
 

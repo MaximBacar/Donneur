@@ -130,10 +130,10 @@ export default function ChangePassword() {
           </p>
           <div className="mt-6">
             <button 
-              onClick={() => navigate('/login')} 
+              onClick={() => navigate('/')} 
               className="w-full text-white bg-black py-2 px-4 rounded-lg hover:bg-gray-800"
             >
-              Go to Login
+              Go to homepage
             </button>
           </div>
         </div>
