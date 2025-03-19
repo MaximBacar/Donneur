@@ -16,7 +16,7 @@ createRoot(document.getElementById('root')).render(
     <Router>
       <Routes>
         {console.log(isGiveDomain)}
-        {isGiveDomain ? (
+        {!isGiveDomain ? (
           <Route path="/:id" element={<Donation />} />
         ) : (
           <>

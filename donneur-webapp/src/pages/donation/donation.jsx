@@ -88,7 +88,7 @@ export default function Donation(){
   return (
     
     <div className="flex items-center justify-center w-screen h-[100svh] flex-col">
-      <div className="flex items-center justify-between w-[80%] h-[90%] flex-col">
+      <div className="flex items-center justify-between w-[68%] h-[90%] flex-col">
         <div className="flex items-center justify-between flex-col w-full h-[85%]">
           < Profile       profileData = {receiverData}        />
           < Total         total = {total}                     />
