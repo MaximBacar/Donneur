@@ -3,7 +3,7 @@
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 1.5rem;
 }
 
 .btn {
@@ -55,6 +55,7 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   line-height: 1.5;
   color: #4a5568;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 .app-store-buttons {
@@ -86,6 +87,21 @@
   height: 20px;
 }
 
+/* Add a viewport meta tag to ensure proper scaling */
+@media (max-width: 992px) {
+  h1, h2 {
+    font-size: calc(1.8rem + 1vw) !important;
+  }
+  
+  h3 {
+    font-size: calc(1.4rem + 0.5vw) !important;
+  }
+  
+  p {
+    font-size: calc(0.95rem + 0.2vw) !important;
+  }
+}
+
 /* Responsive styling */
 @media (max-width: 768px) {
   .container {
@@ -95,5 +111,55 @@
   .app-store-buttons {
     flex-direction: column;
     align-items: center;
+    width: 100%;
+    max-width: 280px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .app-store-button {
+    width: 100%;
+    justify-content: center;
+    font-size: 14px;
+  }
+  
+  /* Better spacing for mobile */
+  section {
+    padding: 40px 0 !important;
+  }
+  
+  /* Make buttons more tappable on mobile */
+  .btn, .app-store-button, .cta-button {
+    padding: 12px 20px;
+    min-height: 44px; /* Minimum height for touch targets */
+  }
+}
+
+/* Fix for very small screens */
+@media (max-width: 480px) {
+  .container {
+    padding: 0 1rem;
+  }
+  
+  /* Further reduce font sizes on very small screens */
+  h1 {
+    font-size: calc(1.5rem + 1vw) !important;
+  }
+  
+  h2 {
+    font-size: calc(1.3rem + 0.8vw) !important;
+  }
+  
+  h3 {
+    font-size: calc(1.1rem + 0.3vw) !important;
+  }
+  
+  .app-store-buttons {
+    max-width: 240px;
+  }
+  
+  .app-store-button {
+    padding: 8px 12px;
+    font-size: 13px;
   }
 }

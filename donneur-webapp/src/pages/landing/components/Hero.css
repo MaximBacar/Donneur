@@ -180,8 +180,9 @@
 
 @media (max-width: 992px) {
   .hero {
-    padding: 150px 0 80px;
+    padding: 150px 0 60px;  /* Increased top padding */
     text-align: center;
+    min-height: auto;
   }
 
   .hero .container {
@@ -190,23 +191,90 @@
 
   .hero-content {
     padding-right: 0;
-    margin-bottom: 50px;
+    margin-bottom: 40px;
     text-align: center;
+    width: 100%;
+    margin-top: 20px; /* Add some margin at the top of the content */
   }
   
   .hero-buttons {
     justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
   .hero h1 {
-    font-size: 42px;
+    font-size: 36px;
+    line-height: 1.3;
+    margin-top: 30px; /* Add margin to the title */
   }
 
   .hero p {
-    font-size: 18px;
+    font-size: 16px;
+    margin-bottom: 20px;
   }
 
   .hero-shape {
     opacity: 0.2;
+  }
+  
+  .hero-image img {
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+  }
+  
+  .app-store-buttons {
+    justify-content: center;
+    flex-direction: column;
+    width: 100%;
+    max-width: 280px;  /* Maximum width for app store buttons */
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .app-store-button {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 130px 0 40px;  /* Increased top padding for smallest screens */
+  }
+  
+  .hero h1 {
+    font-size: 28px;
+    margin-top: 40px; /* More margin for smallest screens */
+  }
+  
+  .hero-content {
+    margin-top: 30px; /* More top margin for smallest screens */
+  }
+  
+  .hero p {
+    font-size: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .hero-buttons a {
+    padding: 12px 20px;
+    font-size: 14px;
+    width: 100%;
+  }
+  
+  .app-store-buttons {
+    max-width: 240px;  /* Even smaller max-width for smallest screens */
+  }
+  
+  .app-store-button {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .scroll-down-indicator {
+    bottom: 10px;
   }
 }

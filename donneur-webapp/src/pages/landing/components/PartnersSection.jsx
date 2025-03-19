@@ -11,7 +11,7 @@ import asso4 from "../assets/asso4.jpg";
 
 const PartnersSection = () => {
   return (
-    <div className="partners-container">
+    <div className="partners-container" id="partners-container">
       {/* Title */}
       <h2 className="partners-title">Our Potential Partners In The Community</h2>
       <div className="title-divider"></div>

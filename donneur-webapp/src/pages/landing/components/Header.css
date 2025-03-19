@@ -56,7 +56,7 @@
   display: flex;
   align-items: center;
   margin-right: auto; /* This pushes the menu to the left */
-  margin-left: 90px; /* Remove any left margin */
+  margin-left: 320px; /* Remove any left margin */
 }
 
 .nav-menu ul {
@@ -74,16 +74,19 @@
   margin-left: 0; /* Remove margin from first item */
 }
 
-.nav-menu a {
+.nav-menu a,
+.nav-menu .nav-link {
   font-family: 'Inter', sans-serif;
   font-size: 18px;
   color: #444;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s ease;
+  cursor: pointer;
 }
 
-.nav-menu a:hover {
+.nav-menu a:hover,
+.nav-menu .nav-link:hover {
   color: #a2e290;
 }
 
@@ -182,6 +185,23 @@
 
 /* Media Queries for Responsive Design */
 @media (max-width: 768px) {
+  .header {
+    height: 70px;
+  }
+
+  .header-container {
+    padding: 0 15px;
+  }
+
+  .logo img {
+    max-height: 40px;
+  }
+
+  .our-logo {
+    max-height: 40px;
+    max-width: 120px;
+  }
+
   .nav-menu {
     position: fixed;
     top: 70px;
@@ -192,6 +212,9 @@
     flex-direction: column;
     transition: left 0.3s ease;
     overflow-y: auto;
+    margin-left: 0;
+    z-index: 1000;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   }
   
   .nav-menu.open {
@@ -209,6 +232,14 @@
     text-align: center;
   }
   
+  .nav-menu a,
+  .nav-menu .nav-link {
+    font-size: 16px;
+    padding: 12px 0;
+    display: block;
+    width: 100%;
+  }
+  
   .mobile-menu-button {
     display: flex;
   }
@@ -220,5 +251,34 @@
   .donate-button {
     padding: 8px 20px;
     font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    height: 60px;
+  }
+  
+  .logo-letter {
+    font-size: 32px;
+  }
+  
+  .our-logo {
+    max-height: 32px;
+    max-width: 100px;
+  }
+  
+  .nav-menu {
+    top: 60px;
+    height: calc(100vh - 60px);
+  }
+  
+  .mobile-menu-button {
+    width: 24px;
+    height: 18px;
+  }
+  
+  .mobile-menu-button span {
+    height: 2px;
   }
 }

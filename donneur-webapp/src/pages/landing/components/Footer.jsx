@@ -176,15 +176,14 @@ const Footer = () => {
               className="footer-links"
               variants={itemVariants}
             >
-              <h4>Resources</h4>
+              <h4>Legal</h4>
               <ul>
                 <li>
-                  <RouterLink to="/Privacy Policy">Blog</RouterLink>
+                  <RouterLink to="/privacy-policy">Privacy Policy</RouterLink>
                 </li>
                 <li>
-                  <RouterLink to="/Terms & conditions">FAQ</RouterLink>
+                  <RouterLink to="/terms-conditions">Terms & Conditions</RouterLink>
                 </li>
-            
               </ul>
             </motion.div>
             
