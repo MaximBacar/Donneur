@@ -13,12 +13,12 @@ class Sender(User):
 
     def __format_address( stripe_address : dict ) -> dict:
         address : dict = {
-            'postal_code'   : address['postal_code'],
-            'province'      : address['state'],
-            'country'       : address['country'],
-            'street'        : address['line1'],
-            'city'          : address['city'],
-            'apt'           : address['line2'],
+            'postal_code'   : stripe_address['postal_code'],
+            'province'      : stripe_address['state'],
+            'country'       : stripe_address['country'],
+            'street'        : stripe_address['line1'],
+            'city'          : stripe_address['city'],
+            'apt'           : stripe_address['line2'],
         }
         return address
 
