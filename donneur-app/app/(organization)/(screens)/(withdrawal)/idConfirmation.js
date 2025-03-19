@@ -25,17 +25,18 @@ export default function IdConfirmationScreen() {
   const [error, setError] = useState(null);      // For error handling
 
 
-  const {userID} = useUser();
+  const {userID, setBalance} = useUser();
 
 
   useEffect(() => {
     if (userID) {
       // Fetch data from API
-      fetch(`https://api.donneur.ca/get_id/${userID}`)
+      fetch(`https://api.donneur.ca/receiver/id_profile?receiver_id=${userID}`)
         .then((response) => response.json())
         .then((data) => {
           setUserData(data);  // Store fetched data
           setLoading(false);   // Set loading to false
+          setBalance(data.balance);
         })
         .catch((err) => {
           setError(err.message); // Set error if the request fails

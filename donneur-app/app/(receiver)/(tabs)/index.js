@@ -110,8 +110,7 @@ export default function DashboardScreen() {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning' : 'remove-later'
+          'Content-Type': 'application/json'
         }
       });
       const data = await response.json();

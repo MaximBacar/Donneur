@@ -21,6 +21,12 @@ export default function WithdrawalScreen() {
     router.push('/qrcode');
   };
 
+  const handleNFC = () => {
+    let id = '333'
+    setUserID(id);
+    router.push('/idConfirmation');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* <BackHeader title="" /> */}
