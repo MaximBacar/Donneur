@@ -1,31 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, View, Text, StyleSheet } from 'react-native';
+import { SafeAreaView, View, Text, StyleSheet, StatusBar, TouchableOpacity } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from './withdrawalContext';
 import { useAuth } from '../../../../context/authContext';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BACKEND_URL } from '../../../../constants/backend';
 
 export default function WithdrawalConfirmationScreen() {
   const router = useRouter();
   const [animationFinished, setAnimationFinished] = useState(false);
+  const insets = useSafeAreaInsets();
 
-
-  const {userID, withdrawAmount}    = useUser();
-  const { user, donneurID, token }         = useAuth();
-  const [loading, setLoading]       = useState(true);
-
+  const {userID, withdrawAmount} = useUser();
+  const { user, donneurID, token } = useAuth();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     console.log('userid',userID);
     console.log('w_a',withdrawAmount);
     if (userID){
-
-  
       const body = JSON.stringify({
-        amount:   withdrawAmount,
-        receiver_id:  userID
+        amount: withdrawAmount,
+        receiver_id: userID
       });
 
       fetch(`https://api.donneur.ca/transaction/withdraw`, {
@@ -34,7 +33,7 @@ export default function WithdrawalConfirmationScreen() {
           'Authorization': `Bearer ${token}`, 
           'Content-Type': 'application/json' // Important: Expecting JSON
         },
-        body:body
+        body: body
       })
         .then((response) => response.json())
         .then((data) => {
@@ -44,11 +43,10 @@ export default function WithdrawalConfirmationScreen() {
           console.log(err)
           setLoading(false);
         });
-
     }
-  },[])
+  }, []);
 
-  // Once the confirmation animation finishes, wait 2 seconds then navigate to the dashboard
+  // Once the confirmation animation finishes, wait 1 second then navigate to the dashboard
   useEffect(() => {
     if (animationFinished && !loading) {
       const timer = setTimeout(() => {
@@ -58,11 +56,24 @@ export default function WithdrawalConfirmationScreen() {
     }
   }, [loading, animationFinished, router]);
 
+  const handleGoBack = () => {
+    router.push('/');
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Centered header */}
+    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F9F9F9" />
+      
+      {/* Custom Header */}
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleGoBack}
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Confirmation</Text>
+        <View style={{ width: 24 }} />
       </View>
 
       {/* Animation Container */}
@@ -88,16 +99,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    alignItems: 'center', // centers the title horizontally
-    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F9F9F9',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  backButton: {
+    padding: 8,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '600',
+    color: '#000000',
   },
   animationContainer: {
     flex: 1,

@@ -6,27 +6,22 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
+  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from './withdrawalContext';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function IdConfirmationScreen() {
   const router = useRouter();
-
-  // Replace with real data or props
-  const profilePhoto = 'https://via.placeholder.com/100';
-  const name = 'RIBERY FRANCK';
-  const birthDate = '2002-03-24';
-  const address = '1234 RUE DE LA PAIX';
-
+  const insets = useSafeAreaInsets();
 
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);  // For loading state
   const [error, setError] = useState(null);      // For error handling
 
-
   const {userID, setBalance} = useUser();
-
 
   useEffect(() => {
     if (userID) {
@@ -45,8 +40,9 @@ export default function IdConfirmationScreen() {
     }
   }, [userID]);  // Only fetch data if `userID` changes or is available
 
-
-  
+  const handleGoBack = () => {
+    router.back();
+  };
 
   const handleConfirm = () => {
     console.log('Identity confirmed');
@@ -60,23 +56,73 @@ export default function IdConfirmationScreen() {
     router.push('/');
   };
 
-
   if (loading) {
-    return <Text>Loading...</Text>;
+    return (
+      <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F9F9F9" />
+        
+        {/* Custom Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={handleGoBack}
+          >
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>ID Confirmation</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <Text>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   if (error) {
-    return <Text>Error: {error}</Text>;
+    return (
+      <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F9F9F9" />
+        
+        {/* Custom Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={handleGoBack}
+          >
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>ID Confirmation</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Text>Error: {error}</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
-
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F9F9F9" />
+      
+      {/* Custom Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleGoBack}
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>ID Confirmation</Text>
+        <View style={{ width: 24 }} />
+      </View>
+
       <View style={styles.content}>
-        {/* Top portion (Header + Identity Info) */}
+        {/* Top portion (Title + Identity Info) */}
         <View>
-          {/* Header */}
-          <View style={styles.header}>
+          {/* Section Title */}
+          <View style={styles.sectionTitleContainer}>
             <Text style={styles.title}>ID Confirmation</Text>
             <Text style={styles.subtitle}>Confirm the identity for the withdrawal</Text>
           </View>
@@ -117,15 +163,44 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F9F9F9',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  backButton: {
+    padding: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   content: {
     flex: 1,
     justifyContent: 'space-between', // Splits top/bottom
     paddingBottom: 20,               // Extra spacing from bottom
     paddingHorizontal: 40,           // More padding on the sides
-    paddingTop: 40,
+    paddingTop: 20,
   },
-  // Header
-  header: {
+  // Section Title
+  sectionTitleContainer: {
     marginBottom: 20,
   },
   title: {
