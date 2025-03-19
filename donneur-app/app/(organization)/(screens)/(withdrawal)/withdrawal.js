@@ -5,16 +5,14 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 // import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
 import { useUser } from './withdrawalContext'
-
-const screenWidth = Dimensions.get('window').width;
 
 export default function WithdrawalScreen() {
   const router = useRouter();
@@ -65,7 +63,7 @@ export default function WithdrawalScreen() {
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" backgroundColor="#F9F9F9" />
       
-      {/* Custom Header */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -77,33 +75,56 @@ export default function WithdrawalScreen() {
         <View style={{ width: 24 }} />
       </View>
       
+      {/* Main Content */}
       <View style={styles.content}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>Withdrawal</Text>
-          <Text style={styles.subtitle}>Begin a new withdrawal</Text>
+        <Text style={styles.subtitle}>Select a withdrawal method</Text>
+        
+        {/* Options */}
+        <View style={styles.optionsContainer}>
+          {/* Option 1: NFC Card */}
+          <TouchableOpacity
+            style={styles.optionCard}
+            onPress={readNfc}
+          >
+            <LinearGradient
+              colors={['#007AFF', '#0056B3']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.iconContainer}
+            >
+              <MaterialCommunityIcons name="nfc" size={28} color="#FFFFFF" />
+            </LinearGradient>
+            <View style={styles.optionTextContainer}>
+              <Text style={styles.optionTitle}>Scan NFC Card</Text>
+              <Text style={styles.optionDescription}>
+                Use NFC technology to read the donor's card
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#CCCCCC" />
+          </TouchableOpacity>
+          
+          {/* Option 2: QR Code */}
+          <TouchableOpacity
+            style={styles.optionCard}
+            onPress={handleNavigate}
+          >
+            <LinearGradient
+              colors={['#FF9800', '#F57C00']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.iconContainer}
+            >
+              <MaterialCommunityIcons name="qrcode-scan" size={28} color="#FFFFFF" />
+            </LinearGradient>
+            <View style={styles.optionTextContainer}>
+              <Text style={styles.optionTitle}>Scan QR Code</Text>
+              <Text style={styles.optionDescription}>
+                Scan the donor's QR code from their app
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#CCCCCC" />
+          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity style={styles.button} onPress={readNfc}>
-          <MaterialCommunityIcons
-            name="nfc"
-            size={28}
-            color="#007AFF"
-            style={styles.icon}
-          />
-          <Text style={styles.buttonText}>Scan NFC Card</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.orText}>Or</Text>
-
-        <TouchableOpacity style={styles.button} onPress={handleNavigate}>
-          <MaterialCommunityIcons
-            name="qrcode-scan"
-            size={28}
-            color="#007AFF"
-            style={styles.icon}
-          />
-          <Text style={styles.buttonText}>Scan QR Code</Text>
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -112,7 +133,7 @@ export default function WithdrawalScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F9F9F9',
   },
   header: {
     flexDirection: 'row',
@@ -120,7 +141,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9F9F9',
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
@@ -133,46 +154,51 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   content: {
-    flex: 1,                   // fill remaining space
-    justifyContent: 'center',  // center vertically
-    alignItems: 'center',      // center horizontally
-    paddingHorizontal: 20,
-  },
-  titleContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 10,
+    padding: 24,
+    flex: 1,
   },
   subtitle: {
-    fontSize: 18,
-    color: '#666',
+    fontSize: 16,
+    color: '#666666',
+    marginBottom: 24,
+    textAlign: 'center',
   },
-  button: {
-    flexDirection: 'row',      // align icon and text in a row
-    width: screenWidth * 0.8,
-    paddingVertical: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 12,
+  optionsContainer: {
+    marginTop: 8,
+  },
+  optionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     justifyContent: 'center',
-    marginVertical: 20,
+    alignItems: 'center',
+    marginRight: 16,
   },
-  icon: {
-    marginRight: 10,
-    color: '#22222',
+  optionTextContainer: {
+    flex: 1,
   },
-  buttonText: {
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  orText: {
+  optionTitle: {
     fontSize: 18,
-    color: '#666',
-    marginVertical: 10,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 4,
+  },
+  optionDescription: {
+    fontSize: 14,
+    color: '#666666',
+    lineHeight: 20,
   },
 });
