@@ -5,13 +5,15 @@ import { useRouter } from 'expo-router';
 import { useUser } from './withdrawalContext';
 import { useAuth } from '../../../../context/authContext';
 
+import { BACKEND_URL } from '../../../../constants/backend';
+
 export default function WithdrawalConfirmationScreen() {
   const router = useRouter();
   const [animationFinished, setAnimationFinished] = useState(false);
 
 
   const {userID, withdrawAmount}    = useUser();
-  const { user, donneurID }         = useAuth();
+  const { user, donneurID, token }         = useAuth();
   const [loading, setLoading]       = useState(true);
 
 
@@ -23,13 +25,13 @@ export default function WithdrawalConfirmationScreen() {
   
       const body = JSON.stringify({
         amount:   withdrawAmount,
-        organization_id:   donneurID,
-        sender_id:  userID
+        receiver_id:  userID
       });
 
-      fetch(`https://api.donneur.ca/withdraw`, {
+      fetch(`https://api.donneur.ca/transaction/withdraw`, {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`, 
           'Content-Type': 'application/json' // Important: Expecting JSON
         },
         body:body

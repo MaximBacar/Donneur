@@ -18,10 +18,8 @@ export default function WithdrawalAmountScreen() {
   const router = useRouter();
   const [amount, setAmount] = useState('0.00');
 
-  const {userID, setWithdrawAmount} = useUser()
+  const {userID, balance, setWithdrawAmount} = useUser()
 
-  // Example current balance
-  const [availableBalance, setAvailableBalance] = useState(0);
 
   // Numeric keypad values
   const keypadValues = [
@@ -30,23 +28,6 @@ export default function WithdrawalAmountScreen() {
     ['7', '8', '9'],
     ['.', '0', 'DEL'],
   ];
-
-
-  useEffect(() => {
-    if (userID){
-
-      fetch(`https://api.donneur.ca/get_balance/${userID}`)
-        .then((response) => response.json())
-        .then((data) => {
-          setAvailableBalance(data.balance);
-        })
-        .catch((err) => {
-          console.log(err)
-          
-        });
-
-    }
-  }, [])
 
   const handleKeyPress = (key) => {
     setAmount((prevAmount) => {
@@ -79,9 +60,9 @@ export default function WithdrawalAmountScreen() {
     console.log(`Confirming withdrawal of $${amount}`);
     // Navigate to withdrawalConfirmation.js
     console.log('ammount', amount);
-    console.log('')
+
     let amount_flt = parseFloat(amount);
-    if (amount_flt <= availableBalance){
+    if (amount_flt <= balance){
       setWithdrawAmount(amount_flt);
       router.push('/withdrawalConfirmation');
     }else{
@@ -103,7 +84,7 @@ export default function WithdrawalAmountScreen() {
 
       {/* Balance and Amount */}
       <View style={styles.amountSection}>
-        <Text style={styles.balanceText}>${availableBalance.toFixed(2)}</Text>
+        <Text style={styles.balanceText}>${balance.toFixed(2)}</Text>
         <Text style={styles.amountText}>${amount}</Text>
         <Text style={styles.amountLabel}>Withdrawal</Text>
       </View>
