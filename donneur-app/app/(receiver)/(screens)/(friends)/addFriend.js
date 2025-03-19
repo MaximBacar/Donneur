@@ -13,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../../../context/authContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Colors } from '../../../../constants/colors';
 
 import { useRouter } from 'expo-router';
 
@@ -71,7 +73,7 @@ export default function AddFriendScreen() {
   };
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F9F9F9" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -86,28 +88,56 @@ export default function AddFriendScreen() {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.subtitle}>
-          Scan your friend's NFC card or QR Code to add them
-        </Text>
+        <View style={styles.instructionCard}>
+          <Text style={styles.subtitle}>
+            Add a friend by scanning their NFC card or QR Code
+          </Text>
+        </View>
 
         {/* NFC Button */}
         <TouchableOpacity
-          style={styles.buttonContainer}
+          style={styles.actionCard}
           onPress={readNfc}
         >
-          <Ionicons name="scan" size={24} color="#000" style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Scan NFC Card</Text>
+          <LinearGradient
+            colors={['#0070BA', '#1546A0']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.iconContainer}
+          >
+            <Ionicons name="scan" size={28} color="#FFFFFF" />
+          </LinearGradient>
+          <View style={styles.actionTextContainer}>
+            <Text style={styles.actionTitle}>Scan NFC Card</Text>
+            <Text style={styles.actionDescription}>
+              Hold your phone near your friend's NFC card
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#CCCCCC" />
         </TouchableOpacity>
 
         <Text style={styles.orText}>Or</Text>
 
         {/* QR Button */}
         <TouchableOpacity
-          style={styles.buttonContainer}
+          style={styles.actionCard}
           onPress={onPressScanQRCode}
         >
-          <Ionicons name="qr-code" size={24} color="#000" style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Scan QR Code</Text>
+          <LinearGradient
+            colors={['#4CAF50', '#2E7D32']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.iconContainer}
+          >
+            <Ionicons name="qr-code" size={28} color="#FFFFFF" />
+          </LinearGradient>
+          <View style={styles.actionTextContainer}>
+            <Text style={styles.actionTitle}>Scan QR Code</Text>
+            <Text style={styles.actionDescription}>
+              Scan your friend's QR code to connect
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#CCCCCC" />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -117,7 +147,7 @@ export default function AddFriendScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9F9F9',
   },
   header: {
     flexDirection: 'row',
@@ -125,7 +155,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9F9F9',
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
@@ -141,50 +171,64 @@ const styles = StyleSheet.create({
     padding: 24,
     flex: 1,
   },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  scanFrame: {
-    width: 200,
-    height: 200,
-    borderWidth: 2,
-    borderColor: '#fff',
-    backgroundColor: 'transparent',
-    alignSelf: 'center',
-    marginTop: '50%',
+  instructionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 16,
+    color: '#666666',
     textAlign: 'center',
-    marginBottom: 40,
+    lineHeight: 22,
   },
-  buttonContainer: {
-    borderWidth: 1,
-    borderColor: '#999',
-    borderRadius: 8,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+  actionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     justifyContent: 'center',
-    marginHorizontal: 32,
-    marginBottom: 16,
+    alignItems: 'center',
+    marginRight: 16,
   },
-  buttonIcon: {
-    marginRight: 8,
+  actionTextContainer: {
+    flex: 1,
   },
-  buttonText: {
-    fontSize: 16,
-    color: '#000',
-    fontWeight: '500',
+  actionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 4,
+  },
+  actionDescription: {
+    fontSize: 14,
+    color: '#666666',
+    lineHeight: 20,
   },
   orText: {
     textAlign: 'center',
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 16,
+    fontSize: 16,
+    color: '#666666',
+    marginVertical: 16,
+    fontWeight: '500',
   },
   closeButton: {
     position: 'absolute',
@@ -194,15 +238,16 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   scanAgainButton: {
-    position: 'absolute',
-    bottom: 50,
     alignSelf: 'center',
-    backgroundColor: '#000',
-    padding: 12,
-    borderRadius: 8,
+    marginTop: 20,
+    overflow: 'hidden',
+    borderRadius: 16,
   },
   scanAgainText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '600',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
   },
 });
