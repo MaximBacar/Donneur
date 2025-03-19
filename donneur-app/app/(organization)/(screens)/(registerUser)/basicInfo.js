@@ -226,6 +226,7 @@ export default function BasicInfoScreen() {
               </LinearGradient>
             </View>
 
+
             <View style={styles.form}>
               <Text style={styles.label}>First name*</Text>
               <View style={[

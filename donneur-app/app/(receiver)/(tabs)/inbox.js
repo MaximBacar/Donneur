@@ -72,7 +72,7 @@ export default function Inbox() {
 
                 // Get other user's name
                 const otherUserName =
-                  chat.userNames?.[otherUserId] || "Unknown User";
+                  chat.userNames?.[otherUserId] || "Care Montreal";
 
                 // Fetch the last message
                 const messagesRef = collection(
