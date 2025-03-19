@@ -84,6 +84,14 @@ export default function Donation(){
         
     }
   }
+
+  const getStripePromise = () => {
+    return loadStripe("pk_test_51QmlVlHgK1fpQ7EODxvlpfxHxf4xIGyIA5HVpbtOIcXJuhtraPx7CpRmku4YwWb8JDaOmY55OwdQSa2WVwF2UvOX0067Xpcr20", {
+      advancedFraudSignals: false
+    });
+  };
+
+
   if (!receiverData) return <></>;
   return (
     
@@ -103,7 +111,7 @@ export default function Donation(){
             onClick={() => setIsMenuOpen(false)}
           />
         )}
-        <PaymentTab total={total} stripe={stripePromise} clientSecret={clientSecret} isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+        <PaymentTab total={total} stripe={getStripePromise()} clientSecret={clientSecret} isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       </div>          
     </div>
     
