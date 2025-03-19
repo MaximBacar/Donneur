@@ -14,21 +14,19 @@ import {
   RefreshControl,
   StatusBar,
 } from 'react-native';
+import { useSegments } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '../../../../context/authContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown, SlideInRight, ZoomIn } from 'react-native-reanimated';
 
-// Import UI components and constants
-import IconSymbol from "../../../../components/ui/IconSymbol";
+import { BACKEND_URL } from '../../../../constants/backend';
 import { Colors } from "../../../../constants/colors";
 
-// Import your Firebase config
-import { auth, database } from '../../../../config/firebase';
 // Import the custom avatar component
 import { AvatarWithLoading } from './AvatarWithLoading';
+import { useFriend } from './friendContext';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -39,110 +37,57 @@ export default function FriendsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
+  const { setFriendProfile } = useFriend();
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [myFriends, setMyFriends] = useState([]);
   const [activeTab, setActiveTab] = useState('friends'); // 'friends' or 'requests'
 
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  
+  const segments = useSegments();
+  const currentPath = `/${segments.join('/')}`;
 
   // Handle refresh
   const onRefresh = useCallback(async () => {
-    if (!user) return;
     setRefreshing(true);
-    await loadFriends(user.uid);
+    await loadFriends();
     setRefreshing(false);
   }, [user]);
 
   // Load friends on component mount
   useEffect(() => {
-    if (user) {
-      loadFriends(user.uid);
-    } else {
-      setLoading(false);
-    }
+    loadFriends();
   }, [user]);
 
-  async function loadFriends(currentUid) {
+  const openFriendProfile = ( friend ) => {
+    setFriendProfile(friend);
+    router.push(`./friendProfile`)
+  }
+
+  async function loadFriends() {
     setLoading(true);
     try {
-      const friendsRef = collection(database, 'friends');
-      const q1 = query(friendsRef, where('user1', '==', currentUid));
-      const q2 = query(friendsRef, where('user2', '==', currentUid));
-      const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-
-      let allDocs = [];
-      snap1.forEach((doc) => {
-        allDocs.push({ id: doc.id, ...doc.data() });
-      });
-      snap2.forEach((doc) => {
-        allDocs.push({ id: doc.id, ...doc.data() });
-      });
-
-      // Remove duplicates
-      const uniqueDocs = [
-        ...new Map(allDocs.map((item) => [item.id, item])).values(),
-      ];
-
-      // Separate accepted from pending:
-      // For pending, only show if for the current user the accepted flag is false and the OTHER user's flag is true.
-      const acceptedDocs = [];
-      const pendingDocs = [];
-      uniqueDocs.forEach((doc) => {
-        if (doc.user1 === currentUid) {
-          if (doc.u1_accepted && doc.u2_accepted) {
-            acceptedDocs.push(doc);
-          } else if (!doc.u1_accepted && doc.u2_accepted) {
-            pendingDocs.push(doc);
-          }
-        } else if (doc.user2 === currentUid) {
-          if (doc.u1_accepted && doc.u2_accepted) {
-            acceptedDocs.push(doc);
-          } else if (doc.u1_accepted && !doc.u2_accepted) {
-            pendingDocs.push(doc);
-          }
+      let url = `${BACKEND_URL}/friend/get`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
         }
       });
+      
+      const data = await response.json();
+      console.log(data);
+      let friends = data.friends;
+      let requests = data.requests;
 
-      // For accepted docs, fetch user info for the "other" user
-      const acceptedPromises = acceptedDocs.map(async (doc) => {
-        const friendUid = doc.user1 === currentUid ? doc.user2 : doc.user1;
+      setMyFriends(friends);
+      setPendingRequests(requests);
 
-        const res = await fetch(`https://api.donneur.ca/get_user?uid=${friendUid}`);
-        const userData = await res.json();
-        const pictureUrl = userData.picture_id 
-          ? `https://api.donneur.ca/image/${userData.picture_id}`
-          : null;
-        return {
-          id: friendUid,
-          name: `${userData.first_name} ${userData.last_name}`,
-          picture: pictureUrl,
-          note: 'See profile.',
-        };
-      });
-      const acceptedResults = await Promise.all(acceptedPromises);
-
-      // For pending docs, fetch user info for the "other" user
-      const pendingPromises = pendingDocs.map(async (doc) => {
-        const friendUid = doc.user1 === currentUid ? doc.user2 : doc.user1;
-        const res = await fetch(`https://api.donneur.ca/get_user?uid=${friendUid}`);
-        const userData = await res.json();
-        const pictureUrl = userData.picture_id 
-          ? `https://api.donneur.ca/image/${userData.picture_id}`
-          : null;
-        return {
-          docId: doc.id,
-          friendUid,
-          name: `${userData.first_name} ${userData.last_name}`,
-          picture: pictureUrl,
-          note: 'wants to be your friend',
-        };
-      });
-      const pendingResults = await Promise.all(pendingPromises);
-
-      setMyFriends(acceptedResults);
-      setPendingRequests(pendingResults);
     } catch (error) {
       console.error('Error loading friends:', error);
     } finally {
@@ -151,53 +96,29 @@ export default function FriendsScreen() {
   }
 
   // Accept handler: update the friend relationship document and animate the state update.
-  const acceptRequest = async (docId) => {
+  const replyRequest = async (friendship_id, accept) => {
     try {
-      const friendDocRef = doc(database, 'friends', docId);
-      await updateDoc(friendDocRef, {
-        u1_accepted: true,
-        u2_accepted: true,
-      });
-      console.log('Friend request accepted');
+      let url = `${BACKEND_URL}/friend/reply`;
 
-      // Animate removal from pending list.
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-
-      // Find the accepted request details from pendingRequests.
-      const acceptedRequest = pendingRequests.find((req) => req.docId === docId);
-      // Remove it from pending requests.
-      setPendingRequests((prev) => prev.filter((req) => req.docId !== docId));
-      // Optionally, add it to myFriends list with an animation.
-      if (acceptedRequest) {
-        setMyFriends((prev) => [...prev, {
-          id: acceptedRequest.friendUid,
-          name: acceptedRequest.name,
-          picture: acceptedRequest.picture,
-          note: 'See profile.',
-        }]);
+      const payload = {
+        'friendship_id': friendship_id,
+        'accept' : accept
       }
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      loadFriends();
     } catch (error) {
       console.error('Error accepting friend request:', error);
       Alert.alert("Error", "Failed to accept friend request.");
-    }
-  };
-
-  // Deny handler: update the friend relationship document and animate removal.
-  const denyRequest = async (docId) => {
-    try {
-      const friendDocRef = doc(database, 'friends', docId);
-      await updateDoc(friendDocRef, {
-        u1_accepted: false,
-        u2_accepted: false,
-      });
-      console.log('Friend request denied');
-
-      // Animate removal from pending list.
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      setPendingRequests((prev) => prev.filter((req) => req.docId !== docId));
-    } catch (error) {
-      console.error('Error denying friend request:', error);
-      Alert.alert("Error", "Failed to deny friend request.");
     }
   };
 
@@ -309,7 +230,7 @@ export default function FriendsScreen() {
                 >
                   <TouchableOpacity
                     style={styles.friendCard}
-                    onPress={() => router.replace(`./${friend.id}`)}
+                    onPress={() => openFriendProfile(friend)}
                     activeOpacity={0.7}
                   >
                     <View style={styles.friendAvatarContainer}>
@@ -321,14 +242,14 @@ export default function FriendsScreen() {
                       ) : (
                         <View style={styles.avatarPlaceholder}>
                           <Text style={styles.avatarInitial}>
-                            {friend.name.charAt(0)}
+                            {friend.first_name.charAt(0)}{friend.last_name.charAt(0)}
                           </Text>
                         </View>
                       )}
                     </View>
                     
                     <View style={styles.friendInfo}>
-                      <Text style={styles.friendName}>{friend.name}</Text>
+                      <Text style={styles.friendName}>{friend.first_name} {friend.last_name}</Text>
                       <Text style={styles.friendNote}>Friend</Text>
                     </View>
                     
@@ -364,7 +285,7 @@ export default function FriendsScreen() {
                 </Animated.View>
                 <Text style={styles.emptyStateTitle}>No friends yet</Text>
                 <Text style={styles.emptyStateText}>
-                  Add new friends to see them here
+                  Add new friends to see them here.
                 </Text>
                 <TouchableOpacity
                   style={styles.emptyStateButton}
@@ -389,28 +310,28 @@ export default function FriendsScreen() {
             {pendingRequests.length > 0 ? (
               pendingRequests.map((request, index) => (
                 <Animated.View 
-                  key={request.docId}
+                  key={request.id}
                   entering={SlideInRight.delay(index * 50).duration(300)}
                 >
                   <View style={styles.requestCard}>
                     <View style={styles.requestMain}>
                       <View style={styles.friendAvatarContainer}>
-                        {request.picture ? (
+                        {request.picture_id ? (
                           <AvatarWithLoading
-                            uri={request.picture}
+                            uri={request.picture_id}
                             style={styles.avatarImage}
                           />
                         ) : (
                           <View style={styles.avatarPlaceholder}>
                             <Text style={styles.avatarInitial}>
-                              {request.name.charAt(0)}
+                              {request.first_name.charAt(0)} {request.last_name.charAt(0)}
                             </Text>
                           </View>
                         )}
                       </View>
                       
                       <View style={styles.requestInfo}>
-                        <Text style={styles.friendName}>{request.name}</Text>
+                        <Text style={styles.friendName}>{request.first_name} {request.last_name}</Text>
                         <Text style={styles.friendNote}>
                           wants to be your friend
                         </Text>
@@ -420,7 +341,7 @@ export default function FriendsScreen() {
                     <View style={styles.requestActions}>
                       <TouchableOpacity 
                         style={styles.rejectButton}
-                        onPress={() => denyRequest(request.docId)}
+                        onPress={() => replyRequest(request.friendship_id, false)}
                         activeOpacity={0.7}
                       >
                         <Ionicons 
@@ -432,7 +353,7 @@ export default function FriendsScreen() {
                       
                       <TouchableOpacity 
                         style={styles.acceptRequestButton}
-                        onPress={() => acceptRequest(request.docId)}
+                        onPress={() => replyRequest(request.friendship_id, true)}
                         activeOpacity={0.7}
                       >
                         <Text style={styles.acceptRequestButtonText}>

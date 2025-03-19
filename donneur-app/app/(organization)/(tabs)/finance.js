@@ -22,6 +22,7 @@ import { useAuth } from '../../../context/authContext';
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
 
+import { BACKEND_URL } from '../../../constants/backend';
 // Financial metrics (will be calculated from real data)
 const financialMetrics = {
   totalWithdrawals: 0,
@@ -33,7 +34,7 @@ const financialMetrics = {
 };
 
 export default function FinanceScreen() {
-  const { user, donneurID } = useAuth();
+  const { user, donneurID, token } = useAuth();
   
   // State management
   const [modalVisible, setModalVisible] = useState(false);
@@ -177,15 +178,23 @@ export default function FinanceScreen() {
           setLoading(false);
           return;
         }
+
+        let url = `${BACKEND_URL}/transaction/get`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`, 
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning' : 'remove-later'
+          }
+        });
         
-        // Now fetch transactions using the organization ID
-        const transactionsResponse = await fetch(`https://api.donneur.ca/get_transactions?organization_id=${userDbId}`);
-        
-        if (!transactionsResponse.ok) {
+        if (!response.ok) {
           throw new Error('Failed to fetch transactions');
         }
-        
-        const transactionsData = await transactionsResponse.json();
+      
+        const transactionsData = await response.json();
+        console.log(transactionsData);
         
         if (transactionsData && transactionsData.transactions) {
           // Transform the API data to match our component's expected format

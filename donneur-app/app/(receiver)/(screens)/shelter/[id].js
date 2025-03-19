@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ImageBackground, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ImageBackground, ActivityIndicator, Image } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { Linking } from 'react-native';
+
+import { BACKEND_URL } from '../../../../constants/backend';
 
 export default function ShelterDetail() {
   const { id } = useLocalSearchParams();
@@ -21,31 +23,24 @@ export default function ShelterDetail() {
   useEffect(() => {
     const fetchShelterData = async () => {
       try {
-        const response = await fetch("https://api.donneur.ca/get_shelter_locations");
+        const url = `${BACKEND_URL}/organization/get?id=${id}`;
+        const response = await fetch(url);
+        
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        const responseData = await response.json();
-        // Convert object to array of [id, shelter] pairs
-        const sheltersArray = Object.entries(responseData).map(([key, value]) => ({
-          id: key,
-          ...value
-        }));
-        const foundShelter = sheltersArray.find(s => s.id === id);
-        if (!foundShelter) {
-          throw new Error(`Shelter with ID ${id} not found.`);
-        }
-        setShelter(foundShelter);
+        const data = await response.json();
+        setShelter(data);
         
-        // If shelter has coordinates, set the map region
-        if (foundShelter.address?.latitude && foundShelter.address?.longitude) {
-          setRegion({
-            latitude: parseFloat(foundShelter.address.latitude),
-            longitude: parseFloat(foundShelter.address.longitude),
+        console.log("addy",data.address.longitude)
+        let lat = data.address.latitude
+        let long = data.address.longitude
+        setRegion({
+            latitude: parseFloat(lat),
+            longitude: parseFloat(long),
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
-          });
-        }
+        });
       } catch (error) {
         console.error('Full error details:', error);
         setError(error.message);
@@ -121,10 +116,10 @@ export default function ShelterDetail() {
   const formatAddress = () => {
     if (!shelter.address) return 'Address not available';
     
-    const { address, city, province, zip } = shelter.address;
+    const { street, city, province, zip } = shelter.address;
     let formattedAddress = '';
     
-    if (address) formattedAddress += address;
+    if (street) formattedAddress += street;
     if (city) formattedAddress += (formattedAddress ? ', ' : '') + city;
     if (province) formattedAddress += (formattedAddress ? ', ' : '') + province;
     if (zip) formattedAddress += (formattedAddress ? ' ' : '') + zip;
@@ -142,9 +137,9 @@ export default function ShelterDetail() {
     return (words[0][0] + words[1][0]).toUpperCase();
   };
   const handleOpenInMaps = () => {
-    const { address, city, province, zip } = shelter.address;
+    const { street, city, province, zip } = shelter.address;
     const query = encodeURIComponent(
-      `${address}, ${city}, ${province} ${zip}`
+      `${street}, ${city}, ${province} ${zip}`
     );
     const url = `https://www.google.com/maps/search/${query}`;
     Linking.openURL(url).catch((err) => {
@@ -157,7 +152,7 @@ export default function ShelterDetail() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Hero Section */}
       <ImageBackground
-        source={{ uri: 'https://via.placeholder.com/400x200' }}
+        source={{ uri: shelter.image_url || 'https://via.placeholder.com/400x200' }}
         style={styles.heroImage}
       >
         <View style={styles.heroOverlay}>
@@ -178,9 +173,16 @@ export default function ShelterDetail() {
       {/* Profile Info */}
       <View style={styles.profileContainer}>
         <View style={styles.logoContainer}>
-          <View style={styles.logo}>
-            <Text style={styles.logoText}>{getInitials()}</Text>
-          </View>
+          {shelter.image_url ? (
+            <Image 
+              source={{ uri: shelter.image_url }} 
+              style={styles.logo}
+            />
+          ) : (
+            <View style={styles.logo}>
+              <Text style={styles.logoText}>{getInitials()}</Text>
+            </View>
+          )}
         </View>
         <Text style={styles.shelterName}>{shelter.name || 'Shelter Name'}</Text>
         <Text style={styles.shelterSubtitle}>{shelter.description || 'No description available'}</Text>

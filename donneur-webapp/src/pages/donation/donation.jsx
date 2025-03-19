@@ -32,7 +32,7 @@ export default function Donation(){
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`https://api.donneur.ca/payment_profile/${id}`);
+        const response = await fetch(`${API_BASE_URL}/receiver/donation_profile?receiver_id=${id}`);
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -60,7 +60,7 @@ export default function Donation(){
     let totalToSend = parseFloat(total);
     if (!isNaN(totalToSend) && totalToSend > 0){
       try{
-        const response = await fetch(`${API_BASE_URL}/create_payment`, {
+        const response = await fetch(`${API_BASE_URL}/donation/create`, {
           method: 'POST',
           headers: {
             "Content-Type": "application/json",  // Tell the server we are sending JSON
@@ -77,7 +77,7 @@ export default function Donation(){
 
         const data = await response.json();  // Parse the response to JSON
         console.log("Payment successful: ", data);
-        setClientSecret(data.clientSecret);
+        setClientSecret(data.client_secret);
         } catch (error) {
           console.error("Error sending payment: ", error);
         }

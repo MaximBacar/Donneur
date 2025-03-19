@@ -8,54 +8,76 @@ import { useRouter } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { addDoc, collection } from 'firebase/firestore';
 import { ActivityIndicator } from 'react-native'
+import { BACKEND_URL } from '../../../../constants/backend';
 export default function ConfirmAddFriend(){
 
-    const {newFriendID, newFriendUID} = useFriend();
+    const {newFriendID} = useFriend();
     const [friendData, setFriendData] = useState(null);
-    const { user } = useAuth();
+    const { user, token } = useAuth();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
-
-
-    const [imageLoading, setImageLoading] = useState(true);
+    const [imageLoading,setImageLoading] = useState(false);
+    const [boxSize, setBoxSize] = useState(0);
     
-      useEffect(() => {
-        console.log(newFriendUID);
-        if (newFriendUID) {
-          fetchUserData(newFriendUID);
-        }
-      }, [newFriendUID]);
-    
-      async function fetchUserData(uid) {
-        try {
-          const res = await fetch(`https://api.donneur.ca/get_user?uid=${uid}`);
-          const data = await res.json();
-          setFriendData(data);
-        } catch (err) {
-          console.error('Error fetching friend data:', err);
-        } finally {
-          setLoading(false);
-        }
+    useEffect(() => {
+      if (newFriendID) {
+        fetchUserData(newFriendID);
       }
+    }, [newFriendID]);
     
-    async function addFriend(){
-        try {
-            // For example, use the scanned encoded string to create a new friend request.
-            const docRef = await addDoc(collection(database, 'friends'), {
-              user1: user.uid,
-              user2: newFriendUID, // This is the encoded string from your generated QR code.
-              u1_accepted: true,
-              u2_accepted: false,
-            });
-            console.log("Friend request created with ID:", docRef.id);
-            Alert.alert("Success", "Friend request sent!");
-            router.replace('(friends)/friends')
-        } catch (error) {
-          console.error("Error adding friend:", error);
-          Alert.alert("Error", "Failed to send friend request.");
-        } finally {
-          setIsScanning(false);
+    const fetchUserData = async (id) => {
+      try {
+        let url = `${BACKEND_URL}/receiver/profile?receiver_id=${id}`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`, 
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning' : 'remove-later'
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`Server responded with status: ${response.status}`);
         }
+        const data = await response.json();
+        setFriendData(data);
+
+      } catch (err) {
+        console.error('Error fetching friend data:', err);
+        Alert.alert('Error', 'Could not load friend data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    const cancel = () => {
+      router.replace('(friends)/friends')
+    }
+    
+    const addFriend = async () =>{
+      console.log('ggg');
+      try {
+          let url = `${BACKEND_URL}/friend/add`;
+          const body = {
+            'friend_id' : newFriendID
+          }
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`, 
+              'Content-Type': 'application/json',
+              'ngrok-skip-browser-warning' : 'remove-later'
+            },
+            body:JSON.stringify(body)
+          });
+          const data = await response.json();
+                
+          Alert.alert("Success", "Friend request sent!");
+          router.replace('(friends)/friends')
+      } catch (error) {
+        console.error("Error adding friend:", error);
+        Alert.alert("Error", "Failed to send friend request.");
+      }
     }
 
     if (loading) {
@@ -75,29 +97,32 @@ export default function ConfirmAddFriend(){
       }
   return (
     <View style={styles.container}>
-      {/* Header with Remove Button (including trash icon) */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => addFriend()}
-        >
-          <Text style={styles.removeButtonText}>+Add</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.profileContainer}>
-        <View style={styles.imageWrapper}>
-            <Image
-                source={{ uri: `https://api.donneur.ca/image/${friendData.picture_id}` }}
-                style={styles.profileImage}
-                onLoadStart={() => setImageLoading(true)}
-                onLoadEnd={() => setImageLoading(false)}
-              />
+      <View style={styles.content}>
+        <View style={styles.profileContainer} onLayout={(event) => {
+        const { width } = event.nativeEvent.layout;
+        setBoxSize(width); // Set height equal to parent width
+      }}>
+          <View style={[styles.imageWrapper, { height: boxSize }]}>
+              <Image
+                  source={{ uri: `${friendData.picture_id}` }}
+                  style={styles.profileImage}
+                  onLoadStart={() => setImageLoading(true)}
+                  onLoadEnd={() => setImageLoading(false)}
+                />
+          </View>
+          <Text style={styles.displayName}>{`${friendData.name}`}</Text>
+          <Text style={styles.memberSince}>
+            Member since: {friendData.member_since || 'N/A'}
+          </Text>
         </View>
-        <Text style={styles.displayName}>{`${friendData.first_name} ${friendData.last_name[0]}.`}</Text>
-        <Text style={styles.memberSince}>
-          Member since: {friendData.member_since || '07-07-2002'}
-        </Text>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.removeButton} onPress={() => addFriend()} >
+            <Text style={styles.removeButtonText}>Add</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.removeButton} onPress={() => cancel()} >
+            <Text style={styles.removeButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   )
@@ -108,15 +133,34 @@ const styles = StyleSheet.create({
       flex: 1, 
       backgroundColor: '#FFFFFF',
       padding: 16,
+      alignItems: 'center'
+      
+    },
+    content:{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '80%',
+      height:'100%'
     },
     header: {
-      alignItems: 'flex-end',
+      alignItems: 'center',
+      justifyContent:'space-between',
+      display: 'flex',
+      flexDirection:'col',
       marginBottom: 20,
+      width: '100%'
     },
     removeButton: {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: 'black',
+      width:'100%',
+      height:60,
+      marginBottom:10,
+      display:'flex',
+      alignItems:'center',
+      justifyContent:'center',
       borderRadius: 8,
       paddingVertical: 8,
       paddingHorizontal: 16,
@@ -135,13 +179,15 @@ const styles = StyleSheet.create({
       alignItems: 'center',
     },
     profileContainer: {
+      display: 'flex',
+      flexDirection:'column',
+      width:'100%',
       alignItems: 'center',
       marginTop: 44,
       marginBottom: 20,
     },
     imageWrapper: {
-      width: 240,
-      height: 240,
+      width: '100%',
       borderRadius: 16,
       overflow: 'hidden',
       marginBottom: 12,

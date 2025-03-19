@@ -15,51 +15,113 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from "../../../context/authContext";
 import * as ImagePicker from 'expo-image-picker';
 
+import { BACKEND_URL } from '../../../constants/backend';
+
 const exampleOrg = {
   banner: 'https://via.placeholder.com/600x200.png',
 };
 export default function PersonProfileScreen() {
-  const { user, donneurID } = useAuth();
+  const { user, token, userData, donneurID } = useAuth();
   const router = useRouter();
   const windowWidth = Dimensions.get('window').width;
   const [banner, setBanner] = useState(exampleOrg.banner);
-  const [userInfo, setUserInfo] = useState(null);
   const [userBalance, setUserBalance] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [transactions, setTransactions] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchBalance = async () => {
+    try {
+      let url = `${BACKEND_URL}/receiver/get_balance`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
+        }
+      });
+      const data = await response.json();
+      setUserBalance(data);
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+    }
+  };
+  
+  const fetchTransactions = async () => {
+      try {
+
+        let url = `${BACKEND_URL}/transaction/get`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`, 
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning' : 'remove-later'
+          }
+        });
+        const data = await response.json();
+        console.log(data);
+    
+        const formattedTransactions = data.map(transaction => {
+         
+          const date = new Date(transaction.creation_date);
+          const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const formattedTime = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+          
+          const isReceived = transaction.receiver_id === donneurID;
+  
+  
+          let description;
+  
+          switch(transaction.type){
+            case 'donation':
+              description = 'Anonymous Donation';
+              break;
+            case 'withdrawal':
+              description = `Withdrawal at ${transaction.receiver_id}`;
+              break;
+            case 'send':
+              description = isReceived ? `Payment received from ${transaction.sender_id}` : `Payment sent to ${transaction.sender_id}`
+              break;
+          }
+            
+          return {
+            id: transaction.id,
+            description: description,
+            date: formattedDate,
+            timestamp: formattedTime,
+            amount: transaction.amount,
+            received: isReceived,
+            category: transaction.category,
+            reference: transaction.id,
+            raw: transaction
+          };
+        });
+        
+        setTransactions(formattedTransactions);
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+      } 
+    };
 
   useEffect(() => {
+
+    const load = async () =>{
+      setLoading(true);
+      await fetchBalance();
+      await fetchTransactions();
+      setLoading(false);
+      console.log(transactions);
+    }
     if (user) {
-      const fetchUserInfo = async () => {
-        try {
-          const res = await fetch(`https://api.donneur.ca/get_user?uid=${user.uid}`);
-          const data = await res.json();
-          setUserInfo(data);
-        } catch (error) {
-          console.error("Error fetching user info:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      const fetchBalance = async () => {
-        try {
-          const res = await fetch(`https://api.donneur.ca/get_balance/${donneurID}`);
-          const data = await res.json();
-          setUserBalance(data.balance);
-        } catch (error) {
-          console.error("Error fetching balance:", error);
-        }
-      };
-
-      fetchUserInfo();
-      fetchBalance();
+      load();
     }
   }, [user]);
 
   // Fallback to example data if loading or no user data
   const examplePerson = {
     type: 'person',
-    firstName: 'John',
+    firstName: userData.firstName,
     lastName: 'Doe',
     bio: 'Passionate traveler, coffee enthusiast, and tech geek.',
     balance: 42,
@@ -84,20 +146,20 @@ export default function PersonProfileScreen() {
 
   // Get initials from first and last name
   const getInitials = () => {
-    if (userInfo) {
-      return `${userInfo.first_name.charAt(0)}${userInfo.last_name.charAt(0)}`;
+    if (userData) {
+      return `${userData.first_name.charAt(0)}${userData.last_name.charAt(0)}`;
     }
     return `${examplePerson.firstName.charAt(0)}${examplePerson.lastName.charAt(0)}`;
   };
 
   // Format full name
-  const fullName = userInfo 
-    ? `${userInfo.first_name} ${userInfo.last_name}` 
+  const fullName = userData 
+    ? `${userData.first_name} ${userData.last_name}` 
     : `${examplePerson.firstName} ${examplePerson.lastName}`;
 
   // Get member since date
-  const memberSince = userInfo 
-    ? new Date(userInfo.creation_date).toLocaleDateString() 
+  const memberSince = userData 
+    ? new Date(userData.creation_date).toLocaleDateString() 
     : examplePerson.memberSince;
 
   const handleSendMoney = () => {
@@ -108,36 +170,14 @@ export default function PersonProfileScreen() {
     router.push('/send-message');
   };
 
-  const pickImage = async (setImage) => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Required', 'We need access to your photos to upload an image.');
-        return;
-      }
   
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
-      });
-  
-      if (!result.canceled) {
-        setImage(result.assets[0].uri);
-      }
-    };
-  
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       
       {/* Header with Banner */}
       <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={() => pickImage(setBanner)}>
-        <Image source={{ uri: banner }} style={styles.banner} />
-        </TouchableOpacity>
-
+        <View source={{ uri: banner }} style={styles.banner} />
         <View style={styles.headerBottom}>
           {/* Profile circle with initials */}
           <View style={styles.initialsCircle}>
@@ -168,12 +208,12 @@ export default function PersonProfileScreen() {
         {/* Quick Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>${userBalance ? userBalance.toFixed(2) : examplePerson.balance}</Text>
+            <Text style={styles.statValue}>${userBalance ? userBalance.toFixed(2) : 'N/A'}</Text>
             <Text style={styles.statTitle}>Balance</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>{examplePerson.age}</Text>
+            <Text style={styles.statValue}>{userData.dob}</Text>
             <Text style={styles.statTitle}>Age</Text>
           </View>
           <View style={styles.statDivider} />
@@ -198,14 +238,14 @@ export default function PersonProfileScreen() {
         {/* Recent Activity */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
-          {examplePerson.activity.map((item, index) => (
+          {transactions.map((item, index) => (
             <View key={index} style={styles.activityItem}>
               <View style={styles.activityIconContainer}>
                 <Ionicons name="cash-outline" size={20} color="#1DA1F2" />
               </View>
               <View style={styles.activityDetails}>
                 <Text style={styles.activityTitle}>
-                  Sent ${item.amount} to {item.recipient}
+                 {item.received ? 'Received' : 'Sent'} {item.amount}$
                 </Text>
                 <Text style={styles.activityDate}>{item.date}</Text>
               </View>
@@ -261,7 +301,7 @@ const styles = StyleSheet.create({
   banner: {
     width: '100%',
     height: BANNER_HEIGHT,
-    backgroundColor: '#ccc',
+    backgroundColor: '#ff',
   },
   
   headerBottom: {

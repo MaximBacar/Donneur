@@ -13,10 +13,15 @@ import { useUser } from './registerContext';
 
 const screenWidth = Dimensions.get('window').width;
 
+import { BACKEND_URL } from '../../../../constants/backend';
+import { useAuth } from '../../../../context/authContext';
+
 export default function UserEmailScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const { userID } = useUser();
+  const {token} = useAuth();
+
 
   const handleContinue = async () => {
     try {
@@ -24,16 +29,18 @@ export default function UserEmailScreen() {
         receiver_id: userID,
         email: email,
       });
-      const response = await fetch('https://api.donneur.ca/update_receiver_email', {
+      const response = await fetch(`${BACKEND_URL}/receiver/set_email`, {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
         },
-        body: body,
+        body:body,
       });
+    
       const result = await response.json();
       console.log(result);
-      // Proceed to next screen after updating email
       router.push('/idPicture');
     } catch (error) {
       console.error('Error updating email:', error);
@@ -51,12 +58,12 @@ export default function UserEmailScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Registration</Text>
           <Text style={styles.subtitle}>
-            Enter your email address {userID}
+            Enter the receiver's email address
           </Text>
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Email*</Text>
+          <Text style={styles.label}>Email</Text>
           <TextInput
             style={styles.input}
             placeholder="example@domain.com"

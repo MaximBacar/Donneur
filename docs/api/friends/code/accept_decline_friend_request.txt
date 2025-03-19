@@ -1,0 +1,31 @@
+title Accept/Decline Friend Request
+
+participant "Client (Frontend)" as client
+
+participant "Controller (REST API)" as controller
+participant "controllers/auth.py\n:Auth" as auth
+participant "controllers/friends.py\n:Friends" as friends
+participant "db:Firebase" as db_firebase
+database "Firebase Realtime-Databse" as db
+activate db
+client->controller:POST /friend_request_response {friendship_id:string, accept:bool}\nheaders : {\n  "authorization": "Bearer <token>"\n}
+activate controller
+ref over controller, auth: Decode Firebase JWT Token\nid, role := controllers.auth.decode_token(token)
+
+controller->friends:request_response(id, friendship_id, accept)
+friends->db_firebase:reference("/friendships/<friendship_id>").get()
+db_firebase->db:find()
+db_firebase<--db:friendship
+friends<--db_firebase:friendship
+alt Friendship Exists AND friendship['user_2'] == id
+alt accept == true
+friends->db_firebase:reference("/friendships/<friendship_id>").update({'friends_since', str(datetime.now()})
+else accept == false
+friends->db_firebase:reference("/friendships/<friendship_id>").delete()
+end
+db_firebase->db:update()
+controller<--friends: Success Message
+client<--controller: JSON Response, 200
+else
+client<--controller: JSON Response, 404
+end

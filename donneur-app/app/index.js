@@ -3,6 +3,7 @@ import { Text } from "react-native";
 import { Redirect } from 'expo-router';
 import { useAuth } from "../context/authContext";
 
+
 export default function Index() {
     const { user, role, loading } = useAuth();
 
@@ -13,14 +14,14 @@ export default function Index() {
         return <Redirect href="/(auth)/login" />;
     } 
     if (user){
-        if (role === "organizations") {
+        if (role === "organization") {
             return <Redirect href="/(organization)" />;
         } 
-        if (role == "receivers"){
+        if (role == "receiver"){
             return <Redirect href="/(receiver)" />;
         }
 
-        if (role == "senders"){
+        if (role == "sender"){
             return <Redirect href="/(sender)" />;
         }
         

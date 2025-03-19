@@ -13,7 +13,11 @@ import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useUser } from './registerContext';
-
+import { v4 as uuidv4 } from 'uuid';
+import { ref, uploadBytes, getDownloadURL, updateMetadata } from 'firebase/storage';
+import { storage } from '../../../../config/firebase';
+import { useAuth } from '../../../../context/authContext';
+import { BACKEND_URL } from '../../../../constants/backend';
 const screenWidth = Dimensions.get('window').width;
 
 
@@ -25,6 +29,7 @@ export default function IdPictureScreen() {
   const cameraRef                       = useRef(null);
   
   const { userID }                      = useUser();
+  const { user, token }                        = useAuth();
 
 
   const Camera = () => {
@@ -38,6 +43,50 @@ export default function IdPictureScreen() {
         </View>
       </CameraView>
     );
+  }
+
+  const uploadImage = async (blob) => {
+    // STORE IMAGE IN FIREBASE
+    const imageRef = ref(storage, `/images/${uuidv4()}.png`);
+    await uploadBytes(imageRef, blob);
+
+    await updateMetadata(imageRef, {
+      cacheControl: 'public,max-age=31536000', // Long-term cache
+      contentType: 'image/png',
+    });
+
+    // GET IMAGE URL
+    const publicURL = `https://firebasestorage.googleapis.com/v0/b/${storage.app.options.storageBucket}/o/${encodeURIComponent(imageRef.fullPath)}?alt=media`;
+
+    sendLinkToBackEnd(publicURL)
+
+    console.log(publicURL);
+  }
+
+  const sendLinkToBackEnd = async (firebase_link) => {
+    try{
+      const body = JSON.stringify({
+        'firebase_link': firebase_link,
+        'user_id':userID
+      });
+      const response = await fetch(`${BACKEND_URL}/media/set_id_picture`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning' : 'remove-later'
+        },
+        body:body,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to send link: ${response.status} ${response.statusText}`);
+      }
+
+    }
+    catch(error){
+      console.log(error);
+    }
   }
 
   const Confirm = () => {
@@ -56,7 +105,7 @@ export default function IdPictureScreen() {
 
   const Display = () => {
     return(
-      <Image style={pictureDisplay.picture} source={{uri:'data:image/jpg;base64,'+photo.base64}}/>
+      <Image style={pictureDisplay.picture} source={{ uri: photo.uri }} />
     )
   }
 
@@ -71,34 +120,16 @@ export default function IdPictureScreen() {
     }
     try {
 
-      const cropWidth = photo.width;  
-      const cropHeight = photo.width;
-      const cropX = (photo.width - cropWidth) / 2; // Center X
-      const cropY = (photo.height - cropHeight) / 2; // Center Y
-
-      const resizedPhoto = await ImageManipulator.manipulateAsync(photo.uri, [{ crop: { originX: cropX, originY: cropY, width: cropWidth, height: cropHeight } }], { compress: 0.1, base64:true, format: ImageManipulator.SaveFormat.JPEG});
+      // Get the image from the camera
+      const response = await fetch(photo.uri);
+      const blob = await response.blob();
       
-    
-      const body = JSON.stringify({
-        image_data:   `data:image/jpeg;base64,${resizedPhoto.base64}`,
-        type:         'pp',
-        id:  userID
-      });
-
-      const response = await fetch('https://api.donneur.ca/upload_base64', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json' // Important: Expecting JSON
-        },
-        body:body,
-      });
-
-      const textResponse = await response.text();
-      console.log(textResponse);
-
+      uploadImage(blob)
+      
     } catch (error) {
-      console.log(error);
+      console.error('Error uploading image:', error);
     }
+    
     router.push('/idDocument');
   };
 
@@ -130,8 +161,9 @@ export default function IdPictureScreen() {
     if (cameraRef.current){
       const options = {
         quality:1,
-        base64:true,
-        exif:false
+        base64:false,
+        exif:false,
+        imageType: 'png'
       };
 
       const takePhoto = await cameraRef.current.takePictureAsync(options);
