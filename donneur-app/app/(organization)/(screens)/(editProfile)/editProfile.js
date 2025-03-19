@@ -239,27 +239,63 @@ export default function EditProfileScreen() {
   const saveProfileData = async () => {
     setIsLoading(true);
     try {
-      // Prepare the data to send
+      // Check if required fields are filled
+      if (!name.trim()) {
+        Alert.alert("Error", "Organization name is required");
+        setIsLoading(false);
+        return;
+      }
+      if (!description.trim()) {
+        Alert.alert("Error", "Description is required");
+        setIsLoading(false);
+        return;
+      }
+      if (!address.trim()) {
+        Alert.alert("Error", "Street address is required");
+        setIsLoading(false);
+        return;
+      }
+      if (!city.trim()) {
+        Alert.alert("Error", "City is required");
+        setIsLoading(false);
+        return;
+      }
+      if (!province.trim()) {
+        Alert.alert("Error", "Province/State is required");
+        setIsLoading(false);
+        return;
+      }
+      if (!zip.trim()) {
+        Alert.alert("Error", "Postal code is required");
+        setIsLoading(false);
+        return;
+      }
+      if (!phoneNumber.trim()) {
+        Alert.alert("Error", "Phone number is required");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Prepare the data to send - NOT in address nested object based on backend error
       const organizationData = {
         name,
         description,
-        address: {
-          street: address,
-          city,
-          state,
-          postalcode
-        },
+        street: address,
+        city,
+        state: province,
+        postalcode: zip,
         phone: phoneNumber,
         max_occupancy: parseInt(maxOccupancy, 10) || 0,
         current_occupancy: parseInt(currentOccupancy, 10) || 0,
         is_24_hours: is24Hours,
         user_id: donneurID
       };
-
+  
       console.log("Saving organization data:", organizationData);
-
+  
       // Make the API call to update the organization
-      const response = await fetch(`${BACKEND_URL}/organization/update`, {
+      console.log("Sending data to API:", JSON.stringify(organizationData));
+      const response = await fetch(`${BACKEND_URL}/organization/set_info`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -268,13 +304,13 @@ export default function EditProfileScreen() {
         },
         body: JSON.stringify(organizationData),
       });
-
+  
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Failed to update organization:", errorText);
         throw new Error("Failed to update organization");
       }
-
+  
       console.log("Organization data updated successfully");
       Alert.alert(
         "Profile Updated",
@@ -458,14 +494,7 @@ export default function EditProfileScreen() {
               keyboardType="numeric"
             />
 
-            <Text style={styles.label}>Current Occupancy</Text>
-            <TextInput
-              style={styles.input}
-              value={currentOccupancy}
-              onChangeText={setCurrentOccupancy}
-              placeholder="Enter current occupancy"
-              keyboardType="numeric"
-            />
+            
 
             <View style={styles.switchRow}>
               <Text style={styles.switchLabel}>24/7 Operation</Text>
