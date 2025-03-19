@@ -1,4 +1,3 @@
-import { useAuth } from "../../../../context/authContext";
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
@@ -28,6 +27,7 @@ import {
 } from "firebase/firestore";
 import { database } from "../../../../config/firebase";
 import { useRouter } from "expo-router";
+import { useAuth } from "../../../../context/authContext";
 
 export default function Inbox() {
   const [chats, setChats] = useState([]);
@@ -71,7 +71,7 @@ export default function Inbox() {
 
                 // Get other user's name
                 const otherUserName =
-                  chat.userNames?.[otherUserId] || "Unknown User";
+                  chat.userNames?.[otherUserId] || "Maxim Bacar";
                 console.log("otherUserIDDD", otherUserId);
 
                 const otherUserData = chat.userDetails?.[otherUserId] || null;
@@ -184,7 +184,6 @@ export default function Inbox() {
       // ============================
       //         FETCH CHANNELS
       // ============================
-      // We'll do TWO queries: one for members, one for admin
       const channelsRef = collection(database, "channels");
 
       // Query A: user is in "members"
@@ -203,21 +202,16 @@ export default function Inbox() {
         channelsQueryMembers,
         async (snapshot) => {
           try {
-            // Instead of building a big array, we do partial updates for each doc
             snapshot.docChanges().forEach(async (change) => {
               if (change.type === "removed") {
-                // If channel was removed, remove from state
                 setChannels((prev) =>
                   prev.filter((ch) => ch.id !== change.doc.id)
                 );
                 return;
               }
-
-              // If added/modified, parse channel doc
               const parsed = await parseChannelDoc(change.doc);
               setChannels((prev) => upsertChannel(prev, parsed));
             });
-
             setLoading(false);
             setRefreshing(false);
           } catch (error) {
@@ -245,11 +239,9 @@ export default function Inbox() {
                 );
                 return;
               }
-
               const parsed = await parseChannelDoc(change.doc);
               setChannels((prev) => upsertChannel(prev, parsed));
             });
-
             setLoading(false);
             setRefreshing(false);
           } catch (error) {
@@ -265,13 +257,10 @@ export default function Inbox() {
         }
       );
 
-      // Return unsubscribe
       return () => {
         unsubscribeChats();
         unsubscribeChannelsMembers();
         unsubscribeChannelsAdmin();
-
-        // Unsubscribe from individual message listeners
         chats.forEach((c) => c.unsubscribeMessages?.());
         channels.forEach((ch) => ch.unsubscribeMessages?.());
       };
@@ -282,19 +271,17 @@ export default function Inbox() {
     }
   }, [user]);
 
-  // ---------------------------------------------
+  // ------------------------------------------------------
   // Helper: upsert (add or update) one channel
-  // ---------------------------------------------
+  // ------------------------------------------------------
   function upsertChannel(prevChannels, newChannel) {
     let found = false;
     const updated = prevChannels.map((ch) => {
       if (ch.id === newChannel.id) {
         found = true;
-        // partial update, keep old fields if not overridden
         return {
           ...ch,
           ...newChannel,
-          // If there's a message unsubscribe function already, keep it
           unsubscribeMessages:
             newChannel.unsubscribeMessages || ch.unsubscribeMessages,
         };
@@ -304,7 +291,6 @@ export default function Inbox() {
     if (!found) {
       updated.push(newChannel);
     }
-    // Re-sort by createdAt
     return updated.sort(
       (a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0)
     );
@@ -316,8 +302,6 @@ export default function Inbox() {
   const parseChannelDoc = async (channelDoc) => {
     const channel = channelDoc.data();
     const channelName = channel.name || "Unnamed Channel";
-
-    // Fetch the last message
     const messagesRef = collection(
       database,
       "channels",
@@ -337,21 +321,13 @@ export default function Inbox() {
       lastMessageData?.createdAt?.toDate() ||
       channel.createdAt?.toDate() ||
       null;
-
     const senderName = lastMessageData?.user?.displayName || "Unknown";
     const sender = lastMessageData ? `${senderName}: ` : "";
-
-    // Get timestamp for the last message
     const lastMessageTimestamp = lastMessageData?.createdAt?.toMillis();
-
-    // Get the user's last read timestamp from the lastRead object in the channel
     const userLastReadTimestamp = channel.lastRead?.[user.uid] || 0;
-
-    // Check if user has read the latest message by comparing timestamps
     const hasUnread =
       lastMessageTimestamp && lastMessageTimestamp > userLastReadTimestamp;
 
-    // Real-time listener for last message changes
     const unsubscribeMessages = onSnapshot(messagesQuery, (snap) => {
       const msg = snap.docs[0]?.data();
       if (msg) {
@@ -359,15 +335,9 @@ export default function Inbox() {
         const updatedCreatedAt = msg.createdAt?.toDate() || null;
         const updatedSenderName = msg.user?.displayName || "Unknown";
         const updatedSender = `${updatedSenderName}: `;
-
-        // Get the new message timestamp
         const newMessageTimestamp = msg.createdAt?.toMillis();
-
-        // Compare with the user's last read timestamp
         const updatedHasUnread =
           newMessageTimestamp && newMessageTimestamp > userLastReadTimestamp;
-
-        // partial update only this channel
         setChannels((prev) =>
           upsertChannel(prev, {
             id: channelDoc.id,
@@ -380,7 +350,6 @@ export default function Inbox() {
       }
     });
 
-    // Return initial channel object
     return {
       id: channelDoc.id,
       displayName: channelName,
@@ -402,8 +371,6 @@ export default function Inbox() {
   // ------------------------------------------------------
   const markChannelAsRead = async (channelId) => {
     try {
-      // Get the latest message timestamp
-
       const messagesRef = collection(
         database,
         "channels",
@@ -416,21 +383,14 @@ export default function Inbox() {
         limit(1)
       );
       const messagesSnapshot = await getDocs(messagesQuery);
-
       const lastMessage = messagesSnapshot.docs[0]?.data();
       if (lastMessage && lastMessage.createdAt) {
         const lastMessageTimestamp = lastMessage.createdAt.toMillis();
-
-        // Create an update object that ONLY contains lastRead with ONLY the current user's entry
         const updateData = {
           [`lastRead.${user.uid}`]: lastMessageTimestamp,
         };
-
-        // Update the channel document with just this field
         const channelRef = doc(database, "channels", channelId);
         await updateDoc(channelRef, updateData);
-
-        // Update the local state to reflect the change
         setChannels((prevChannels) =>
           prevChannels.map((channel) =>
             channel.id === channelId
@@ -449,18 +409,15 @@ export default function Inbox() {
   // ------------------------------------------------------
   const applyCombinedFilters = useCallback(() => {
     const normalizedQuery = searchQuery.toLowerCase().trim();
-
     let filteredChatsData = chats;
     let filteredChannelsData = channels;
 
-    // Search filter
     if (normalizedQuery) {
       filteredChatsData = chats.filter(
         (chat) =>
           chat.displayName.toLowerCase().includes(normalizedQuery) ||
           chat.lastMessage.toLowerCase().includes(normalizedQuery)
       );
-
       filteredChannelsData = channels.filter(
         (channel) =>
           channel.displayName.toLowerCase().includes(normalizedQuery) ||
@@ -468,14 +425,12 @@ export default function Inbox() {
       );
     }
 
-    // Tab filter
     if (activeTab === "direct") {
       filteredChannelsData = [];
     } else if (activeTab === "channels") {
       filteredChatsData = [];
     }
 
-    // Combine & sort
     const combined = [...filteredChatsData, ...filteredChannelsData].sort(
       (a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0)
     );
@@ -489,25 +444,20 @@ export default function Inbox() {
     const unsubscribe = fetchChats();
     return () => {
       if (typeof unsubscribe === "function") unsubscribe();
-
-      // Unsubscribe from message listeners
       chats.forEach((c) => c.unsubscribeMessages?.());
       channels.forEach((ch) => ch.unsubscribeMessages?.());
     };
   }, [fetchChats]);
 
-  // Re-apply filters
   useEffect(() => {
     applyCombinedFilters();
   }, [chats, channels, searchQuery, activeTab, applyCombinedFilters]);
 
-  // Pull to Refresh
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchChats();
   }, [fetchChats]);
 
-  // Navigate
   const handleItemPress = (item) => {
     if (item.type === "direct") {
       router.push("/(inboxOrg)/chats2/" + item.id);
@@ -517,12 +467,10 @@ export default function Inbox() {
     }
   };
 
-  // Format date
   const formatMessageDate = (date) => {
     if (!date) return "";
     const now = new Date();
     const msgDate = new Date(date);
-
     if (msgDate.toDateString() === now.toDateString()) {
       return msgDate.toLocaleTimeString([], {
         hour: "2-digit",
@@ -564,34 +512,35 @@ export default function Inbox() {
             {formatMessageDate(item.createdAt)}
           </Text>
         </View>
-
         <View style={styles.previewContainer}>
           {item.type === "channel" && (
             <Text style={styles.memberCountText}>
-              {item.memberCount} members ·
+              {item.memberCount === 1
+                ? "1 member"
+                : `${item.memberCount} members`}{" "}
+              ·
             </Text>
           )}
           <Text
-            style={[styles.messageText, item.hasUnread && styles.unreadText]}
+            style={[
+              styles.messageText,
+              item.type === "direct" && item.hasUnread
+                ? styles.unreadText
+                : null,
+            ]}
             numberOfLines={1}
           >
             {item.sender}
             {item.lastMessage}
           </Text>
-          {item.hasUnread && (
-            <View
-              style={[
-                styles.unreadIndicator,
-                item.type === "channel" && styles.channelUnreadIndicator,
-              ]}
-            />
+          {item.type === "direct" && item.hasUnread && (
+            <View style={styles.unreadIndicator} />
           )}
         </View>
       </View>
     </TouchableOpacity>
   );
 
-  // Empty list
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
       <Ionicons
@@ -730,9 +679,6 @@ export default function Inbox() {
   );
 }
 
-// -----------------------------------------------------------------
-// STYLES (Same as your original code, no changes needed here.)
-// -----------------------------------------------------------------
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -867,7 +813,6 @@ const styles = StyleSheet.create({
   },
   unreadText: {
     color: "#000",
-    fontWeight: "500",
   },
   unreadIndicator: {
     width: 10,
