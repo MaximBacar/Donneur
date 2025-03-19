@@ -16,8 +16,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from './registerContext';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { MaterialIcons, Ionicons, FontAwesome } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { BACKEND_URL } from '../../../../constants/backend';
 import { useAuth } from '../../../../context/authContext';
@@ -171,6 +173,19 @@ export default function BasicInfoScreen() {
     setShowDatePicker(true);
   };
 
+  // Handle date selection from the date picker
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      const day = selectedDate.getDate().toString().padStart(2, '0');
+      const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
+      const year = selectedDate.getFullYear();
+      const formattedDate = `${day}-${month}-${year}`;
+      setDob(formattedDate);
+      setDobError('');
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" backgroundColor="#F9F9F9" />
@@ -195,18 +210,39 @@ export default function BasicInfoScreen() {
           {/* Content area with section title and form */}
           <View style={styles.content}>
             <View style={styles.sectionTitleContainer}>
-              <Text style={styles.title}>Registration</Text>
-              <Text style={styles.subtitle}>Begin the registration of a new user</Text>
+              <LinearGradient
+                colors={['#f5f5f7', '#e8e8e8']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.gradientHeader}
+              >
+                <View style={styles.headerIconContainer}>
+                  <FontAwesome name="user-plus" size={24} color="#555" />
+                </View>
+                <View style={styles.headerTextContainer}>
+                  <Text style={styles.title}>New User Registration</Text>
+                  <Text style={styles.subtitle}>Enter the basic information</Text>
+                </View>
+              </LinearGradient>
             </View>
 
 
             <View style={styles.form}>
               <Text style={styles.label}>First name*</Text>
-              <View style={styles.inputContainer}>
-                <MaterialIcons name="person" size={20} color="#666" style={styles.inputIcon} />
+              <View style={[
+                styles.inputContainer,
+                firstNameError ? styles.inputContainerError : null
+              ]}>
+                <MaterialIcons 
+                  name="person" 
+                  size={20} 
+                  color={firstNameError ? "#ff3b30" : "#666"} 
+                  style={styles.inputIcon} 
+                />
                 <TextInput
-                  style={[styles.input, firstNameError ? styles.inputError : null]}
+                  style={styles.input}
                   placeholder="John"
+                  placeholderTextColor="#AAA"
                   value={firstName}
                   onChangeText={(text) => {
                     setFirstName(text);
@@ -218,15 +254,29 @@ export default function BasicInfoScreen() {
                   autoCorrect={false}
                 />
               </View>
-              {firstNameError ? <Text style={styles.errorText}>{firstNameError}</Text> : null}
+              {firstNameError ? (
+                <View style={styles.errorContainer}>
+                  <FontAwesome name="exclamation-circle" size={14} color="#ff3b30" />
+                  <Text style={styles.errorText}>{firstNameError}</Text>
+                </View>
+              ) : null}
 
               <Text style={styles.label}>Last name*</Text>
-              <View style={styles.inputContainer}>
-                <MaterialIcons name="person" size={20} color="#666" style={styles.inputIcon} />
+              <View style={[
+                styles.inputContainer,
+                lastNameError ? styles.inputContainerError : null
+              ]}>
+                <MaterialIcons 
+                  name="person" 
+                  size={20} 
+                  color={lastNameError ? "#ff3b30" : "#666"} 
+                  style={styles.inputIcon} 
+                />
                 <TextInput
                   ref={lastNameRef}
-                  style={[styles.input, lastNameError ? styles.inputError : null]}
+                  style={styles.input}
                   placeholder="Doe"
+                  placeholderTextColor="#AAA"
                   value={lastName}
                   onChangeText={(text) => {
                     setLastName(text);
@@ -238,44 +288,57 @@ export default function BasicInfoScreen() {
                   autoCorrect={false}
                 />
               </View>
-              {lastNameError ? <Text style={styles.errorText}>{lastNameError}</Text> : null}
-
-              <Text style={styles.label}>Date of Birth* (dd-mm-yyyy)</Text>
-              <View style={styles.dobContainer}>
-                <View style={[
-                  styles.inputContainer, 
-                  styles.dobInputContainer,
-                  dobError ? styles.inputContainerError : null
-                ]}>
-                  {/* Modified to make the calendar icon touchable */}
-                  <TouchableOpacity onPress={handleCalendarIconPress}>
-                    <MaterialIcons name="calendar-today" size={20} color="#666" style={styles.inputIcon} />
-                  </TouchableOpacity>
-                  <TextInput
-                    ref={dobRef}
-                    style={styles.input}
-                    placeholder="31-12-1990"
-                    value={dob}
-                    onChangeText={handleDobInputChange}
-                    keyboardType="numeric"
-                    maxLength={10}
-                  />
+              {lastNameError ? (
+                <View style={styles.errorContainer}>
+                  <FontAwesome name="exclamation-circle" size={14} color="#ff3b30" />
+                  <Text style={styles.errorText}>{lastNameError}</Text>
                 </View>
-              </View>
-              
-              {dobError ? <Text style={styles.errorText}>{dobError}</Text> : null}
+              ) : null}
 
-              {showDatePicker && (
-                <DateTimePicker
-                  value={dob && validateDate(dob) 
-                    ? new Date(dob.split('-')[2], dob.split('-')[1] - 1, dob.split('-')[0])
-                    : new Date()}
-                  mode="date"
-                  display="default"
-                  onChange={handleDateChange}
-                  maximumDate={new Date()}
-                />
-              )}
+<Text style={styles.label}>Date of Birth*</Text>
+<TouchableOpacity 
+  style={[
+    styles.inputContainer, 
+    dobError ? styles.inputContainerError : null
+  ]}
+  onPress={handleCalendarIconPress}
+  activeOpacity={0.7}
+>
+  <MaterialIcons 
+    name="calendar-today" 
+    size={20} 
+    color={dobError ? "#ff3b30" : "#666"} 
+    style={styles.inputIcon}
+  />
+  <Text style={[styles.input, !dob && {color: '#AAA'}]}>
+    {dob || "DD-MM-YYYY"}
+  </Text>
+</TouchableOpacity>
+{dobError ? (
+  <View style={styles.errorContainer}>
+    <FontAwesome name="exclamation-circle" size={14} color="#ff3b30" />
+    <Text style={styles.errorText}>{dobError}</Text>
+  </View>
+) : null}
+
+{showDatePicker && (
+  <DateTimePicker
+    value={dob && validateDate(dob) 
+      ? new Date(dob.split('-')[2], dob.split('-')[1] - 1, dob.split('-')[0])
+      : new Date()}
+    mode="date"
+    display="default"
+    onChange={handleDateChange}
+    maximumDate={new Date()}
+  />
+)}
+              
+              <View style={styles.infoContainer}>
+                <Ionicons name="information-circle-outline" size={18} color="#555" />
+                <Text style={styles.infoText}>
+                  All information is securely stored and protected by our privacy policy.
+                </Text>
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -283,15 +346,25 @@ export default function BasicInfoScreen() {
         {/* Buttons container fixed at the bottom */}
         <View style={styles.buttonsContainer}>
           <TouchableOpacity
-            style={[styles.continueButton, isLoading && styles.disabledButton]}
-            onPress={handleContinue}
             disabled={isLoading}
+            onPress={handleContinue}
+            style={styles.buttonWrapper}
           >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={styles.continueButtonText}>Continue</Text>
-            )}
+            <LinearGradient
+              colors={['#f5f5f7', '#e8e8e8']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.continueButton, isLoading && styles.disabledButton]}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#555" size="small" />
+              ) : (
+                <>
+                  <Text style={styles.continueButtonText}>Continue</Text>
+                  <Ionicons name="arrow-forward" size={20} color="#555" style={styles.buttonIcon} />
+                </>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -311,7 +384,7 @@ export default function BasicInfoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F9F9F9',
   },
   // Header
   header: {
@@ -320,7 +393,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9F9F9',
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
@@ -346,36 +419,75 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   sectionTitleContainer: {
-    marginBottom: 20,
+    marginBottom: 25,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  gradientHeader: {
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '600',
-    marginBottom: 6,
-    color: '#333',
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 4,
+    color: '#333333',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 14,
+    color: '#666666',
   },
   form: {
     marginBottom: 20,
   },
   label: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     marginTop: 20,
-    marginBottom: 6,
-    color: '#333',
+    marginBottom: 8,
+    color: '#424242',
+    paddingLeft: 2,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    backgroundColor: '#f9f9f9',
+    borderColor: '#E0E0E0',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    backgroundColor: '#FFFFFF',
+    height: 56,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  inputContainerSuccess: {
+    borderColor: '#4CAF50',
+    borderWidth: 1,
+  },
+  inputContainerError: {
+    borderColor: '#ff3b30',
+    borderWidth: 1,
   },
   dobContainer: {
     flexDirection: 'row',
@@ -383,77 +495,89 @@ const styles = StyleSheet.create({
   },
   dobInputContainer: {
     flex: 1,
-    marginRight: 10,
   },
-  calendarButton: {
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    backgroundColor: '#f9f9f9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inputContainerError: {
-    borderColor: '#ff3b30',
+  calendarIconContainer: {
+    padding: 8,
   },
   inputIcon: {
-    marginRight: 10,
+    marginRight: 12,
+  },
+  validationIcon: {
+    marginLeft: 8,
   },
   input: {
     flex: 1,
     paddingVertical: 12,
-    fontSize: 14,
+    fontSize: 16,
     color: '#333',
   },
-  inputError: {
-    borderColor: '#ff3b30',
-  },
-  dateText: {
-    flex: 1,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: '#333',
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    paddingLeft: 2,
   },
   errorText: {
     color: '#ff3b30',
-    fontSize: 12,
-    marginTop: 5,
-    marginLeft: 5,
+    fontSize: 13,
+    marginLeft: 6,
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F0F5FF',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 25,
+    alignItems: 'flex-start',
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#666666',
+    marginLeft: 12,
+    flex: 1,
+    lineHeight: 20,
   },
   // Buttons container positioned at the bottom
   buttonsContainer: {
-    paddingHorizontal: 60,
-    paddingBottom: 20,
-    paddingTop: 10,
-    backgroundColor: '#fff',
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    paddingTop: 16,
+    backgroundColor: '#F9F9F9',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: '#F0F0F0',
   },
-  continueButton: {
-    width: screenWidth * 0.7,
-    backgroundColor: '#007AFF',
-    paddingVertical: 15,
-    borderRadius: 30,
-    alignItems: 'center',
+  buttonWrapper: {
+    width: '100%',
     marginBottom: 15,
+    borderRadius: 30,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
+  },
+  continueButton: {
+    paddingVertical: 15,
+    borderRadius: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   disabledButton: {
-    backgroundColor: '#a0a0a0',
+    opacity: 0.7,
   },
   continueButtonText: {
-    color: '#fff',
+    color: '#333333',
     fontSize: 16,
     fontWeight: '600',
+    marginRight: 8,
+  },
+  buttonIcon: {
+    marginLeft: 4,
   },
   cancelButton: {
-    width: screenWidth * 0.7,
+    width: '100%',
     borderWidth: 1,
     borderColor: '#8e8e93',
     borderRadius: 30,

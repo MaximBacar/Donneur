@@ -166,7 +166,7 @@ export default function DashboardScreen() {
           }}
         >
           <LinearGradient
-            colors={["#0a7ea4", "#005b84"]}
+            colors={["#f5f5f7", "#e8e8e8"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.topCard}
@@ -179,28 +179,7 @@ export default function DashboardScreen() {
                 </Text>
               </View>
 
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>
-                    {shelter.max_occupancy + shelter.occupancy}
-                  </Text>
-                  <Text style={styles.statLabel}>Total Capacity</Text>
-                </View>
-
-                <View style={styles.statDivider} />
-
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{shelter.occupancy}</Text>
-                  <Text style={styles.statLabel}>Current Occupancy</Text>
-                </View>
-
-                <View style={styles.statDivider} />
-
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{shelter.max_occupancy}</Text>
-                  <Text style={styles.statLabel}>Available Spots</Text>
-                </View>
-              </View>
+        
 
               <TouchableOpacity
                 style={styles.shareButton}
@@ -451,21 +430,23 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#ffffff",
+    color: "#333333",
     marginBottom: 6,
   },
   orgAddress: {
     fontSize: 14,
-    color: "rgba(255,255,255,0.8)",
+    color: "#666666",
     marginBottom: 16,
   },
   statsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "rgba(255,255,255,0.15)",
+    backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 16,
     marginVertical: 16,
+    borderWidth: 1,
+    borderColor: "#eeeeee",
   },
   statItem: {
     flex: 1,
@@ -474,34 +455,36 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#ffffff",
+    color: "#333333",
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: "rgba(255,255,255,0.8)",
+    color: "#666666",
     textAlign: "center",
   },
   statDivider: {
     width: 1,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: "#eeeeee",
     marginHorizontal: 8,
   },
   shareButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: "#f0f0f0",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
     alignSelf: "flex-start",
+    borderWidth: 1,
+   borderColor: "#e0e0e0",
   },
   shareButtonText: {
     marginLeft: 8,
     fontSize: 14,
     fontWeight: "500",
-    color: "#ffffff",
+    color: "#555555",
   },
 
   // ===== Quick Actions =====
