@@ -199,6 +199,7 @@ export default function BasicInfoScreen() {
               <Text style={styles.subtitle}>Begin the registration of a new user</Text>
             </View>
 
+
             <View style={styles.form}>
               <Text style={styles.label}>First name*</Text>
               <View style={styles.inputContainer}>
