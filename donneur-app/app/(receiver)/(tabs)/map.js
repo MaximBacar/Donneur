@@ -192,6 +192,13 @@ export default function ExplorePage() {
           const { address } = shelter;
           console.log(address);
           const fullAddress = `${address.street}, ${address.city}, ${address.state}, ${address.postalcode}`;
+          
+          // TEMPORARY: For testing, randomly set some shelters as pickup points if is_pickup_point is not provided
+          // In production, this should come from the backend
+          const isPickupPoint = shelter.is_pickup_point !== undefined 
+            ? shelter.is_pickup_point 
+            : parseInt(id) % 3 === 0; // Every third shelter will be a pickup point for testing
+          
           shelterMarkers.push({
             id,
             name: shelter.name,
@@ -199,7 +206,7 @@ export default function ExplorePage() {
             address: fullAddress,
             description: shelter.description,
             type: shelter.type || "Shelter",
-            isOpen: true, // Default value, can be updated with actual data
+            isOpen: !isPickupPoint, // If it's a pickup point, set isOpen to false
             distance: 0, // Will be calculated later
             latitude: address.latitude,
             longitude: address.longitude,
@@ -361,10 +368,18 @@ export default function ExplorePage() {
         resizeMode="cover"
       />
       <View style={styles.shelterInfo}>
-        <Text style={styles.shelterName}>{item.name}</Text>
+        <View style={styles.shelterNameRow}>
+          <Text style={styles.shelterName}>{item.name}</Text>
+          {!item.isOpen && (
+            <View style={styles.pickupBadge}>
+              <Icon name="money" size={10} color="white" />
+              <Text style={styles.pickupBadgeText}>Pickup</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.shelterDistance}>{formatDistance(item.distance)} · {item.type}</Text>
         <Text style={styles.shelterAddress}>{item.address}</Text>
-        <Text style={styles.shelterStatus}>{item.isOpen ? "Open 24 hours" : "Closed"}</Text>
+        <Text style={styles.shelterStatus}>Open 24 hours</Text>
       </View>
       <TouchableOpacity 
         style={styles.shelterTime}
@@ -423,10 +438,9 @@ export default function ExplorePage() {
                       height: glowSize,
                       backgroundColor: glowOpacity.interpolate({
                         inputRange: [0.5, 1],
-                        outputRange: [
-                          "rgba(154, 255, 1, 0.5)",
-                          "rgba(154, 255, 1, 1)",
-                        ],
+                        outputRange: shelter.isOpen ? 
+                          ["rgba(154, 255, 1, 0.5)", "rgba(154, 255, 1, 1)"] : 
+                          ["rgba(255, 140, 0, 0.5)", "rgba(255, 140, 0, 1)"],
                       }),
                     },
                   ]}
@@ -860,10 +874,29 @@ const styles = StyleSheet.create({
   shelterInfo: {
     flex: 1,
   },
+  shelterNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   shelterName: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginRight: 8,
+  },
+  pickupBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF8C00',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  pickupBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginLeft: 3,
   },
   shelterDistance: {
     fontSize: 14,
