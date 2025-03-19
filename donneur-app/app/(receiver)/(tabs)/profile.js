@@ -59,8 +59,30 @@ export default function PersonProfileScreen() {
             'ngrok-skip-browser-warning' : 'remove-later'
           }
         });
-        const data = await response.json();
-        console.log(data);
+        let data = await response.json();
+        console.log("Transaction data:", data);
+        
+        // Check if data is an array
+        if (!Array.isArray(data)) {
+          console.error("Expected array but got:", typeof data);
+          if (data.error) {
+            console.error("API error:", data.error);
+          }
+          
+          // Check if data is an object with a 'transactions' property that's an array
+          if (data && typeof data === 'object' && Array.isArray(data.transactions)) {
+            console.log("Found transactions array in data object");
+            // Continue with the data.transactions array
+            data = data.transactions;
+          } else if (data && typeof data === 'object' && Array.isArray(data.data)) {
+            console.log("Found data array in data object");
+            // Continue with the data.data array
+            data = data.data;
+          } else {
+            setTransactions([]);
+            return;
+          }
+        }
     
         const formattedTransactions = data.map(transaction => {
          
@@ -83,6 +105,9 @@ export default function PersonProfileScreen() {
             case 'send':
               description = isReceived ? `Payment received from ${transaction.sender_id}` : `Payment sent to ${transaction.sender_id}`
               break;
+            default:
+              description = `Transaction: ${transaction.type || 'unknown'}`;
+              break;
           }
             
           return {
@@ -90,9 +115,9 @@ export default function PersonProfileScreen() {
             description: description,
             date: formattedDate,
             timestamp: formattedTime,
-            amount: transaction.amount,
+            amount: transaction.amount || 0,
             received: isReceived,
-            category: transaction.category,
+            category: transaction.category || 'other',
             reference: transaction.id,
             raw: transaction
           };
@@ -101,6 +126,7 @@ export default function PersonProfileScreen() {
         setTransactions(formattedTransactions);
       } catch (error) {
         console.error('Error fetching transactions:', error);
+        setTransactions([]); // Set to empty array instead of null
       } 
     };
 
@@ -238,7 +264,7 @@ export default function PersonProfileScreen() {
         {/* Recent Activity */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
-          {transactions.map((item, index) => (
+          {transactions && transactions.map((item, index) => (
             <View key={index} style={styles.activityItem}>
               <View style={styles.activityIconContainer}>
                 <Ionicons name="cash-outline" size={20} color="#1DA1F2" />

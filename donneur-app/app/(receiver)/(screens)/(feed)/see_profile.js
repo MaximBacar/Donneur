@@ -12,7 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from "../../../context/authContext";
+import { useAuth } from "../../../../context/authContext";
 
 export default function OtherUserProfileScreen() {
   const { user } = useAuth();
