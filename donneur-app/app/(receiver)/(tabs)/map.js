@@ -49,8 +49,8 @@ export default function ExplorePage() {
   const modalY = useRef(new Animated.Value(halfScreenPosition)).current;
   
   // Glow Animation
-  const glowSize = useRef(new Animated.Value(50)).current;
-  const glowOpacity = useRef(new Animated.Value(0.8)).current;
+  const glowSize = useRef(new Animated.Value(40)).current; // Reduced from 50
+  const glowOpacity = useRef(new Animated.Value(0.7)).current; // Slightly less opacity
   
   // Pan Responder for dragging the modal
   const panResponder = useRef(
@@ -120,12 +120,12 @@ export default function ExplorePage() {
       Animated.loop(
         Animated.sequence([
           Animated.timing(glowSize, {
-            toValue: 50,
+            toValue: 40, // Reduced from 50
             duration: 2000,
             useNativeDriver: false,
           }),
           Animated.timing(glowSize, {
-            toValue: 120,
+            toValue: 70, // Reduced from 120
             duration: 2000,
             useNativeDriver: false,
           }),
@@ -135,12 +135,12 @@ export default function ExplorePage() {
       Animated.loop(
         Animated.sequence([
           Animated.timing(glowOpacity, {
-            toValue: 0.8,
+            toValue: 0.7, // Reduced from 0.8
             duration: 2002,
             useNativeDriver: false,
           }),
           Animated.timing(glowOpacity, {
-            toValue: 0,
+            toValue: 0.1, // Increased from 0 for less dramatic effect
             duration: 2002,
             useNativeDriver: false,
           }),
@@ -613,37 +613,39 @@ const styles = StyleSheet.create({
     height: Dimensions.get("window").height,
   },
   markerBox: {
-    width: 120,
-    height: 120,
+    width: 80, // Reduced from 120
+    height: 80, // Reduced from 120
     alignItems: "center",
     justifyContent: "center",
   },
   markerInside: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 50, // Reduced from 70
+    height: 50, // Reduced from 70
+    borderRadius: 25, // Adjusted for new size
     backgroundColor: "#d6d6d6",
   },
   markerImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 50, // Reduced from 70
+    height: 50, // Reduced from 70
+    borderRadius: 25, // Adjusted for new size
     borderWidth: 2,
     borderColor: "white",
   },
   markerGlow: {
-    borderRadius: 75,
+    borderRadius: 50, // Reduced from 75
     display: 'flex',
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 1,
   },
   marker: {
-    width: 120,
-    height: 130,
+    width: 80, // Reduced from 120
+    height: 90, // Reduced from 130
     display:'flex',
     flexDirection: 'column',
     alignItems: "center",
     justifyContent: "center",
+    transform: [{scale: 0.8}], // Scale down markers
   },
   locationButtonInner: {
     width: 44,
