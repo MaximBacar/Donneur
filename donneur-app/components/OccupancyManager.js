@@ -28,9 +28,11 @@ const OccupancyManager = ({
     : 1;
 
   const [currentOccupancy, setCurrentOccupancy] = useState(safeInitialOccupancy);
+  const [savedOccupancy, setSavedOccupancy] = useState(safeInitialOccupancy);
   const [animation] = useState(new Animated.Value(0));
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(String(safeInitialOccupancy));
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     // Update local state if prop changes externally
@@ -40,7 +42,9 @@ const OccupancyManager = ({
       : 0;
     
     setCurrentOccupancy(newOccupancy);
+    setSavedOccupancy(newOccupancy);
     setInputValue(String(newOccupancy));
+    setHasChanges(false);
   }, [initialOccupancy]);
 
   useEffect(() => {
@@ -53,12 +57,15 @@ const OccupancyManager = ({
     }).start(() => {
       animation.setValue(0);
     });
-  }, [currentOccupancy]);
+
+    // Check if current occupancy differs from saved occupancy
+    setHasChanges(currentOccupancy !== savedOccupancy);
+  }, [currentOccupancy, savedOccupancy]);
 
   const increaseOccupancy = () => {
     if (currentOccupancy < safeMaxOccupancy) {
       const newOccupancy = currentOccupancy + 1;
-      updateOccupancy(newOccupancy);
+      updateLocalOccupancy(newOccupancy);
     } else {
       Alert.alert("Maximum Capacity", "The shelter is at maximum capacity.");
     }
@@ -67,25 +74,23 @@ const OccupancyManager = ({
   const decreaseOccupancy = () => {
     if (currentOccupancy > 0) {
       const newOccupancy = currentOccupancy - 1;
-      updateOccupancy(newOccupancy);
+      updateLocalOccupancy(newOccupancy);
     } else {
       Alert.alert("Minimum Reached", "Occupancy cannot be less than 0.");
     }
   };
 
-  const updateOccupancy = (value) => {
+  const updateLocalOccupancy = (value) => {
     const newValue = Math.min(Math.max(0, Math.round(value)), safeMaxOccupancy);
     setCurrentOccupancy(newValue);
     setInputValue(String(newValue));
-    if (onOccupancyChange) {
-      onOccupancyChange(newValue);
-    }
+    // Note: We're not calling onOccupancyChange here anymore
   };
 
-  // This function updates in real-time as the slider moves
+  // This function updates the local state as the slider moves
   const handleSliderChange = (value) => {
     const roundedValue = Math.round(value);
-    updateOccupancy(roundedValue);
+    updateLocalOccupancy(roundedValue);
   };
 
   const handleInputChange = (text) => {
@@ -98,7 +103,27 @@ const OccupancyManager = ({
     if (isNaN(numValue)) {
       setInputValue(String(currentOccupancy));
     } else {
-      updateOccupancy(numValue);
+      updateLocalOccupancy(numValue);
+    }
+  };
+
+  const handleUpdateSystem = () => {
+    // Only update backend if there are actual changes
+    if (hasChanges && onOccupancyChange) {
+      onOccupancyChange(currentOccupancy);
+      setSavedOccupancy(currentOccupancy);
+      // Show success message
+      Alert.alert(
+        "Success", 
+        "Occupancy has been updated in the system.",
+        [{ text: "OK" }]
+      );
+    } else if (!hasChanges) {
+      Alert.alert(
+        "No Changes", 
+        "No changes to update.",
+        [{ text: "OK" }]
+      );
     }
   };
 
@@ -143,6 +168,15 @@ const OccupancyManager = ({
           </LinearGradient>
         </View>
       </View>
+
+      {hasChanges && (
+        <View style={styles.unsavedChangesContainer}>
+          <Text style={styles.unsavedChangesText}>
+            <MaterialCommunityIcons name="information" size={16} color="#F59E0B" /> 
+            Changes not saved. Click "Update System" to save.
+          </Text>
+        </View>
+      )}
 
       <View style={styles.countDisplay}>
         <TouchableOpacity
@@ -262,14 +296,22 @@ const OccupancyManager = ({
         </LinearGradient>
       </View>
 
-      <TouchableOpacity style={styles.updateButton}>
+      <TouchableOpacity 
+        style={[
+          styles.updateButton, 
+          !hasChanges && styles.updateButtonDisabled
+        ]}
+        onPress={handleUpdateSystem}
+      >
         <LinearGradient
-          colors={["#4A90E2", "#5A5DE8"]}
+          colors={hasChanges ? ["#4A90E2", "#5A5DE8"] : ["#A0AEC0", "#CBD5E0"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.updateButtonGradient}
         >
-          <Text style={styles.updateButtonText}>Update System</Text>
+          <Text style={styles.updateButtonText}>
+            {hasChanges ? "Update System" : "No Changes to Update"}
+          </Text>
         </LinearGradient>
       </TouchableOpacity>
     </View>
@@ -441,6 +483,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
   },
+  updateButtonDisabled: {
+    opacity: 0.7,
+  },
   updateButtonGradient: {
     paddingVertical: 15,
     alignItems: "center",
@@ -450,5 +495,17 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  unsavedChangesContainer: {
+    backgroundColor: "#FEF3C7",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 15,
+    borderLeftWidth: 4,
+    borderLeftColor: "#F59E0B",
+  },
+  unsavedChangesText: {
+    color: "#92400E",
+    fontSize: 14,
   },
 });
