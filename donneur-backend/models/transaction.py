@@ -19,7 +19,7 @@ class Transaction(Model):
     class TransactionType(enum.Enum):
 
         DONATION    = 'donation'
-        WITHDRAW    = 'withdraw'
+        WITHDRAW    = 'withdrawal'
         SEND        = 'send' 
 
 
@@ -41,7 +41,7 @@ class Transaction(Model):
         transaction_data = {
             'creation_date' : datetime.now().isoformat(),
             'receiver_id'   : receiver_id,
-            'confirmed'     : False,
+            'confirmed'     : True,
             'sender_id'     : sender_id,
             'currency'      : 'cad',
             'amount'        : amount,
@@ -132,7 +132,7 @@ class Transaction(Model):
         
         user_types      : list = ['receiver_id', 'sender_id']
         transactions    : list = []
-
+        print(user_id)
         for user_type in user_types:
             query : db.Query = reference.order_by_child(user_type).equal_to(user_id)
             transactions_data = query.get()

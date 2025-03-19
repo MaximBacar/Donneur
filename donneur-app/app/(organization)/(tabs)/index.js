@@ -18,6 +18,9 @@ import { Colors } from "../../../constants/colors";
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
 
+import { BACKEND_URL } from "../../../constants/backend";
+import { useAuth } from "../../../context/authContext";
+
 export default function DashboardScreen() {
   const router = useRouter();
   const [greeting, setGreeting] = useState("Good day");
@@ -25,12 +28,41 @@ export default function DashboardScreen() {
   const translateYAnim = useState(new Animated.Value(20))[0];
   const scaleAnim = useState(new Animated.Value(0.95))[0];
 
-  // Set greeting based on time of day
+  const {token, donneurID} = useAuth()
+
+  const [shelter, setShelter] = useState(null);
+  const [currentOccupancy, setCurrentOccupancy] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  
+  const getData = async () => {
+    setLoading(true);
+    try{
+      const url = `${BACKEND_URL}/organization/get?id=${donneurID}`;
+      console.log("Fetching organization data for user ID:", donneurID);
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('data;', data);
+      setShelter(data);
+      setCurrentOccupancy(data.current_occupancy || 0);
+    }catch(err){
+      console.log(err);
+    }finally {
+      setLoading(false);
+    }
+    
+  }
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour < 12) setGreeting("Good morning");
     else if (hour < 18) setGreeting("Good afternoon");
     else setGreeting("Good evening");
+
+    getData();
 
     // Entrance animations
     Animated.parallel([
@@ -60,6 +92,14 @@ export default function DashboardScreen() {
     messages: 354,
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text>Loading...</Text>  {/* You can replace this with a more complex loading indicator */}
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -78,7 +118,7 @@ export default function DashboardScreen() {
         >
           <View style={styles.greetingContainer}>
             <Text style={styles.greeting}>{greeting}</Text>
-            <Text style={styles.orgName}>Shelter Organization</Text>
+            <Text style={styles.orgName}>{shelter.name}</Text>
             <Text style={styles.date}>
               {new Date().toLocaleDateString("en-US", {
                 weekday: "long",
@@ -119,7 +159,7 @@ export default function DashboardScreen() {
               <View>
                 <Text style={styles.cardTitle}>Shelter Status</Text>
                 <Text style={styles.orgAddress} numberOfLines={1}>
-                  1234 Maple Street, Hometown
+                  {shelter.address.street} {shelter.address.city}, {shelter.address.state} {shelter.address.postalcode}
                 </Text>
               </View>
 

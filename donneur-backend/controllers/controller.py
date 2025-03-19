@@ -27,8 +27,12 @@ class Controller:
 
 
     def initialize():
-        
-        logging.basicConfig(level=logging.INFO)
+
+        logging.basicConfig(
+            filename='email.log',         
+            level=logging.INFO, 
+            format='%(asctime)s - %(levelname)s - %(message)s'
+        )
         dotenv.load_dotenv()
         
         Controller.__init_firebase()

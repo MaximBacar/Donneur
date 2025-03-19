@@ -10,7 +10,7 @@ import {
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 // import BackHeader from '../../../../components/header';
-
+// import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -21,6 +21,35 @@ export default function WithdrawalScreen() {
     router.push('/qrcode');
   };
 
+  const readNfc = async () => {
+      try {
+        const isSupported = await NfcManager.isSupported();
+        if (!isSupported) {
+          Alert.alert('NFC not supported on this device');
+          return;
+        }
+        
+        await NfcManager.requestTechnology(NfcTech.Ndef);
+        const tag = await NfcManager.getTag();
+        console.log('NFC Tag:', tag);
+  
+        if (tag?.ndefMessage) {
+          const message = tag.ndefMessage[0]; // Get first record
+          const decoded = Ndef.text.decodePayload(message.payload);
+  
+          let id = decoded.split("donneur.ca/")[1];
+          setUserID(id);
+          router.push('/idConfirmation');
+        } else {
+          Alert.alert('No NDEF data found');
+        }
+      } catch (error) {
+        console.warn('Error reading NFC:', error);
+      } finally {
+        NfcManager.cancelTechnologyRequest();
+      }
+    };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* <BackHeader title="" /> */}
@@ -30,7 +59,7 @@ export default function WithdrawalScreen() {
           <Text style={styles.subtitle}>Begin a new withdrawal</Text>
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleNavigate}>
+        <TouchableOpacity style={styles.button} onPress={readNfc}>
           <MaterialCommunityIcons
             name="nfc"
             size={28}

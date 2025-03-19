@@ -26,5 +26,5 @@ Controller.initialize()
 
 # print(o.id)
 
-
+FeedController.reply_to_post('-OLeAmqkXydM_iDIkhTt', 'OLb2pexbeflLpCaqnJV', {'text' : 'this is the reply'}, 'all')
 #FeedController.create_post('-OL_DerRWLhVkVebdg7L', {'text' : 'New to the app'}, 'all')

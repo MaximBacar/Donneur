@@ -46,6 +46,36 @@ class SetCurrentOccupancy(Resource):
             return {'error' : str(e)}, 400
         
 
+class SetData(Resource):
+    @auth_required
+    def post(self, user_id : str, role : str):
+
+        parser = reqparse.RequestParser()
+        parser.add_argument( 'phone',           type=str, required=True, help="No phone provided" )
+        parser.add_argument( 'name',            type=str, required=True, help="No name provided" )
+        parser.add_argument( 'description',     type=str, required=True, help="No description provided" )
+        parser.add_argument( 'street',          type=str, required=True, help="No street provided" )
+        parser.add_argument( 'city',            type=str, required=True, help="No city provided" )
+        parser.add_argument( 'state',           type=str, required=True, help="No state provided" )
+        parser.add_argument( 'postalcode',      type=str, required=True, help="No postalcode provided" )
+        parser.add_argument( 'max_occupancy',   type=int, required=True, help="No max_occupancy provided" )
+        args = parser.parse_args()
+
+        try:
+            OrganizationController.set_info(
+                user_id, 
+                args.get('phone'),
+                args.get('name'),
+                args.get('description'),
+                args.get('street'),
+                args.get('city'),
+                args.get('state'),
+                args.get('postalcode'),
+                args.get('max_occupancy'),
+                ) 
+            return { 'status': 'ok'}, 200
+        except Exception as e:
+            return {'error' : str(e)}, 400
         
 class CreateShelterResource(Resource):
 

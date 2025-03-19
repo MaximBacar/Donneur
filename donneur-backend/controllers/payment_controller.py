@@ -28,14 +28,18 @@ class PaymentController():
             currency                    = 'cad',
             payment_method_types        = ['card']
         )
+        
+        reference : db.Reference = db.reference(f'/payments/{intent["id"]}')
 
-        Transaction.create_transaction( 
-            receiver_id = receiver_id,
-            amount      = amount,
-            type        = Transaction.TransactionType.DONATION,
-            IP          = IP,
-            stripe_id   = intent['id']
-        )
+        payment_data = {
+            'receiver_id'   : receiver_id,
+            'amount'        : amount,
+            'confirmed'     : False,
+            'curency'       : 'cad',
+            'creation_date' : datetime.now().isoformat()
+        }
+        
+        reference.set(payment_data)
 
         return intent['client_secret']
 
@@ -51,9 +55,40 @@ class PaymentController():
 
         sender_id               = Sender.create_anonymous( sender_name, sender_address )
 
-        Transaction.confirm_transaction(stripe_id, sender_id, payment_method)
+        reference = db.reference(f'/payments/{stripe_id}')
+
+        payment : dict = reference.get()
+
+        if not payment:
+            return
+        
+        reference.child('confirmed').set(True)
+        reference.child('confirmation_date').set(datetime.now().isoformat())
+        
+        receiver_id = payment.get('receiver_id')
+        amount = payment.get('amount')
+        IP = payment.get('IP')
+        
+
+        receiver : Receiver = Receiver(receiver_id)
+
+        receiver.deposit(amount)
+
+        Transaction.create_transaction( 
+            receiver_id = receiver_id,
+            sender_id   = sender_id,
+            amount      = amount,
+            type        = Transaction.TransactionType.DONATION,
+            IP          = IP,
+            stripe_id   = stripe_id,
+
+        )
 
     def cancel_payment( client_secret : str ):
 
-        transaction : Transaction = Transaction( client_secret.split('_secret_')[0] )
-        stripe.PaymentIntent.cancel( transaction.id )
+        stripe_id = client_secret.split('_secret_')[0]
+
+        reference = db.reference(f'/payments/{stripe_id}')
+
+        reference.delete()
+        stripe.PaymentIntent.cancel( stripe_id )

@@ -17,13 +17,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 // Replace uuid with a different approach
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  updateMetadata,
-} from "firebase/storage";
-// Replace uuid with a different approach
+
 import { ref, uploadBytes, getDownloadURL, updateMetadata } from "firebase/storage";
 import { storage } from "../../../../config/firebase";
 import { useAuth } from "../../../../context/authContext";
@@ -34,8 +28,10 @@ export default function EditProfileScreen() {
   const params = useLocalSearchParams();
   const orgId = params.id;
 
+
   const params = useLocalSearchParams();
   const orgId = params.id;
+
   
   const [profilePic, setProfilePic] = useState(
     "https://via.placeholder.com/100/4A90E2/FFFFFF.png?text=CM"
@@ -61,6 +57,7 @@ export default function EditProfileScreen() {
   // Function to handle phone number input - digits only, max 10
   const handlePhoneChange = (text) => {
     // Remove any non-digit characters
+
     const digitsOnly = text.replace(/\D/g, "");
 
     // Limit to 10 digits
@@ -162,6 +159,7 @@ export default function EditProfileScreen() {
   // Function to handle phone number input - digits only, max 10
   const handlePhoneChange = (text) => {
     // Remove any non-digit characters
+
     const digitsOnly = text.replace(/\D/g, '');
     
     // Limit to 10 digits
@@ -271,12 +269,12 @@ export default function EditProfileScreen() {
       // Send to the appropriate backend endpoint (logo or banner)
       await sendLinkToBackEnd(publicURL, isLogo);
 
-      console.log(`Firebase URL (${isLogo ? "logo" : "banner"}):`, publicURL);
       console.log(`Firebase URL (${isLogo ? 'logo' : 'banner'}):`, publicURL);
       return publicURL; // Make sure to return the URL
     } catch (error) {
       console.error("Error in uploadImage:", error);
       throw error; // Re-throw the error to be caught by the caller
+
     }
   };
 
@@ -500,6 +498,7 @@ export default function EditProfileScreen() {
     }
   };
 
+
   const saveProfileData = async () => {
     setIsLoading(true);
     try {
@@ -617,7 +616,6 @@ export default function EditProfileScreen() {
         },
         {
           text: "Save",
-          onPress: saveProfileData,
           onPress: saveProfileData
         },
       ]

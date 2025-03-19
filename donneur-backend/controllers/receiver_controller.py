@@ -4,6 +4,7 @@ from    utils           import SendMail
 from    models          import Receiver
 from    datetime        import datetime
 from    firebase_admin  import db, auth
+import logging
 
 
 class ReceiverError(Exception):
@@ -33,7 +34,7 @@ class ReceiverController():
             profile = {
                 'id' : receiver_id,
                 'name' : f'{receiver_data.get("first_name")} {receiver_data.get("last_name")[0]}.',
-                'image_url' : f'https://api.donneur.ca/image/{receiver_data.get("id_picture_file")}'
+                'image_url' : receiver_data.get("id_picture_file")
             }
             return profile
         raise ReceiverError.ReceiverNotFound('Receiver not found')
@@ -46,22 +47,26 @@ class ReceiverController():
         return receiver
     
     def update_email( receiver_id : str, email : str ) -> None:
-        
+        logging.info(f'UPDATING EMAIL RECEIVER : {receiver_id}')
         receiver : Receiver = Receiver( receiver_id )
         receiver.set_email( email )
 
         ReceiverController.send_account_creation_link( receiver_id )
     
     def send_account_creation_link( receiver_id : str ):
-        
+        print(f'SEND ACCOUNT LINK RECEIVER : {receiver_id}')
+        logging.info(f'SEND ACCOUNT LINK RECEIVER : {receiver_id}')
         receiver        : Receiver  = Receiver( receiver_id )
         receiver_data   : dict      = receiver.get()
 
         email           : str       = receiver_data.get('email')
 
-        SendMail.send_password_creation_email( email, f'https://www.donneur.ca/create_account/{receiver.id}')
+        print(f'SEND ACCOUNT LINK EMAIL : {email}')
+        logging.info(f'SEND ACCOUNT LINK EMAIL : {email}')
 
-    def verify_account_creation_link ( self, receiver_id : str ) -> bool:
+        SendMail.send_password_creation_email( email, f'https://www.donneur.ca/setPassword?id={receiver.id}')
+
+    def verify_account_creation_link ( receiver_id : str ) -> bool:
         
         receiver : Receiver = Receiver ( receiver_id )
         if receiver.has_app():
@@ -106,3 +111,22 @@ class ReceiverController():
     def get_receiver( receiver_id : str ) -> dict:
         receiver : Receiver = Receiver(receiver_id)
         return receiver.get()
+    
+    def get_profile( receiver_id : str ) -> dict:
+
+        def format_date(date_string):
+            date = datetime.fromisoformat(date_string)
+            return date.strftime("%B %Y")
+        receiver : Receiver = Receiver( receiver_id )
+
+        data = receiver.get()
+
+        if not data:
+            raise ValueError("receiver_not_found")
+        
+        profile = {
+            'picture_id' : data.get('id_picture_file'),
+            'name' : f"{data.get('first_name')} {data.get('last_name')}",
+            'member_since' : format_date(data.get('creation_date'))
+        }
+        return profile

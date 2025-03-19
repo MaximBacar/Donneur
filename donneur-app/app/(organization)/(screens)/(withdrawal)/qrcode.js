@@ -34,7 +34,7 @@ const QRCode = () => {
   return (
     <CameraView style={styles.camera} facing={facing} onBarcodeScanned={({data}) => {
       if (data.includes('give.donneur.ca/')){
-        let id = data.split("/")[3];
+        let id = data.split("donneur.ca/")[1];
         console.log(id);
         setUserID(id);
         router.push('/idConfirmation');

@@ -11,20 +11,9 @@ const ReadFriendCode = () => {
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing]             = useState('back');
   const router = useRouter();
+  const { fromFriends } = router.params || {};
 
-  const {setNewFriendID, setNewFriendUID} = useFriend()
-
-
-  async function getUID(id){
-    try {
-      const res = await fetch(`https://api.donneur.ca/get_uid?donneurID=${id}`);
-      const data = await res.json();
-      setNewFriendUID(data.uid);
-    } catch (err) {
-      console.error('Error fetching friend data:', err);
-    }
-  }
-
+  const {setNewFriendID} = useFriend()
 
   if (!permission) {
       // Camera permissions are still loading.
@@ -45,12 +34,14 @@ const ReadFriendCode = () => {
   return (
     <CameraView style={styles.camera} facing={facing} onBarcodeScanned={async({data}) => {
       if (data.includes('give.donneur.ca/')){
-        let id = data.split("/")[3];
+        let id = data.split("donneur.ca/")[1];
+        console.log(data);
+        console.log(id);
         setNewFriendID(id);
-        await getUID(id);
-        router.push('/confirmAddFriend');
-        // setUserID(id);
-        // router.push('/idConfirmation');
+        router.push({
+          pathname: '/confirmAddFriend',
+          params: { fromFriends }
+        });
       }
       
     }}/>
