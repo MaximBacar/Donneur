@@ -1,15 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ImageBackground, ActivityIndicator, Image } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  ScrollView, 
+  Alert, 
+  ImageBackground, 
+  ActivityIndicator, 
+  Image,
+  RefreshControl,
+  StatusBar,
+  SafeAreaView
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { Linking } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BACKEND_URL } from '../../../../constants/backend';
 
 export default function ShelterDetail() {
   const { id } = useLocalSearchParams();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  
   const [location, setLocation] = useState(null);
   const [region, setRegion] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -18,39 +36,40 @@ export default function ShelterDetail() {
   const [shelter, setShelter] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Fetch shelter data
-  useEffect(() => {
-    const fetchShelterData = async () => {
-      try {
-        const url = `${BACKEND_URL}/organization/get?id=${id}`;
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const data = await response.json();
-        setShelter(data);
-        
-        console.log("addy",data.address.longitude)
-        let lat = data.address.latitude
-        let long = data.address.longitude
-        setRegion({
-            latitude: parseFloat(lat),
-            longitude: parseFloat(long),
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-        });
-      } catch (error) {
-        console.error('Full error details:', error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
+  const fetchShelterData = useCallback(async () => {
+    try {
+      const url = `${BACKEND_URL}/organization/get?id=${id}`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
-    };
-    
-    fetchShelterData();
+      const data = await response.json();
+      setShelter(data);
+      
+      let lat = data.address.latitude;
+      let long = data.address.longitude;
+      setRegion({
+        latitude: parseFloat(lat),
+        longitude: parseFloat(long),
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
+    } catch (error) {
+      console.error('Full error details:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, [id]);
+  
+  useEffect(() => {
+    fetchShelterData();
+  }, [fetchShelterData]);
 
   // Get user location
   useEffect(() => {
@@ -76,6 +95,15 @@ export default function ShelterDetail() {
     })();
   }, []);
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchShelterData();
+  }, [fetchShelterData]);
+
+  const handleGoBack = () => {
+    router.back();
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -91,7 +119,7 @@ export default function ShelterDetail() {
         <MaterialCommunityIcons name="alert-circle-outline" size={64} color="#FF6B6B" />
         <Text style={styles.errorTitle}>Error loading shelter</Text>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton}>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchShelterData}>
           <Text style={styles.retryButtonText}>Try Again</Text>
         </TouchableOpacity>
       </View>
@@ -105,12 +133,12 @@ export default function ShelterDetail() {
   
   // Determine color based on occupancy
   const getOccupancyColor = (percentage) => {
-    if (percentage < 50) return '#4CAF50'; // Green for low occupancy
-    if (percentage < 80) return '#FFC107'; // Yellow for medium
-    return '#FF5252'; // Red for high occupancy
+    if (percentage < 50) return ['#4CAF50', '#2E7D32']; // Green for low occupancy
+    if (percentage < 80) return ['#FFC107', '#F57C00']; // Yellow for medium
+    return ['#FF5252', '#D32F2F']; // Red for high occupancy
   };
   
-  const occupancyColor = getOccupancyColor(occupancyPercentage);
+  const occupancyColors = getOccupancyColor(occupancyPercentage);
   
   // Format address components
   const formatAddress = () => {
@@ -136,6 +164,7 @@ export default function ShelterDetail() {
     
     return (words[0][0] + words[1][0]).toUpperCase();
   };
+
   const handleOpenInMaps = () => {
     const { street, city, province, zip } = shelter.address;
     const query = encodeURIComponent(
@@ -146,178 +175,287 @@ export default function ShelterDetail() {
       console.error('Failed to open maps:', err);
     });
   };
-    
+  
+  const handleOpenPhone = () => {
+    if (shelter.phone) {
+      Linking.openURL(`tel:${shelter.phone}`);
+    }
+  };
+
+  const handleOpenEmail = () => {
+    if (shelter.email) {
+      Linking.openURL(`mailto:${shelter.email}`);
+    }
+  };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Hero Section */}
-      <ImageBackground
-        source={{ uri: shelter.image_url || 'https://via.placeholder.com/400x200' }}
-        style={styles.heroImage}
+    <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleGoBack}
+        >
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{shelter.name}</Text>
+        <View style={{ width: 24 }} />
+      </View>
+
+      <ScrollView 
+        style={styles.container} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#4A90E2']}
+            tintColor={'#4A90E2'}
+          />
+        }
       >
-        <View style={styles.heroOverlay}>
-          <View style={styles.headerActions}>
-           
-            <TouchableOpacity 
-              style={[styles.followButton, isFollowing && styles.followingButton]}
-              onPress={() => setIsFollowing(!isFollowing)}
-            >
-              <Text style={[styles.followButtonText, isFollowing && styles.followingButtonText]}>
-                {isFollowing ? 'Following' : 'Follow'}
+        {/* Hero Section */}
+        <ImageBackground
+          source={{ uri: shelter.image_url || 'https://via.placeholder.com/400x200' }}
+          style={styles.heroImage}
+        >
+          <LinearGradient
+            colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.6)']}
+            style={styles.heroOverlay}
+          >
+            <View style={styles.headerActions}>
+              <TouchableOpacity 
+                style={[styles.followButton, isFollowing && styles.followingButton]}
+                onPress={() => setIsFollowing(!isFollowing)}
+              >
+                <Ionicons 
+                  name={isFollowing ? "star" : "star-outline"} 
+                  size={16} 
+                  color={isFollowing ? "#FFC107" : "#FFF"} 
+                  style={{marginRight: 8}}
+                />
+                <Text style={[styles.followButtonText, isFollowing && styles.followingButtonText]}>
+                  {isFollowing ? 'Following' : 'Follow'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+        </ImageBackground>
+
+        {/* Profile Info */}
+        <View style={styles.profileContainer}>
+          <View style={styles.logoContainer}>
+            {shelter.image_url ? (
+              <Image 
+                source={{ uri: shelter.image_url }} 
+                style={styles.logo}
+              />
+            ) : (
+              <LinearGradient
+                colors={['#4A90E2', '#2E5AAC']}
+                style={styles.logo}
+              >
+                <Text style={styles.logoText}>{getInitials()}</Text>
+              </LinearGradient>
+            )}
+          </View>
+          <Text style={styles.shelterName}>{shelter.name || 'Shelter Name'}</Text>
+          <Text style={styles.shelterSubtitle}>{shelter.description || 'No description available'}</Text>
+          
+          {/* Quick Stats */}
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <MaterialCommunityIcons name="bed" size={24} color="#4A90E2" />
+              <Text style={styles.statValue}>
+                {shelter.current_occupancy || '?'}/{shelter.max_occupancy || '?'}
               </Text>
-            </TouchableOpacity>
+              <Text style={styles.statLabel}>Beds Available</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <MaterialCommunityIcons name="clock-outline" size={24} color="#4A90E2" />
+              <Text style={styles.statValue}>
+                {shelter.hours || '24/7'}
+              </Text>
+              <Text style={styles.statLabel}>Open Hours</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <MaterialCommunityIcons name="map-marker" size={24} color="#4A90E2" />
+              <Text style={styles.statValue}>
+                {shelter.address?.city || 'City'}
+              </Text>
+              <Text style={styles.statLabel}>Location</Text>
+            </View>
           </View>
-        </View>
-      </ImageBackground>
 
-      {/* Profile Info */}
-      <View style={styles.profileContainer}>
-        <View style={styles.logoContainer}>
-          {shelter.image_url ? (
-            <Image 
-              source={{ uri: shelter.image_url }} 
-              style={styles.logo}
-            />
-          ) : (
-            <View style={styles.logo}>
-              <Text style={styles.logoText}>{getInitials()}</Text>
-            </View>
-          )}
-        </View>
-        <Text style={styles.shelterName}>{shelter.name || 'Shelter Name'}</Text>
-        <Text style={styles.shelterSubtitle}>{shelter.description || 'No description available'}</Text>
-        
-        {/* Quick Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <MaterialCommunityIcons name="bed" size={24} color="#4A90E2" />
-            <Text style={styles.statValue}>
-              {shelter.current_occupancy || '?'}/{shelter.max_occupancy || '?'}
-            </Text>
-            <Text style={styles.statLabel}>Beds Available</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <MaterialCommunityIcons name="clock-outline" size={24} color="#4A90E2" />
-            <Text style={styles.statValue}>
-              {shelter.hours || '24/7'}
-            </Text>
-            <Text style={styles.statLabel}>Open Hours</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <MaterialCommunityIcons name="map-marker" size={24} color="#4A90E2" />
-            <Text style={styles.statValue}>
-              {shelter.address?.city || 'City'}
-            </Text>
-            <Text style={styles.statLabel}>Location</Text>
-          </View>
-        </View>
 
-        {/* Contact Info */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
-          <TouchableOpacity style={styles.contactItem}>
-            <MaterialCommunityIcons name="map-marker" size={24} color="#4A90E2" />
-            <View style={styles.contactText}>
-              <Text style={styles.contactLabel}>Address</Text>
-              <Text style={styles.contactValue}>{formatAddress()}</Text>
-            </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.contactItem}>
-            <MaterialCommunityIcons name="phone" size={24} color="#4A90E2" />
-            <View style={styles.contactText}>
-              <Text style={styles.contactLabel}>Phone</Text>
-              <Text style={styles.contactValue}>{shelter.phone || 'No phone available'}</Text>
-            </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
-          </TouchableOpacity>
-          {shelter.email && (
-            <TouchableOpacity style={styles.contactItem}>
-              <MaterialCommunityIcons name="email" size={24} color="#4A90E2" />
+          {/* Contact Info */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Contact Information</Text>
+            <TouchableOpacity 
+              style={styles.contactCard}
+              onPress={handleOpenInMaps}
+            >
+              <LinearGradient
+                colors={['#4A90E2', '#2E5AAC']}
+                style={styles.contactIconContainer}
+              >
+                <MaterialCommunityIcons name="map-marker" size={24} color="#FFF" />
+              </LinearGradient>
               <View style={styles.contactText}>
-                <Text style={styles.contactLabel}>Email</Text>
-                <Text style={styles.contactValue}>{shelter.email}</Text>
+                <Text style={styles.contactLabel}>Address</Text>
+                <Text style={styles.contactValue}>{formatAddress()}</Text>
               </View>
               <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
             </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Occupancy Section */}
-        {shelter.max_occupancy && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Current Occupancy</Text>
-            <View style={styles.occupancyContainer}>
-              <View style={[styles.occupancyCircle, {backgroundColor: occupancyColor}]}>
-                <Text style={styles.occupancyPercentage}>{occupancyPercentage}%</Text>
-                <Text style={styles.occupancyLabel}>Occupied</Text>
-              </View>
-              <View style={styles.occupancyStats}>
-                <View style={styles.occupancyStat}>
-                  <Text style={styles.occupancyStatValue}>{shelter.current_occupancy || '?'}</Text>
-                  <Text style={styles.occupancyStatLabel}>Current</Text>
-                </View>
-                <View style={styles.occupancyStatDivider} />
-                <View style={styles.occupancyStat}>
-                  <Text style={styles.occupancyStatValue}>{shelter.max_occupancy}</Text>
-                  <Text style={styles.occupancyStatLabel}>Maximum</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Map Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location</Text>
-          <View style={styles.mapContainer}>
-            {region && (
-              <MapView
-                style={styles.map}
-                region={region}
-                onRegionChangeComplete={setRegion}
-                showsUserLocation={true}
-                showsMyLocationButton={true}
+            
+            <TouchableOpacity 
+              style={styles.contactCard}
+              onPress={handleOpenPhone}
+            >
+              <LinearGradient
+                colors={['#4CAF50', '#2E7D32']}
+                style={styles.contactIconContainer}
               >
-                {shelter.address?.latitude && shelter.address?.longitude && (
-                  <Marker
-                    coordinate={{
-                      latitude: parseFloat(shelter.address.latitude),
-                      longitude: parseFloat(shelter.address.longitude)
-                    }}
-                    title={shelter.name}
-                    description={formatAddress()}
-                  />
-                )}
-              </MapView>
+                <MaterialCommunityIcons name="phone" size={24} color="#FFF" />
+              </LinearGradient>
+              <View style={styles.contactText}>
+                <Text style={styles.contactLabel}>Phone</Text>
+                <Text style={styles.contactValue}>{shelter.phone || 'No phone available'}</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
+            </TouchableOpacity>
+            
+            {shelter.email && (
+              <TouchableOpacity 
+                style={styles.contactCard}
+                onPress={handleOpenEmail}
+              >
+                <LinearGradient
+                  colors={['#FF9800', '#F57C00']}
+                  style={styles.contactIconContainer}
+                >
+                  <MaterialCommunityIcons name="email" size={24} color="#FFF" />
+                </LinearGradient>
+                <View style={styles.contactText}>
+                  <Text style={styles.contactLabel}>Email</Text>
+                  <Text style={styles.contactValue}>{shelter.email}</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
+              </TouchableOpacity>
             )}
           </View>
-          <TouchableOpacity style={styles.directionButton}  onPress={handleOpenInMaps}>
-            <MaterialCommunityIcons name="directions" size={24} color="white" />
-            <Text style={styles.directionButtonText}>Get Directions</Text>
-          </TouchableOpacity>
-        </View>
 
-        {/* Additional Info Section (if available) */}
-        {shelter.additional_info && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Additional Information</Text>
-            <View style={styles.infoContainer}>
-              <Text style={styles.infoText}>{shelter.additional_info}</Text>
+{/* Occupancy Section */}
+{shelter.max_occupancy && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Current Occupancy</Text>
+              <View style={styles.occupancyContainer}>
+                <LinearGradient
+                  colors={occupancyColors}
+                  style={styles.occupancyCircle}
+                >
+                  <Text style={styles.occupancyPercentage}>{occupancyPercentage}%</Text>
+                  <Text style={styles.occupancyLabel}>Occupied</Text>
+                </LinearGradient>
+                <View style={styles.occupancyStats}>
+                  <View style={styles.occupancyStat}>
+                    <Text style={styles.occupancyStatValue}>{shelter.current_occupancy || '?'}</Text>
+                    <Text style={styles.occupancyStatLabel}>Current</Text>
+                  </View>
+                  <View style={styles.occupancyStatDivider} />
+                  <View style={styles.occupancyStat}>
+                    <Text style={styles.occupancyStatValue}>{shelter.max_occupancy}</Text>
+                    <Text style={styles.occupancyStatLabel}>Maximum</Text>
+                  </View>
+                </View>
+              </View>
             </View>
+          )}
+
+          {/* Map Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Location</Text>
+            <View style={styles.mapContainer}>
+              {region && (
+                <MapView
+                  style={styles.map}
+                  region={region}
+                  onRegionChangeComplete={setRegion}
+                  showsUserLocation={true}
+                  showsMyLocationButton={true}
+                >
+                  {shelter.address?.latitude && shelter.address?.longitude && (
+                    <Marker
+                      coordinate={{
+                        latitude: parseFloat(shelter.address.latitude),
+                        longitude: parseFloat(shelter.address.longitude)
+                      }}
+                      title={shelter.name}
+                      description={formatAddress()}
+                    />
+                  )}
+                </MapView>
+              )}
+            </View>
+            <TouchableOpacity 
+              style={styles.actionButton}  
+              onPress={handleGoBack}
+            >
+              <MaterialCommunityIcons name="directions" size={20} color="white" style={{marginRight: 8}} />
+              <Text style={styles.actionButtonText}>Get Directions</Text>
+            </TouchableOpacity>
           </View>
-        )}
-      </View>
-    </ScrollView>
+
+          {/* Additional Info Section (if available) */}
+          {shelter.additional_info && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Additional Information</Text>
+              <View style={styles.infoContainer}>
+                <Text style={styles.infoText}>{shelter.additional_info}</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Bottom padding for better scrolling */}
+          <View style={{height: 24}} />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  backButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#0f0f0f',
   },
   loadingContainer: {
     flex: 1,
@@ -355,7 +493,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#4A90E2',
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   retryButtonText: {
     color: 'white',
@@ -363,36 +501,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   heroImage: {
-    height: 200,
+    height: 220,
     justifyContent: 'flex-end',
   },
   heroOverlay: {
     height: '100%',
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'space-between',
     padding: 20,
   },
   headerActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'flex-start',
-    paddingTop: 40,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   followButton: {
-    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#4A90E2',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
   },
   followingButton: {
-    backgroundColor: '#FFF',
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderColor: '#4A90E2',
   },
   followButtonText: {
     color: '#FFF',
@@ -432,13 +566,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 16,
+    color: '#333',
   },
   shelterSubtitle: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: 8,
     paddingHorizontal: 20,
+    lineHeight: 24,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -446,7 +582,12 @@ const styles = StyleSheet.create({
     marginTop: 24,
     padding: 16,
     backgroundColor: '#F8F9FA',
-    borderRadius: 12,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   statItem: {
     flex: 1,
@@ -454,12 +595,13 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 1,
-    backgroundColor: '#DDD',
+    backgroundColor: '#EEEEEE',
   },
   statValue: {
     fontSize: 16,
     fontWeight: 'bold',
     marginTop: 8,
+    color: '#333',
   },
   statLabel: {
     fontSize: 12,
@@ -473,18 +615,31 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
+    color: '#333',
   },
-  contactItem: {
+  contactCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  contactIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
   contactText: {
     flex: 1,
-    marginLeft: 12,
   },
   contactLabel: {
     fontSize: 12,
@@ -493,18 +648,23 @@ const styles = StyleSheet.create({
   contactValue: {
     fontSize: 14,
     fontWeight: '500',
-    marginTop: 2,
+    marginTop: 4,
+    color: '#333',
   },
   occupancyContainer: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   occupancyCircle: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#4A90E2',
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
@@ -521,7 +681,7 @@ const styles = StyleSheet.create({
   occupancyStats: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 24,
   },
   occupancyStat: {
     alignItems: 'center',
@@ -530,6 +690,7 @@ const styles = StyleSheet.create({
   occupancyStatValue: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#333',
   },
   occupancyStatLabel: {
     fontSize: 12,
@@ -538,18 +699,24 @@ const styles = StyleSheet.create({
   },
   occupancyStatDivider: {
     width: 1,
-    backgroundColor: '#DDD',
+    height: 40,
+    backgroundColor: '#EEEEEE',
     marginHorizontal: 16,
   },
   mapContainer: {
     height: 200,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   map: {
     flex: 1,
   },
-  directionButton: {
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -558,19 +725,24 @@ const styles = StyleSheet.create({
     padding: 16,
     marginTop: 12,
   },
-  directionButtonText: {
+  actionButtonText: {
     color: '#FFF',
     fontWeight: '600',
-    marginLeft: 8,
+    fontSize: 16,
   },
   infoContainer: {
     padding: 16,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   infoText: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#333',
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#444',
   },
 });
