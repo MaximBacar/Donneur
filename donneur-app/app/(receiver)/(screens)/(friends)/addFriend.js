@@ -8,7 +8,7 @@ import {
   View,
   StatusBar
 } from 'react-native';
-// import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
+import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../../../context/authContext';

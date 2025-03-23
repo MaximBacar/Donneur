@@ -132,7 +132,7 @@ class Transaction(Model):
         
         user_types      : list = ['receiver_id', 'sender_id']
         transactions    : list = []
-        print(user_id)
+        
         for user_type in user_types:
             query : db.Query = reference.order_by_child(user_type).equal_to(user_id)
             transactions_data = query.get()
@@ -141,5 +141,7 @@ class Transaction(Model):
                 transaction['id'] = transaction_id
 
                 transactions.append(transaction)
+     
+        sorted_transactions = sorted(transactions, key=lambda x: datetime.fromisoformat(x['creation_date']), reverse=True)
         
-        return transactions
+        return sorted_transactions

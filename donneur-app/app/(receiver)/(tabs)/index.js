@@ -1,35 +1,20 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  Dimensions,
-  TouchableOpacity,
-  Modal,
-  ActivityIndicator,
-  RefreshControl,
-  StatusBar,
-  Platform,
-} from "react-native";
-import { useRouter } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeInDown, FadeOut, Layout } from 'react-native-reanimated';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { LineChart } from "react-native-chart-kit";
-import QRCode from 'react-native-qrcode-svg';
-import { BACKEND_URL } from "../../../constants/backend";
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, Dimensions, TouchableOpacity, Modal, ActivityIndicator, RefreshControl, StatusBar, Platform } from "react-native";
 
-// Import UI components and constants
-import IconSymbol from "../../../components/ui/IconSymbol";
-import { Colors } from "../../../constants/colors";
+import QRCode                                                   from 'react-native-qrcode-svg';
+import IconSymbol                                               from "../../../components/ui/IconSymbol";
 
-// Import your auth context and Firebase config
-import { useAuth } from "../../../context/authContext";
-import { database } from '../../../config/firebase';
+import { Colors }                                               from "../../../constants/colors";
+import { Ionicons }                                             from "@expo/vector-icons";
+import { LineChart }                                            from "react-native-chart-kit";
+import { LinearGradient }                                       from "expo-linear-gradient";
+import { useSafeAreaInsets }                                    from 'react-native-safe-area-context';
+
+import Animated,  { FadeIn, FadeInDown, FadeOut, Layout }       from 'react-native-reanimated';
+import React,     { useState, useEffect, useCallback, useMemo } from "react";
+
+import { useAuth }                                              from "../../../context/authContext";
+import { useRouter }                                            from "expo-router";
+import { useReceiver }                                          from "../receiverContext";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -54,157 +39,25 @@ const chartConfig = {
 export default function DashboardScreen() {
   const router = useRouter();
   const { user, donneurID } = useAuth();
-  const { token } = useAuth();
   const insets = useSafeAreaInsets();
 
-  // State management
-  const [userInfo, setUserInfo] = useState(null);
-  const [userBalance, setBalance] = useState(0);
-  const [loadingUser, setLoadingUser] = useState(true);
+  const {friends, updateFriends, transactions, updateTransactions, userInfo, updateUserInfo} = useReceiver();
+
   const [showQRCode, setShowQRCode] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [friendsCount, setFriendsCount] = useState(0);
-  const [transactions, setTransactions] = useState([]);
-  const [chartLoading, setChartLoading] = useState(true);
+
   const [timeRange, setTimeRange] = useState('week'); // 'week', 'month', 'year'
 
   // Handle refresh functionality
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchUserInfo(), fetchBalance(), fetchFriendsCount(), fetchTransactions()]);
+    await Promise.all([updateFriends(), updateTransactions(), updateUserInfo()]);
     setRefreshing(false);
-  }, [user, donneurID, token]);
+  }, [user]);
   
 
-  const fetchFriendsCount = async () => {
-    try{
-      let url = `${BACKEND_URL}/friend/get`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning' : 'remove-later'
-        }
-      });
-      
-      const data      = await response.json();
-      let friends = data.friends
-
-      console.log(friends.length);
-      
-      setFriendsCount(friends.length);
-      
-    } catch (error) {
-      console.error("Error fetching friends count:", error);
-      setFriendsCount(0);
-    }
-  };
-
-  // Fetch user balance
-  const fetchBalance = async () => {
-    
-    try {
-      let url = `${BACKEND_URL}/receiver/get_balance`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await response.json();
-      setBalance(data);
-    } catch (error) {
-      console.error("Error fetching balance:", error);
-    } finally {
-      setLoadingUser(false);
-    }
-  };
-
-  const fetchUserInfo = async () => { 
-    try {
-      let url = `${BACKEND_URL}/receiver/get`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning' : 'remove-later'
-        }
-      });
-      const data = await response.json();
-      setUserInfo(data);
-    } catch (error) {
-      console.error("Error fetching user info:", error);
-    } finally {
-      setLoadingUser(false);
-    }
-  };
-
-  // Fetch transaction data
-  const fetchTransactions = async () => {
-    try {
-      setChartLoading(true);
-
-            
-      let url = `${BACKEND_URL}/transaction/get`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning' : 'remove-later'
-        }
-      });
-      const data = await response.json();
-      
-        
-      const formattedTransactions = data.transactions.map(transaction => {
-       
-        const date = new Date(transaction.creation_date);
-        const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        const formattedTime = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
-        
-        const isReceived = transaction.receiver_id === donneurID;
-      
-      
-        let description;
-      
-        switch(transaction.type){
-          case 'donation':
-            description = 'Anonymous Donation';
-            break;
-          case 'withdrawal':
-            description = `Withdrawal at ${transaction.receiver_id}`;
-            break;
-          case 'send':
-            description = isReceived ? `Payment received from ${transaction.sender_id}` : `Payment sent to ${transaction.sender_id}`
-            break;
-        }
-          
-        return {
-          id: transaction.id,
-          description: description,
-          date: formattedDate,
-          timestamp: formattedTime,
-          amount: isReceived ? transaction.amount : -transaction.amount,
-          type: isReceived ? 'deposit' : 'withdrawal',
-          status: transaction.confirmed ? 'completed' : 'pending',
-          category: transaction.type || 'transfer',
-          reference: transaction.id,
-          raw: transaction,
-          rawDate: date // Add the actual date object for chart processing
-        };
-      });
-      
-      setTransactions(formattedTransactions);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-    } finally {
-      setChartLoading(false);
-    }
-  };
+  const balance = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+  const friendsCount =  friends.friends.length;
 
   // Process transaction data for chart
   const chartData = useMemo(() => {
@@ -419,34 +272,30 @@ export default function DashboardScreen() {
   // Initialize data fetching
   useEffect(() => {
     if (user) {
-      fetchBalance();
-      fetchUserInfo();
-      fetchFriendsCount();
-      fetchTransactions();
-      
-      // Set interval to fetch balance every 30 seconds
+
+      updateFriends();
+      updateTransactions();
       const interval = setInterval(() => {
-        fetchBalance();
-        fetchTransactions(); // Also refresh transactions periodically
+        updateTransactions();
       }, 30000);
       
       // Cleanup interval on component unmount
       return () => clearInterval(interval);
     }
-  }, [user, donneurID, token]);
+  }, [user, donneurID]);
 
   // While user info is loading, show an enhanced loader
-  if (loadingUser) {
-    return (
-      <SafeAreaView style={[styles.loadingContainer, {paddingTop: insets.top}]}>
-        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-        <Animated.View entering={FadeIn.duration(600)}>
-          <ActivityIndicator size="large" color={Colors.light.tint} />
-          <Text style={styles.loadingText}>Loading your dashboard...</Text>
-        </Animated.View>
-      </SafeAreaView>
-    );
-  }
+  // if (loadingUser) {
+  //   return (
+  //     <SafeAreaView style={[styles.loadingContainer, {paddingTop: insets.top}]}>
+  //       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+  //       <Animated.View entering={FadeIn.duration(600)}>
+  //         <ActivityIndicator size="large" color={Colors.light.tint} />
+  //         <Text style={styles.loadingText}>Loading your dashboard...</Text>
+  //       </Animated.View>
+  //     </SafeAreaView>
+  //   );
+  // }
 
   // Use the fetched data for the balance, name, and other wallet information.
   const fullName = userInfo
@@ -473,7 +322,7 @@ export default function DashboardScreen() {
           style={styles.balanceContainer}
           entering={FadeInDown.duration(600).springify()}
         >
-          <Text style={styles.balanceValue}>${userBalance.toFixed(2)}</Text>
+          <Text style={styles.balanceValue}>${balance.toFixed(2)}</Text>
           <Text style={styles.balanceLabel}>Available Balance</Text>
         </Animated.View>
 
@@ -549,7 +398,7 @@ export default function DashboardScreen() {
               {/* Balance info at Bottom Right */}
               <View style={styles.balanceInfo}>
                 <Text style={styles.walletBalanceLabel}>Balance</Text>
-                <Text style={styles.walletBalance}>${userBalance.toFixed(2)}</Text>
+                <Text style={styles.walletBalance}>${balance.toFixed(2)}</Text>
               </View>
             </View>
           </LinearGradient>
@@ -674,16 +523,7 @@ export default function DashboardScreen() {
                timeRange === 'month' ? 'Monthly' : 'Yearly'} transactions summary
             </Text>
             
-            {chartLoading ? (
-              <Animated.View 
-                style={styles.chartLoadingContainer}
-                entering={FadeIn}
-                exiting={FadeOut}
-              >
-                <ActivityIndicator size="small" color={Colors.light.tint} />
-                <Text style={styles.loadingChartText}>Loading chart data...</Text>
-              </Animated.View>
-            ) : transactions.length === 0 ? (
+            {transactions.length === 0 ? (
               <Animated.View 
                 style={styles.noDataContainer}
                 entering={FadeIn}

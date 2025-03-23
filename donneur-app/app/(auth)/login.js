@@ -59,12 +59,11 @@ export default function Index() {
   };
 
   const signIn = async () => {
-    // Clear previous errors.
     setEmailError("");
     setPasswordError("");
     try {
       const user = await signInWithEmailAndPassword(auth, email, password);
-      console.log(user);
+      console.log('user : ' + user)
       if (user) router.replace("/");
     } catch (error) {
       console.log(error);
@@ -93,7 +92,6 @@ export default function Index() {
   return (
     <SafeAreaView style={styles.safeContainer}>
       <View style={styles.outerContainer}>
-        {/* Header */}
         <View style={styles.headerContainer}>
           <Text style={styles.title}>Welcome!</Text>
           <Text style={styles.subtitle}>Sign in to continue</Text>

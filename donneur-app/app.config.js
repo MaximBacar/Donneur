@@ -1,8 +1,8 @@
 import "dotenv/config";
 export default{
   "expo": {
-    "name": "donneur-app",
-    "slug": "donneur-app",
+    "name": "Donneur",
+    "slug": "Donneur",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,14 +15,14 @@ export default{
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.donneurapp",
+      "bundleIdentifier": "ca.donneur.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show you on the map.",
         "NSCameraUsageDescription": "This app requires camera access to scan QR codes."
       }
     },
     "android": {
-      "package": "com.anonymous.donneurapp",
+      "package": "ca.donneur.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

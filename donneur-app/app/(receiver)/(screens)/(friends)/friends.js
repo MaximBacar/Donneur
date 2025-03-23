@@ -27,6 +27,7 @@ import { Colors } from "../../../../constants/colors";
 // Import the custom avatar component
 import { AvatarWithLoading } from './AvatarWithLoading';
 import { useFriend } from './friendContext';
+import { useReceiver } from '../../receiverContext';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -39,10 +40,9 @@ export default function FriendsScreen() {
 
   const { setFriendProfile } = useFriend();
 
-  const [loading, setLoading] = useState(true);
+  const {friends, updateFriends} = useReceiver();
+
   const [refreshing, setRefreshing] = useState(false);
-  const [pendingRequests, setPendingRequests] = useState([]);
-  const [myFriends, setMyFriends] = useState([]);
   const [activeTab, setActiveTab] = useState('friends'); // 'friends' or 'requests'
 
   const { user, token } = useAuth();
@@ -53,47 +53,17 @@ export default function FriendsScreen() {
   // Handle refresh
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadFriends();
+    await updateFriends();
     setRefreshing(false);
   }, [user]);
 
-  // Load friends on component mount
-  useEffect(() => {
-    loadFriends();
-  }, [user]);
 
   const openFriendProfile = ( friend ) => {
     setFriendProfile(friend);
-    router.push(`./friendProfile`)
+    router.push(`./friendProfile?id=${3}`)
   }
 
-  async function loadFriends() {
-    setLoading(true);
-    try {
-      let url = `${BACKEND_URL}/friend/get`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning' : 'remove-later'
-        }
-      });
-      
-      const data = await response.json();
-      console.log(data);
-      let friends = data.friends;
-      let requests = data.requests;
-
-      setMyFriends(friends);
-      setPendingRequests(requests);
-
-    } catch (error) {
-      console.error('Error loading friends:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  
 
   // Accept handler: update the friend relationship document and animate the state update.
   const replyRequest = async (friendship_id, accept) => {
@@ -121,18 +91,6 @@ export default function FriendsScreen() {
       Alert.alert("Error", "Failed to accept friend request.");
     }
   };
-
-  if (loading) {
-    return (
-      <SafeAreaView style={[styles.loadingContainer, {paddingTop: insets.top}]}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <Animated.View entering={FadeIn.duration(600)}>
-          <ActivityIndicator size="large" color={Colors.light.tint} />
-          <Text style={styles.loadingText}>Loading friends...</Text>
-        </Animated.View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
@@ -181,7 +139,7 @@ export default function FriendsScreen() {
             activeTab === 'friends' && styles.activeTabText
           ]}>
             My Friends
-            {myFriends.length > 0 && ` (${myFriends.length})`}
+            {friends.friends.length > 0 && ` (${friends.friends.length})`}
           </Text>
         </TouchableOpacity>
         
@@ -198,11 +156,11 @@ export default function FriendsScreen() {
             activeTab === 'requests' && styles.activeTabText
           ]}>
             Requests
-            {pendingRequests.length > 0 && ` (${pendingRequests.length})`}
+            {friends.requests.length > 0 && ` (${friends.requests.length})`}
           </Text>
-          {pendingRequests.length > 0 && (
+          {friends.requests.length > 0 && (
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{pendingRequests.length}</Text>
+              <Text style={styles.badgeText}>{friends.requests.length}</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -225,8 +183,8 @@ export default function FriendsScreen() {
             style={styles.tabContent}
             entering={FadeIn.duration(300)}
           >
-            {myFriends.length > 0 ? (
-              myFriends.map((friend, index) => (
+            {friends.friends.length > 0 ? (
+              friends.friends.map((friend, index) => (
                 <Animated.View 
                   key={friend.id}
                   entering={SlideInRight.delay(index * 50).duration(300)}
@@ -310,8 +268,8 @@ export default function FriendsScreen() {
             style={styles.tabContent}
             entering={FadeIn.duration(300)}
           >
-            {pendingRequests.length > 0 ? (
-              pendingRequests.map((request, index) => (
+            {friends.requests.length > 0 ? (
+              friends.requests.map((request, index) => (
                 <Animated.View 
                   key={request.id}
                   entering={SlideInRight.delay(index * 50).duration(300)}

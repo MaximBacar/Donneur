@@ -1,18 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  SafeAreaView,
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Dimensions,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-  StatusBar,
-  Platform,
-  Animated,
-} from 'react-native';
+import { SafeAreaView, View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, ActivityIndicator, RefreshControl, StatusBar, Platform, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -25,6 +12,7 @@ import { BACKEND_URL } from '../../../../constants/backend';
 import IconSymbol from "../../../../components/ui/IconSymbol";
 import { Colors } from "../../../../constants/colors";
 import { useAuth } from "../../../../context/authContext";
+import { useReceiver } from '../../receiverContext';
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
@@ -39,82 +27,16 @@ export default function PastTransactionsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [transactions, setTransactions] = useState(transactionsData);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const {transactions, updateTransactions} = useReceiver();
   const [filterType, setFilterType] = useState('all');
   
   // Modal animation values
   const modalBackgroundOpacity = useRef(new Animated.Value(0)).current;
   const modalTranslateY = useRef(new Animated.Value(screenHeight)).current;
 
-  // Function to fetch transactions from API
-  const fetchTransactions = async () => {
-    try {
-      setIsLoading(true);
-      
-      let url = `${BACKEND_URL}/transaction/get`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning' : 'remove-later'
-        }
-      });
-      const data = await response.json();
-      
-  
-      const formattedTransactions = data.transactions.map(transaction => {
-       
-        const date = new Date(transaction.creation_date);
-        const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        const formattedTime = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
-        
-        const isReceived = transaction.receiver_id === donneurID;
 
-
-        let description;
-
-        switch(transaction.type){
-          case 'donation':
-            description = 'Anonymous Donation';
-            break;
-          case 'withdrawal':
-            description = `Withdrawal at ${transaction.receiver_id}`;
-            break;
-          case 'send':
-            description = isReceived ? `Payment received from ${transaction.sender_id}` : `Payment sent to ${transaction.sender_id}`
-            break;
-        }
-          
-        return {
-          id: transaction.id,
-          description: description,
-          date: formattedDate,
-          timestamp: formattedTime,
-          amount: isReceived ? transaction.amount : -transaction.amount,
-          type: isReceived ? 'deposit' : 'withdrawal',
-          status: transaction.confirmed ? 'completed' : 'pending',
-          category: transaction.type || 'transfer',
-          reference: transaction.id,
-          raw: transaction
-        };
-      });
-      
-      setTransactions(formattedTransactions);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Initial data fetch
-  useEffect(() => {
-    fetchTransactions();
-  }, [donneurID, user]);
-
-  // Calculate the total values
   const totalTransactions = transactions.length;
   const netAmount = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
   const lastUpdated = transactions.length > 0 ? transactions[0].date : 'Never';
@@ -128,7 +50,7 @@ export default function PastTransactionsScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchTransactions();
+    await updateTransactions();
     setRefreshing(false);
   }, [donneurID, user]);
 
@@ -238,153 +160,73 @@ export default function PastTransactionsScreen() {
           />
         }
       >
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.light.tint} />
-            <Text style={styles.loadingText}>Loading transactions...</Text>
+ 
+      <Animated.View style={styles.summaryCard} entering={FadeInDown.delay(100).duration(500).springify()}>
+        <Text style={styles.cardTitle}>Account Summary</Text>
+              
+        <View style={styles.summaryGrid}>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Total Transactions</Text>
+            <Text style={styles.summaryValue}>{totalTransactions}</Text>
+          </View>
+                
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Net Amount</Text>
+            <Text style={[ styles.summaryValue, { color: netAmount >= 0 ? '#34C759' : '#FF3B30' } ]}>
+              {netAmount >= 0 ? '+' : '-'}${Math.abs(netAmount).toFixed(2)}
+            </Text>
+          </View>
+                
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Last Updated</Text>
+            <Text style={styles.summaryDateTime}>{lastUpdated}</Text>
+          </View>
+        </View>
+      </Animated.View>
+
+      <Animated.View style={styles.filterContainer} entering={FadeInDown.delay(200).duration(500).springify()}>
+        <TouchableOpacity style={[styles.filterButton, filterType === 'all' && styles.filterButtonActive]} onPress={() => setFilterType('all')} activeOpacity={0.7} >
+          <Text style={[styles.filterButtonText, filterType === 'all' && styles.filterButtonTextActive]}>All</Text>
+        </TouchableOpacity>
+              
+        <TouchableOpacity style={[styles.filterButton, filterType === 'deposits' && styles.filterButtonActive]} onPress={() => setFilterType('deposits')} activeOpacity={0.7}>
+          <Text style={[styles.filterButtonText, filterType === 'deposits' && styles.filterButtonTextActive]}>
+            Deposits
+          </Text>
+        </TouchableOpacity>
+              
+        <TouchableOpacity style={[styles.filterButton, filterType === 'withdrawals' && styles.filterButtonActive]} onPress={() => setFilterType('withdrawals')} activeOpacity={0.7} >
+          <Text style={[styles.filterButtonText, filterType === 'withdrawals' && styles.filterButtonTextActive]}>
+            Withdrawals
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
+
+      <Animated.View style={styles.transactionsSection} entering={FadeInDown.delay(300).duration(500).springify()} >
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>
+            {filteredTransactions.length} Transactions
+          </Text>
+        </View>
+
+        {filteredTransactions.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="document-outline" size={48} color={Colors.light.icon} />
+            <Text style={styles.emptyStateText}>No transactions found</Text>
           </View>
         ) : (
-          <>
-            {/* Summary Card */}
-            <Animated.View 
-              style={styles.summaryCard}
-              entering={FadeInDown.delay(100).duration(500).springify()}
-            >
-              <Text style={styles.cardTitle}>Account Summary</Text>
-              
-              <View style={styles.summaryGrid}>
-                <View style={styles.summaryItem}>
-                  <Text style={styles.summaryLabel}>Total Transactions</Text>
-                  <Text style={styles.summaryValue}>{totalTransactions}</Text>
+          filteredTransactions.map((transaction, index) => (
+            <Animated.View key={transaction.id} entering={FadeInRight.delay(index * 50).duration(500)} >
+              <TouchableOpacity style={[styles.transactionItem, {borderLeftWidth: 4, borderLeftColor: transaction.amount >= 0 ? '#34C759' : '#FF3B30'}]} onPress={() => openModal(transaction)} activeOpacity={0.7}>
+                <View style={[styles.transactionIconContainer, { backgroundColor: Colors.light.tint + '15' }]}>
+                  <Ionicons name={getTransactionTypeIcon(transaction.type, transaction.category)} size={24} color={Colors.light.tint}/>
                 </View>
-                
-                <View style={styles.summaryItem}>
-                  <Text style={styles.summaryLabel}>Net Amount</Text>
-                  <Text style={[
-                    styles.summaryValue,
-                    { color: netAmount >= 0 ? '#34C759' : '#FF3B30' }
-                  ]}>
-                    {netAmount >= 0 ? '+' : '-'}${Math.abs(netAmount).toFixed(2)}
-                  </Text>
-                </View>
-                
-                <View style={styles.summaryItem}>
-                  <Text style={styles.summaryLabel}>Last Updated</Text>
-                  <Text style={styles.summaryDateTime}>{lastUpdated}</Text>
-                </View>
-              </View>
-            </Animated.View>
-
-            {/* Filter Section */}
-            <Animated.View 
-              style={styles.filterContainer}
-              entering={FadeInDown.delay(200).duration(500).springify()}
-            >
-              <TouchableOpacity 
-                style={[
-                  styles.filterButton, 
-                  filterType === 'all' && styles.filterButtonActive
-                ]}
-                onPress={() => setFilterType('all')}
-                activeOpacity={0.7}
-              >
-                <Text style={[
-                  styles.filterButtonText,
-                  filterType === 'all' && styles.filterButtonTextActive
-                ]}>All</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.filterButton, 
-                  filterType === 'deposits' && styles.filterButtonActive
-                ]}
-                onPress={() => setFilterType('deposits')}
-                activeOpacity={0.7}
-              >
-                <Text style={[
-                  styles.filterButtonText,
-                  filterType === 'deposits' && styles.filterButtonTextActive
-                ]}>Deposits</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.filterButton, 
-                  filterType === 'withdrawals' && styles.filterButtonActive
-                ]}
-                onPress={() => setFilterType('withdrawals')}
-                activeOpacity={0.7}
-              >
-                <Text style={[
-                  styles.filterButtonText,
-                  filterType === 'withdrawals' && styles.filterButtonTextActive
-                ]}>Withdrawals</Text>
-              </TouchableOpacity>
-            </Animated.View>
-
-            {/* Transactions List */}
-            <Animated.View 
-              style={styles.transactionsSection}
-              entering={FadeInDown.delay(300).duration(500).springify()}
-            >
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>
-                  {filteredTransactions.length} Transactions
-                </Text>
-              </View>
-
-              {filteredTransactions.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <Ionicons name="document-outline" size={48} color={Colors.light.icon} />
-                  <Text style={styles.emptyStateText}>No transactions found</Text>
-                </View>
-              ) : (
-                filteredTransactions.map((transaction, index) => (
-                  <Animated.View 
-                    key={transaction.id}
-                    entering={FadeInRight.delay(index * 50).duration(500)}
-                  >
-                    <TouchableOpacity
-                      style={[
-                        styles.transactionItem,
-                        {
-                          borderLeftWidth: 4,
-                          borderLeftColor: transaction.amount >= 0 ? '#34C759' : '#FF3B30'
-                        }
-                      ]}
-                      onPress={() => openModal(transaction)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[
-                        styles.transactionIconContainer,
-                        { backgroundColor: Colors.light.tint + '15' } // 15% opacity of tint color
-                      ]}>
-                        <Ionicons 
-                          name={getTransactionTypeIcon(transaction.type, transaction.category)} 
-                          size={24} 
-                          color={Colors.light.tint} 
-                        />
-                      </View>
                       
                       <View style={styles.transactionInfo}>
                         <View style={styles.transactionTitleRow}>
                           <Text style={styles.transactionDesc} numberOfLines={1}>
                             {transaction.description}
                           </Text>
-                          {transaction.status !== 'completed' && (
-                            <View style={[
-                              styles.statusBadge,
-                              { backgroundColor: getStatusColor(transaction.status) + '20' } // 20% opacity
-                            ]}>
-                              <Text style={[
-                                styles.statusText,
-                                { color: getStatusColor(transaction.status) }
-                              ]}>
-                                {transaction.status}
-                              </Text>
-                            </View>
-                          )}
                         </View>
                         <Text style={styles.transactionDate}>
                           {transaction.date} • {transaction.timestamp}
@@ -402,8 +244,6 @@ export default function PastTransactionsScreen() {
                 ))
               )}
             </Animated.View>
-          </>
-        )}
       </ScrollView>
 
       {/* Transaction Details Modal */}

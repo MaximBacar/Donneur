@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-// import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
+import NfcManager, { Ndef, NfcTech } from 'react-native-nfc-manager';
 import { useUser } from './withdrawalContext'
 
 export default function WithdrawalScreen() {

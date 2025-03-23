@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
   View,
@@ -10,208 +10,66 @@ import {
   StatusBar,
   Dimensions,
   ActivityIndicator,
+  RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from "../../../context/authContext";
-import * as ImagePicker from 'expo-image-picker';
+import { Colors } from "../../../constants/colors";
 
-import { BACKEND_URL } from '../../../constants/backend';
+import { useReceiver } from '../receiverContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 export default function PersonProfileScreen() {
-  const { user, token, userData, donneurID } = useAuth();
+
   const router = useRouter();
-  const windowWidth = Dimensions.get('window').width;
-  const [userBalance, setUserBalance] = useState(0);
-  const [transactions, setTransactions] = useState(null);
-  const [loading, setLoading] = useState(false);
 
-  const fetchBalance = async () => {
-    try {
-      let url = `${BACKEND_URL}/receiver/get_balance`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning' : 'remove-later'
-        }
-      });
-      const data = await response.json();
-      setUserBalance(data);
-    } catch (error) {
-      console.error("Error fetching balance:", error);
-    }
-  };
+  const {transactions, updateTransactions, userInfo, updateUserInfo} = useReceiver()
+  const [refreshing, setRefreshing] = useState(false);
+
+  const balance = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
   
-  const fetchTransactions = async () => {
-      try {
+  const onRefresh = useCallback(async () => {
+      setRefreshing(true);
+      await Promise.all([updateTransactions(), updateUserInfo()]);
+      setRefreshing(false);
+    }, []);
 
-        let url = `${BACKEND_URL}/transaction/get`;
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`, 
-            'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning' : 'remove-later'
-          }
-        });
-        let data = await response.json();
-        console.log("Transaction data:", data);
-        
-        // Handle different response formats
-        if (!data) {
-          console.error("No data received");
-          setTransactions([]);
-          return;
-        }
-        
-        // Check if data is an array
-        if (!Array.isArray(data)) {
-          console.log("Response is not an array, got:", typeof data);
-          
-          // Check for common nested array patterns
-          if (typeof data === 'object') {
-            // Try to find an array in common properties
-            const possibleArrayProps = ['transactions', 'data', 'results', 'items'];
-            
-            for (const prop of possibleArrayProps) {
-              if (Array.isArray(data[prop])) {
-                console.log(`Found transactions in data.${prop}`);
-                data = data[prop];
-                break;
-              }
-            }
-            
-            // If we still don't have an array, check if there's a transaction object that should be wrapped in an array
-            if (!Array.isArray(data) && data.id) {
-              console.log("Found single transaction object, wrapping in array");
-              data = [data];
-            } else if (!Array.isArray(data)) {
-              console.log("Could not find transaction array in response");
-              setTransactions([]);
-              return;
-            }
-          } else {
-            console.error("Unexpected response format");
-            setTransactions([]);
-            return;
-          }
-        }
-    
-        const formattedTransactions = data.map(transaction => {
-         
-          const date = new Date(transaction.creation_date);
-          const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-          const formattedTime = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
-          
-          const isReceived = transaction.receiver_id === donneurID;
   
-  
-          let description;
-  
-          switch(transaction.type){
-            case 'donation':
-              description = 'Anonymous Donation';
-              break;
-            case 'withdrawal':
-              description = `Withdrawal at ${transaction.receiver_id}`;
-              break;
-            case 'send':
-              description = isReceived ? `Payment received from ${transaction.sender_id}` : `Payment sent to ${transaction.sender_id}`
-              break;
-            default:
-              description = `Transaction: ${transaction.type || 'unknown'}`;
-              break;
-          }
-            
-          return {
-            id: transaction.id,
-            description: description,
-            date: formattedDate,
-            timestamp: formattedTime,
-            amount: transaction.amount || 0,
-            received: isReceived,
-            category: transaction.category || 'other',
-            reference: transaction.id,
-            raw: transaction
-          };
-        });
-        
-        setTransactions(formattedTransactions);
-      } catch (error) {
-        console.error('Error fetching transactions:', error);
-        setTransactions([]); // Set to empty array instead of null
-      } 
-    };
-
-  useEffect(() => {
-
-    const load = async () =>{
-      setLoading(true);
-      await fetchBalance();
-      await fetchTransactions();
-      setLoading(false);
-      console.log(transactions);
-    }
-    if (user) {
-      load();
-    }
-  }, [user]);
-
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1DA1F2" />
-      </View>
-    );
-  }
-
-  // Get initials from first and last name
   const getInitials = () => {
-    if (userData) {
-      return `${userData.first_name.charAt(0)}${userData.last_name.charAt(0)}`;
+    if (userInfo) {
+      return `${userInfo.first_name.charAt(0)}${userInfo.last_name.charAt(0)}`;
     }
     return '';
   };
 
   // Format full name
-  const fullName = userData 
-    ? `${userData.first_name} ${userData.last_name}` 
+  const fullName = userInfo 
+    ? `${userInfo.first_name} ${userInfo.last_name}` 
     : '';
 
   // Get member since date
-  const memberSince = userData 
-    ? new Date(userData.creation_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) 
+  const memberSince = userInfo 
+    ? new Date(userInfo.creation_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) 
     : '';
     
   // Calculate age from date of birth
   const calculateAge = (dob) => {
     if (!dob) return 'N/A';
     
-    // Handle different date formats
-    let birthDate;
-    if (dob.includes('-')) {
-      // YYYY-MM-DD format
-      const [year, month, day] = dob.split('-').map(Number);
-      birthDate = new Date(year, month - 1, day);
-    } else if (dob.includes('/')) {
-      // MM/DD/YYYY format
-      const [month, day, year] = dob.split('/').map(Number);
-      birthDate = new Date(year, month - 1, day);
-    } else {
-      return 'N/A';
-    }
-    
-    const today = new Date();
+
+   
+    const [day, month, year] = dob.split('-').map(Number);
+    console.log('year :' +year);
+    console.log('month :' +month);
+    console.log('day :' +day);
+
+    const birthDate = new Date(year, month - 1, day);
+    const today     = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    // Adjust age if birthday hasn't occurred yet this year
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    
     return age.toString();
   };
 
@@ -229,135 +87,112 @@ export default function PersonProfileScreen() {
 
   
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
-      <ScrollView style={styles.mainScrollView} showsVerticalScrollIndicator={false}>
-        {/* Header with Banner */}
+
+      <ScrollView style={styles.mainScrollView} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.light.tint]} />}>
         <View style={styles.headerContainer}>
-          <View style={styles.banner}>
-            <View style={styles.bannerOverlay} />
-          </View>
+          <View style={styles.banner}/>
           <View style={styles.headerBottom}>
-            {/* Profile circle with initials */}
             <View style={styles.profileImageContainer}>
               <View style={styles.initialsCircle}>
                 <Text style={styles.initialsText}>{getInitials()}</Text>
               </View>
-              {userData && userData.verified && (
-                <View style={styles.verifiedBadge}>
-                  <Ionicons name="checkmark-circle" size={22} color="#4F8EF7" style={styles.verifiedIcon} />
-                </View>
-              )}
+              
+              <View style={styles.verifiedBadge}>
+                <Ionicons name="checkmark-circle" size={22} color="#4F8EF7" style={styles.verifiedIcon} />
+              </View>
+              
             </View>
             
-            {/* Full name displayed below */}
             <View style={styles.nameContainer}>
-  <Text style={styles.nameText}>{fullName}</Text>
-
-</View>
+              <Text style={styles.nameText}>{fullName}</Text>
+            </View>
             
-            {userData && userData.location && (
+            {userInfo && userInfo.location && (
               <Text style={styles.location}>
                 <Ionicons name="location-outline" size={16} color="#718096" />
-                {' '}{userData.location}
+                {' '}{userInfo.location}
               </Text>
             )}
-
             <View style={styles.userInfoChips}>
               <View style={styles.userInfoChip}>
                 <Ionicons name="calendar-outline" size={14} color="#4F8EF7" />
                 <Text style={styles.userInfoChipText}>Joined {memberSince}</Text>
               </View>
-              {userData && userData.email && (
+              {userInfo && userInfo.email && (
                 <View style={styles.userInfoChip}>
                   <Ionicons name="mail-outline" size={14} color="#4F8EF7" />
                   <Text style={styles.userInfoChipText}>Verified</Text>
                 </View>
               )}
             </View>
-            <TouchableOpacity 
-  style={styles.shareButtonCapsule} 
-  onPress={handleShareProfile}
-  activeOpacity={0.8}
->
-  <Ionicons name="share-social" size={18} color="#4F8EF7" />
-  <Text style={styles.shareButtonText}>Share Profile</Text>
-</TouchableOpacity>
-
+            <TouchableOpacity style={styles.shareButtonCapsule} onPress={handleShareProfile} activeOpacity={0.8}>
+              <Ionicons name="share-social" size={18} color="#4F8EF7" />
+              <Text style={styles.shareButtonText}>Share Profile</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Content Sections */}
+        
         <View style={styles.scrollContent}>
-          {/* Bio Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
-          {userData && userData.bio ? (
-            <Text style={styles.bio}>{userData.bio}</Text>
-          ) : (
-            <Text style={styles.emptyBio}>No bio information available</Text>
-          )}
-        </View>
-        
-        {/* Quick Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>${userBalance ? userBalance.toFixed(2) : 'N/A'}</Text>
-            <Text style={styles.statTitle}>Balance</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{userData && userData.dob ? calculateAge(userData.dob) : 'N/A'}</Text>
-            <Text style={styles.statTitle}>Age</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{transactions ? transactions.length : '0'}</Text>
-            <Text style={styles.statTitle}>Transactions</Text>
-          </View>
-        </View>
-        
-        {/* Recent Activity */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          {transactions && transactions.length > 0 ? (
-            transactions.map((item, index) => (
-              <View key={index} style={[styles.activityItem, index === transactions.length - 1 && { borderBottomWidth: 0 }]}>
-                <View style={[
-                  styles.activityIconContainer, 
-                  { backgroundColor: item.received ? '#ebfaf0' : '#fee2e2' }
-                ]}>
-                  <Ionicons 
-                    name={item.received ? "arrow-down-outline" : "arrow-up-outline"} 
-                    size={24} 
-                    color={item.received ? "#10b981" : "#ef4444"} 
-                  />
-                </View>
-                <View style={styles.activityDetails}>
-                  <Text style={styles.activityTitle}>
-                    {item.description || (item.received ? 'Received' : 'Sent')}
-                  </Text>
-                  <Text style={styles.activityDate}>{item.date} • {item.timestamp}</Text>
-                </View>
-                <View style={styles.activityAmount}>
-                  <Text style={[
-                    styles.amountText, 
-                    { color: item.received ? '#10b981' : '#ef4444' }
-                  ]}>
-                    {item.received ? '+' : '-'} ${Math.abs(item.amount).toFixed(2)}
-                  </Text>
-                </View>
-              </View>
-            ))
-          ) : (
-            <View style={styles.emptyStateContainer}>
-              <Ionicons name="receipt-outline" size={40} color="#a0aec0" />
-              <Text style={styles.emptyStateText}>No transactions yet</Text>
-              <Text style={styles.emptyStateSubtext}>Your transaction history will appear here</Text>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>About</Text>
+              {userInfo && userInfo.bio ? (
+                <Text style={styles.bio}>{userInfo.bio}</Text>
+              ) : (
+                <Text style={styles.emptyBio}>No bio information available</Text>
+              )}
             </View>
-          )}
-        </View>
+        
+            <View style={styles.statsContainer}>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>${balance ? balance.toFixed(2) : 'N/A'}</Text>
+                <Text style={styles.statTitle}>Balance</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{userInfo && userInfo.dob ? calculateAge(userInfo.dob) : 'N/A'}</Text>
+                <Text style={styles.statTitle}>Age</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{transactions ? transactions.length : '0'}</Text>
+                <Text style={styles.statTitle}>Transactions</Text>
+              </View>
+            </View>
+        
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Recent Activity</Text>
+              {transactions && transactions.length > 0 ? (
+                transactions.map((item, index) => (
+                  <View key={index} style={[styles.activityItem, index === transactions.length - 1 && { borderBottomWidth: 0 }]}>
+                    <View style={[styles.activityIconContainer, { backgroundColor: item.amount >= 0 ? '#ebfaf0' : '#fee2e2' }]}>
+                      <Ionicons name={item.amount >= 0 ? "arrow-down-outline" : "arrow-up-outline"} size={24} color={item.amount >= 0 ? "#10b981" : "#ef4444"} />
+                    </View>
+                    <View style={styles.activityDetails}>
+                      <Text style={styles.activityTitle}>
+                        {item.description || (item.amount >= 0 ? 'Received' : 'Sent')}
+                      </Text>
+                      <Text style={styles.activityDate}>{item.date} • {item.timestamp}</Text>
+                    </View>
+                    <View style={styles.activityAmount}>
+                      <Text style={[styles.amountText, { color: item.amount >= 0 ? '#10b981' : '#ef4444' }]}>
+                        {item.amount >= 0 ? '+' : '-'} ${Math.abs(item.amount).toFixed(2)}
+                      </Text>
+                    </View>
+                  </View>
+                ))
+              ) : (
+                <View style={styles.emptyStateContainer}>
+                  <Ionicons name="receipt-outline" size={40} color="#a0aec0" />
+                  <Text style={styles.emptyStateText}>No transactions yet</Text>
+                  <Text style={styles.emptyStateSubtext}>Your transaction history will appear here</Text>
+                </View>
+              )}
+            </View>
         
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
@@ -368,35 +203,27 @@ export default function PersonProfileScreen() {
             <Ionicons name="wallet-outline" size={20} color="#FFF" />
             <Text style={styles.primaryButtonText}>Send Money</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.secondaryButton]} 
-            onPress={handleSendMessage}
-          >
-            <Ionicons name="chatbubble-outline" size={20} color="#4F8EF7" />
-            <Text style={styles.secondaryButtonText}>Message</Text>
-          </TouchableOpacity>
         </View>
         
           {/* Extra space at bottom for scrolling */}
           <View style={{ height: 20 }} />
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
-const BANNER_HEIGHT = 150;
+const BANNER_HEIGHT = 100;
 const INITIALS_CIRCLE_SIZE = 90;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#fff',
   },
   mainScrollView: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#fff',
   },
   loadingContainer: {
     flex: 1,
@@ -408,8 +235,8 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     overflow: 'hidden',
-    backgroundColor: '#fff',
-    shadowColor: '#000',
+    backgroundColor: 'red',
+    shadowColor: 'red',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -418,17 +245,10 @@ const styles = StyleSheet.create({
   banner: {
     width: '100%',
     height: BANNER_HEIGHT,
-    backgroundColor: '#4F8EF7',
+    backgroundColor: '#fff',
     position: 'relative',
   },
-  bannerOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.15)',
-  },
+ 
   shareButton: {
     position: 'absolute',
     right: -40,
@@ -552,6 +372,7 @@ shareButtonText: {
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 20,
+    backgroundColor: '#f9fafb'
   },
   section: {
     marginTop: 20,

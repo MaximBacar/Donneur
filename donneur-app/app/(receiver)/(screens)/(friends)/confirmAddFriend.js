@@ -62,7 +62,6 @@ export default function ConfirmAddFriend(){
     }
     
     const addFriend = async () =>{
-      console.log('ggg');
       try {
           let url = `${BACKEND_URL}/friend/add`;
           const body = {

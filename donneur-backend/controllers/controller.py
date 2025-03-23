@@ -8,8 +8,8 @@ import  os
 
 class Controller:
 
-    flask_secret    = None
-    google_key      = None
+    flask_secret    : str   = None
+    google_key      : str   = None
 
     def __init_firebase():
         database_url                = os.getenv('DATABASE_URL')
@@ -28,11 +28,7 @@ class Controller:
 
     def initialize():
 
-        logging.basicConfig(
-            filename='email.log',         
-            level=logging.INFO, 
-            format='%(asctime)s - %(levelname)s - %(message)s'
-        )
+        logging.basicConfig(level=logging.INFO)
         dotenv.load_dotenv()
         
         Controller.__init_firebase()

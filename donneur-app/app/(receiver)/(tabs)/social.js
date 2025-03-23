@@ -1,18 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  FlatList,
-  TouchableOpacity,
-  SafeAreaView,
-  Alert,
-  StatusBar,
-  Platform,
-  Modal,
-  Animated,
-} from "react-native";
+import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, SafeAreaView, Alert, StatusBar, Platform, Modal, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
 import { useRouter } from "expo-router";
@@ -25,9 +12,6 @@ import {
   fetchUserPostsOnce,
 } from "../(screens)/(feed)/postService";
 
-// Firestore for partial real-time
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { database } from "../../../config/firebase";
 
 const placeholderAvatar = { uri: "https://i.pravatar.cc/300" };
 

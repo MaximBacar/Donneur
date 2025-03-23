@@ -129,8 +129,7 @@ export default function IdDocumentScreen() {
       console.error('Error uploading image:', error);
     }
     
-    router.push('/registrationConfirmation');
-    // router.push('/registerNFC');
+    router.push('/registerNFC');
     
   };
 

@@ -1,52 +1,50 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { auth } from "../config/firebase"; // Firebase instance
 
-import { BACKEND_URL } from "../constants/backend";
-
+import { authenticate } from "../components/api.donneur.ca/authentication";
+import { router } from "expo-router";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [role, setRole] = useState(null);
-  const [donneurID, setDonneurID] = useState(null);
-  const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
+
+  const [ user,      setUser      ] = useState(null);
+  const [ role,      setRole      ] = useState(null);
+  const [ token,     setToken     ] = useState(null);
+  const [ loading,   setLoading   ] = useState(true);
+  const [ userData,  setUserData  ] = useState(null);
+  const [ donneurID, setDonneurID ] = useState(null);
+  
   
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      setUser(user);
       if (user) {
         try {
-          const jwt_token = await user.getIdToken(true);
-          setToken(jwt_token);
+          setUser(user);
+          let token = await user.getIdToken()
+          const data = await authenticate(token);
           
-          let url = `${BACKEND_URL}/authenticate`;
-          const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${jwt_token}`, 
-              'Content-Type': 'application/json',
-              'ngrok-skip-browser-warning' : 'vag'
-            }
-          });
-          const data      = await response.json();
+          setToken(token);
           setRole(data.role);
           setDonneurID(data.id);
           setUserData(data.data);
-          
+
         } catch (error) {
-          console.error("Failed to fetch role:", error);
+          console.error("Failed to fetch user:", {
+            message: error.message,
+            name: error.response,
+            stack: error.request,
+            error, // Logs the full error object for additional context
+          });
         }
-      } else {
-        setRole(null);
       }
-      // setUser(user);
+      else{
+        router.replace('/');
+      }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, role, loading, donneurID, token, userData }}>
