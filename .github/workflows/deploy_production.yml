@@ -2,7 +2,7 @@ name: Deploy application to VPS
 on:
   push:
     branches:
-      - maxim-clutch
+      - main
 
 jobs:
   deploy:
@@ -20,7 +20,7 @@ jobs:
             cd /home/mb/donneur-production/Donneur
 
             # Fetch the latest code
-            git pull origin maxim-clutch
+            git pull origin main
 
             export NVM_DIR=~/.nvm
             source ~/.nvm/nvm.sh
