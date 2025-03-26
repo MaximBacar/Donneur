@@ -113,50 +113,58 @@ export default function Donation() {
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-white">
-      {/* Header with profile */}
-      <div className="bg-gradient-to-b from-blue-50 to-white pt-6 pb-8 px-4">
-        <Profile profileData={receiverData} />
-      </div>
-      
-      {/* Main content */}
-      <div className="flex-1 px-4 -mt-6">
-        <div className="bg-white rounded-2xl shadow-md p-5 mb-4">
-          <Total total={total} />
-          <Pad total={total} setTotal={setTotal} />
+      {/* Main Content Container - will be blurred when modal is open */}
+      <div className={`relative flex flex-col w-full h-full ${isMenuOpen ? 'blur-sm' : ''}`}>
+        {/* Header with profile */}
+        <div className="bg-gradient-to-b from-blue-50 to-white pt-6 pb-8 px-4">
+          <Profile profileData={receiverData} />
+        </div>
+        
+        {/* Main content */}
+        <div className="flex-1 px-4 -mt-6">
+          <div className="bg-white rounded-2xl shadow-md p-5 mb-4">
+            <Total total={total} />
+            <Pad total={total} setTotal={setTotal} />
+          </div>
+        </div>
+        
+        {/* Fixed bottom section */}
+        <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-4 shadow-md">
+          <PaymentButton 
+            onClick={createPayment} 
+            disabled={!isValidAmount}
+          />
+          
+          <div className="flex items-center justify-center mt-3 space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+            </svg>
+            <span className="text-xs text-gray-500">Secured by Stripe</span>
+          </div>
         </div>
       </div>
       
-      {/* Fixed bottom section */}
-      <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-4 shadow-md">
-        <PaymentButton 
-          onClick={createPayment} 
-          disabled={!isValidAmount}
-        />
-        
-        <div className="flex items-center justify-center mt-3 space-x-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-          </svg>
-          <span className="text-xs text-gray-500">Secured by Stripe</span>
-        </div>
-      </div>
-        
-      {/* Modal overlay */}
+      {/* Modal system - separate from main content */}
       {isMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/75 backdrop-blur-sm z-10 transition-opacity"
-          onClick={() => setIsMenuOpen(false)}
-        />
+        <>
+          {/* Darkened overlay - removed backdrop-blur-sm */}
+          <div 
+            className="fixed inset-0 bg-black/60 z-10 transition-opacity"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          
+          {/* Payment tab - above the overlay */}
+          <div className="z-20 relative">
+            <PaymentTab 
+              total={total} 
+              stripe={stripePromise} 
+              clientSecret={clientSecret} 
+              isOpen={isMenuOpen} 
+              onClose={() => setIsMenuOpen(false)} 
+            />
+          </div>
+        </>
       )}
-      
-      {/* Payment tab */}
-      <PaymentTab 
-        total={total} 
-        stripe={stripePromise} 
-        clientSecret={clientSecret} 
-        isOpen={isMenuOpen} 
-        onClose={() => setIsMenuOpen(false)} 
-      />
     </div>
   );
 }
