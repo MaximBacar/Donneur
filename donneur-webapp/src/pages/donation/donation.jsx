@@ -154,15 +154,13 @@ export default function Donation() {
           />
           
           {/* Payment tab - above the overlay */}
-          <div className="z-20 relative">
-            <PaymentTab 
-              total={total} 
-              stripe={stripePromise} 
-              clientSecret={clientSecret} 
-              isOpen={isMenuOpen} 
-              onClose={() => setIsMenuOpen(false)} 
-            />
-          </div>
+          <PaymentTab 
+            total={total} 
+            stripe={stripePromise} 
+            clientSecret={clientSecret} 
+            isOpen={isMenuOpen} 
+            onClose={() => setIsMenuOpen(false)} 
+          />
         </>
       )}
     </div>
