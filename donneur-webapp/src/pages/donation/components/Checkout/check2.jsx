@@ -1,11 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useStripe, useElements, ExpressCheckoutElement } from '@stripe/react-stripe-js';
+import './success-animation.css';
 
 export default function ECheckout() {
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState("idle"); // idle, processing, success, error
+  const [paymentAmount, setPaymentAmount] = useState(null);
+
+  // Determine the correct return URL based on the current hostname
+  const getReturnUrl = () => {
+    const hostname = window.location.hostname;
+    const isGiveDomain = hostname === "give.donneur.ca";
+    const isDevelopment = hostname === "localhost" || hostname === "127.0.0.1";
+    
+    if (isGiveDomain) {
+      return `https://${hostname}/thank-you`;
+    } else if (isDevelopment) {
+      return `${window.location.origin}/thank-you`;
+    } else {
+      return `https://donneur.ca/thank-you`;
+    }
+  };
+
+  // Redirect to thank you page after success animation completes
+  useEffect(() => {
+    if (paymentStatus === "success") {
+      const timer = setTimeout(() => {
+        window.location.href = getReturnUrl();
+      }, 2500); // Delay redirect for 2.5 seconds to show the animation
+
+      return () => clearTimeout(timer);
+    }
+  }, [paymentStatus]);
 
   const onConfirm = async (event) => {
     if (!stripe) {
@@ -13,36 +41,51 @@ export default function ECheckout() {
       return;
     }
 
-    setIsProcessing(true);
+    setPaymentStatus("processing");
 
     try {
       const { error: submitError } = await elements.submit();
       if (submitError) {
         setErrorMessage(submitError.message);
-        setIsProcessing(false);
+        setPaymentStatus("error");
         return;
       }
 
+      // Get payment intent to display amount in success screen
+      const clientSecret = event.paymentIntent?.client_secret;
+      if (clientSecret) {
+        const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+        if (paymentIntent?.amount) {
+          setPaymentAmount((paymentIntent.amount / 100).toFixed(2));
+        }
+      }
+
       // Confirm the PaymentIntent using the details collected by the Express Checkout Element
-      const { error } = await stripe.confirmPayment({
+      const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
+        redirect: 'if_required',
         confirmParams: {
-          return_url: 'https://donneur.ca/thank-you',
+          // Only set return_url for fallback
+          return_url: getReturnUrl(),
         },
       });
 
       if (error) {
         // Payment failed
         setErrorMessage(error.message);
-        setIsProcessing(false);
+        setPaymentStatus("error");
+      } else if (paymentIntent && (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing')) {
+        // Payment succeeded
+        setPaymentStatus("success");
       } else {
-        // The payment UI automatically closes with a success animation
-        // Customer is redirected to return_url
+        // Something unexpected happened
+        setPaymentStatus("error");
+        setErrorMessage("An unexpected error occurred. Please try again.");
       }
     } catch (e) {
       console.error("Payment error:", e);
       setErrorMessage("An unexpected error occurred. Please try again.");
-      setIsProcessing(false);
+      setPaymentStatus("error");
     }
   };
 
@@ -53,15 +96,44 @@ export default function ECheckout() {
     }
   };
 
+  // Success animation section
+  const SuccessAnimation = () => (
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-white bg-opacity-95">
+      <div className="flex flex-col items-center justify-center max-w-md mx-auto text-center p-6">
+        <div className="success-checkmark">
+          <div className="check-icon">
+            <span className="icon-line line-tip"></span>
+            <span className="icon-line line-long"></span>
+            <div className="icon-circle"></div>
+            <div className="icon-fix"></div>
+          </div>
+        </div>
+        
+        <h2 className="mt-4 text-2xl font-bold text-gray-800">
+          {paymentAmount ? `$${paymentAmount} Donated` : 'Donation Complete'}
+        </h2>
+        <p className="mt-2 text-gray-600">
+          Thank you for your generosity!
+        </p>
+        <div className="mt-4">
+          <div className="inline-block h-2 w-2 bg-indigo-600 rounded-full animate-bounce"></div>
+          <div className="inline-block h-2 w-2 bg-indigo-600 rounded-full animate-bounce mx-1" style={{ animationDelay: '0.2s' }}></div>
+          <div className="inline-block h-2 w-2 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div id="checkout-page" className="w-full">
+
       <ExpressCheckoutElement 
         onConfirm={onConfirm} 
         options={expressCheckoutOptions}
         className="w-full"
       />
       
-      {isProcessing && (
+      {paymentStatus === "processing" && (
         <div className="mt-3 flex justify-center items-center text-sm text-gray-600">
           <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -85,6 +157,9 @@ export default function ECheckout() {
           </div>
         </div>
       )}
+
+      {/* Success animation overlay */}
+      {paymentStatus === "success" && <SuccessAnimation />}
     </div>
   );
 };
