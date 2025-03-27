@@ -24,17 +24,55 @@ const ThankYouContent = () => {
     }
 
     // Retrieve the "payment_intent_client_secret" and "redirect_status" query parameters
-    const clientSecret = new URLSearchParams(window.location.search).get(
+    // Check both normal and Stripe Express format (payment_intent vs. payment_intent_client_secret)
+    let clientSecret = new URLSearchParams(window.location.search).get(
       'payment_intent_client_secret'
     );
+    
+    // Stripe Express might use a different parameter format
+    if (!clientSecret) {
+      const paymentIntent = new URLSearchParams(window.location.search).get(
+        'payment_intent'
+      );
+      if (paymentIntent) {
+        clientSecret = `${paymentIntent}_secret_`;
+      }
+    }
+    
     const redirectStatus = new URLSearchParams(window.location.search).get(
       'redirect_status'
     );
 
     console.log("Client secret:", clientSecret ? "Found" : "Not found");
     console.log("Redirect status:", redirectStatus);
+    
+    // Log all URL parameters for debugging
+    console.log("All URL parameters:");
+    for (const [key, value] of new URLSearchParams(window.location.search).entries()) {
+      console.log(`${key}: ${value}`);
+    }
 
-    // If no client secret, show a generic thank you message
+    // If redirectStatus is 'succeeded' but no client secret, still show success
+    if (redirectStatus === 'succeeded' && !clientSecret) {
+      console.log("No client secret, but redirect status is succeeded");
+      
+      // Try to parse amount from URL if available
+      const amount = new URLSearchParams(window.location.search).get('amount');
+      const formattedAmount = amount ? 
+        parseFloat(amount).toLocaleString('en-US', {
+          style: 'currency',
+          currency: 'USD'
+        }) : null;
+      
+      setPaymentStatus({
+        status: 'success',
+        message: 'Thank you for your donation!',
+        amount: formattedAmount || "your donation"
+      });
+      return;
+    }
+    
+    // If no client secret and no success redirect status, show generic message
     if (!clientSecret) {
       console.log("No client secret, showing generic message");
       setPaymentStatus({
