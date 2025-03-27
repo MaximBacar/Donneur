@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js/pure';
 import { Elements, useStripe } from '@stripe/react-stripe-js';
-import { Link } from 'react-router-dom';
 
 // Initialize Stripe
 loadStripe.setLoadParameters({advancedFraudSignals: false});
@@ -16,21 +15,66 @@ const ThankYouContent = () => {
     amount: null
   });
 
+  // Add console logging to track payment intent retrieval
   useEffect(() => {
+    console.log("ThankYou page loaded");
     if (!stripe) {
+      console.log("Stripe not loaded yet");
       return;
     }
 
     // Retrieve the "payment_intent_client_secret" and "redirect_status" query parameters
-    const clientSecret = new URLSearchParams(window.location.search).get(
+    // Check both normal and Stripe Express format (payment_intent vs. payment_intent_client_secret)
+    let clientSecret = new URLSearchParams(window.location.search).get(
       'payment_intent_client_secret'
     );
+    
+    // Stripe Express might use a different parameter format
+    if (!clientSecret) {
+      const paymentIntent = new URLSearchParams(window.location.search).get(
+        'payment_intent'
+      );
+      if (paymentIntent) {
+        clientSecret = `${paymentIntent}_secret_`;
+      }
+    }
+    
     const redirectStatus = new URLSearchParams(window.location.search).get(
       'redirect_status'
     );
 
-    // If no client secret, show a generic thank you message
+    console.log("Client secret:", clientSecret ? "Found" : "Not found");
+    console.log("Redirect status:", redirectStatus);
+    
+    // Log all URL parameters for debugging
+    console.log("All URL parameters:");
+    for (const [key, value] of new URLSearchParams(window.location.search).entries()) {
+      console.log(`${key}: ${value}`);
+    }
+
+    // If redirectStatus is 'succeeded' but no client secret, still show success
+    if (redirectStatus === 'succeeded' && !clientSecret) {
+      console.log("No client secret, but redirect status is succeeded");
+      
+      // Try to parse amount from URL if available
+      const amount = new URLSearchParams(window.location.search).get('amount');
+      const formattedAmount = amount ? 
+        parseFloat(amount).toLocaleString('en-US', {
+          style: 'currency',
+          currency: 'USD'
+        }) : null;
+      
+      setPaymentStatus({
+        status: 'success',
+        message: 'Thank you for your donation!',
+        amount: formattedAmount || "your donation"
+      });
+      return;
+    }
+    
+    // If no client secret and no success redirect status, show generic message
     if (!clientSecret) {
+      console.log("No client secret, showing generic message");
       setPaymentStatus({
         status: 'generic',
         message: 'Thank you for your support.',
@@ -40,11 +84,15 @@ const ThankYouContent = () => {
     }
 
     // Retrieve payment intent details
+    console.log("Retrieving payment intent");
     stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
+      console.log("Payment intent retrieved:", paymentIntent?.status);
+      
       if (!paymentIntent) {
+        console.log("No payment intent found");
         setPaymentStatus({
-          status: 'error',
-          message: 'Payment information could not be retrieved.',
+          status: 'generic',
+          message: 'Thank you for your support.',
           amount: null
         });
         return;
@@ -58,6 +106,7 @@ const ThankYouContent = () => {
             currency: paymentIntent.currency.toUpperCase()
           });
           
+          console.log("Payment succeeded, amount:", amount);
           setPaymentStatus({
             status: 'success',
             message: 'Thank you for your donation!',
@@ -65,6 +114,7 @@ const ThankYouContent = () => {
           });
           break;
         case 'processing':
+          console.log("Payment is processing");
           setPaymentStatus({
             status: 'processing',
             message: 'Your donation is processing.',
@@ -72,6 +122,7 @@ const ThankYouContent = () => {
           });
           break;
         case 'requires_payment_method':
+          console.log("Payment requires payment method");
           setPaymentStatus({
             status: 'error',
             message: 'Your payment was not successful, please try again.',
@@ -79,13 +130,21 @@ const ThankYouContent = () => {
           });
           break;
         default:
+          console.log("Unknown payment status:", paymentIntent.status);
           setPaymentStatus({
-            status: 'error',
-            message: 'Something went wrong with your donation.',
+            status: 'generic',
+            message: 'Thank you for your support.',
             amount: null
           });
           break;
       }
+    }).catch(error => {
+      console.error("Error retrieving payment intent:", error);
+      setPaymentStatus({
+        status: 'generic',
+        message: 'Thank you for your support.',
+        amount: null
+      });
     });
   }, [stripe]);
 
@@ -96,7 +155,7 @@ const ThankYouContent = () => {
         return (
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 border-t-4 border-blue-500 border-solid rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-600">Processing your donation...</p>
+            <p className="text-gray-600">Loading donation information...</p>
           </div>
         );
       
@@ -112,9 +171,12 @@ const ThankYouContent = () => {
             <p className="text-xl text-gray-600 mb-1">We appreciate your support.</p>
             <p className="text-md text-gray-500 mb-8">Your generosity makes a meaningful difference.</p>
             <div className="flex flex-col items-center space-y-4">
-              <Link to="/" className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg shadow-md hover:bg-indigo-700 transition-colors">
-                Return to Homepage
-              </Link>
+              <a 
+                href="https://donneur.ca"
+                className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg shadow-md hover:bg-indigo-700 transition-colors"
+              >
+                Visit Donneur.ca
+              </a>
             </div>
           </div>
         );
@@ -131,12 +193,15 @@ const ThankYouContent = () => {
             <p className="text-xl text-gray-600 mb-1">Your donation of {paymentStatus.amount} has been received.</p>
             <p className="text-md text-gray-500 mb-8">Your generosity makes a meaningful difference.</p>
             <div className="flex flex-col items-center space-y-4">
-              <Link to="/" className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg shadow-md hover:bg-indigo-700 transition-colors">
-                Return to Homepage
-              </Link>
+              <a 
+                href="https://donneur.ca"
+                className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg shadow-md hover:bg-indigo-700 transition-colors"
+              >
+                Visit Donneur.ca
+              </a>
               <button 
                 onClick={() => window.print()}
-                className="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center"
+                className="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center justify-center"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
@@ -157,9 +222,14 @@ const ThankYouContent = () => {
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Processing Payment</h1>
             <p className="text-xl text-gray-600 mb-8">Your donation is being processed. This may take a moment.</p>
-            <Link to="/" className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg shadow-md hover:bg-indigo-700 transition-colors">
-              Return to Homepage
-            </Link>
+            <div className="flex flex-col items-center space-y-4">
+              <a 
+                href="https://donneur.ca"
+                className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg shadow-md hover:bg-indigo-700 transition-colors"
+              >
+                Visit Donneur.ca
+              </a>
+            </div>
           </div>
         );
       
@@ -175,9 +245,12 @@ const ThankYouContent = () => {
             <p className="text-xl text-gray-600 mb-2">{paymentStatus.message}</p>
             <p className="text-md text-gray-500 mb-8">Please try again or contact support if the issue persists.</p>
             <div className="flex flex-col space-y-4 items-center">
-              <Link to="/" className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg shadow-md hover:bg-indigo-700 transition-colors">
-                Return to Homepage
-              </Link>
+              <a 
+                href="https://donneur.ca"
+                className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg shadow-md hover:bg-indigo-700 transition-colors"
+              >
+                Visit Donneur.ca
+              </a>
               <a 
                 href="mailto:support@donneur.ca"
                 className="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
@@ -194,8 +267,8 @@ const ThankYouContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
         {renderStatus()}
       </div>
     </div>

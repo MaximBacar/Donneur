@@ -10,30 +10,38 @@ export default function ECheckout() {
   const [paymentAmount, setPaymentAmount] = useState(null);
 
   // Determine the correct return URL based on the current hostname
-  const getReturnUrl = () => {
+  const getReturnUrl = (amount = null) => {
     const hostname = window.location.hostname;
     const isGiveDomain = hostname === "give.donneur.ca";
     const isDevelopment = hostname === "localhost" || hostname === "127.0.0.1";
     
+    let baseUrl = "";
     if (isGiveDomain) {
-      return `https://${hostname}/thank-you`;
+      baseUrl = `https://${hostname}/thank-you`;
     } else if (isDevelopment) {
-      return `${window.location.origin}/thank-you`;
+      baseUrl = `${window.location.origin}/thank-you`;
     } else {
-      return `https://donneur.ca/thank-you`;
+      baseUrl = `https://donneur.ca/thank-you`;
     }
+    
+    // Add amount parameter if available
+    if (amount) {
+      baseUrl += `?amount=${amount}`;
+    }
+    
+    return baseUrl;
   };
 
   // Redirect to thank you page after success animation completes
   useEffect(() => {
     if (paymentStatus === "success") {
       const timer = setTimeout(() => {
-        window.location.href = getReturnUrl();
+        window.location.href = getReturnUrl(paymentAmount);
       }, 2500); // Delay redirect for 2.5 seconds to show the animation
 
       return () => clearTimeout(timer);
     }
-  }, [paymentStatus]);
+  }, [paymentStatus, paymentAmount]);
 
   const onConfirm = async (event) => {
     if (!stripe) {
@@ -60,13 +68,18 @@ export default function ECheckout() {
         }
       }
 
+      // Prepare return URL with amount if available
+      const returnUrl = clientSecret 
+        ? getReturnUrl(paymentAmount) 
+        : getReturnUrl();
+        
       // Confirm the PaymentIntent using the details collected by the Express Checkout Element
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
-        redirect: 'if_required',
+        redirect: 'always',  // Change to always redirect
         confirmParams: {
-          // Only set return_url for fallback
-          return_url: getReturnUrl(),
+          // Set proper return URL for payment confirmation
+          return_url: returnUrl,
         },
       });
 
