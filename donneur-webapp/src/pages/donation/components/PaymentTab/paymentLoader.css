@@ -1,0 +1,190 @@
+/* Payment Methods Loader Animation */
+.payment-methods-loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  height: 120px;
+  width: 100%;
+  overflow: visible;
+}
+
+.loader-card {
+  position: absolute;
+  height: 45px;
+  width: 250px;
+  border-radius: 8px;
+  background: #f9f9f9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  animation: pulse 1.5s infinite ease-in-out;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Gradient shimmer effect */
+.loader-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.2) 20%,
+    rgba(255, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer 2s infinite;
+}
+
+/* Card logo element */
+.loader-card-logo {
+  height: 20px;
+  width: 55px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+/* First card has Apple Pay style */
+.loader-card.one .loader-card-logo::before {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.1);
+  left: 5px;
+  top: 5px;
+  border-radius: 2px;
+}
+
+/* Second card has Google Pay style */
+.loader-card.two .loader-card-logo::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.1);
+  left: 3px;
+  top: 0px;
+}
+
+.loader-card.two .loader-card-logo::after {
+  content: '';
+  position: absolute;
+  width: 25px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  right: 3px;
+  top: 6px;
+  border-radius: 2px;
+}
+
+/* Third card style */
+.loader-card.three .loader-card-logo::before {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  background: rgba(0, 0, 0, 0.1);
+  left: 5px;
+  top: 2px;
+  transform: rotate(45deg);
+}
+
+.loader-card.three .loader-card-logo::after {
+  content: '';
+  position: absolute;
+  width: 25px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  right: 5px;
+  top: 6px;
+  border-radius: 2px;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.loader-card.one {
+  transform: translateY(-30px);
+  animation-delay: 0s;
+  z-index: 3;
+  background: #fcfcfc;
+}
+
+.loader-card.two {
+  transform: translateY(0px);
+  animation-delay: 0.2s;
+  z-index: 2;
+  background: #f8f8f8;
+}
+
+.loader-card.three {
+  transform: translateY(30px);
+  animation-delay: 0.4s;
+  z-index: 1;
+  background: #f5f5f5;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.7;
+    transform: translateY(-30px) scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-30px) scale(1);
+  }
+  100% {
+    opacity: 0.7;
+    transform: translateY(-30px) scale(0.98);
+  }
+}
+
+.loader-card.two {
+  animation-name: pulse2;
+}
+
+@keyframes pulse2 {
+  0% {
+    opacity: 0.7;
+    transform: translateY(0px) scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
+  }
+  100% {
+    opacity: 0.7;
+    transform: translateY(0px) scale(0.98);
+  }
+}
+
+.loader-card.three {
+  animation-name: pulse3;
+}
+
+@keyframes pulse3 {
+  0% {
+    opacity: 0.7;
+    transform: translateY(30px) scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(30px) scale(1);
+  }
+  100% {
+    opacity: 0.7;
+    transform: translateY(30px) scale(0.98);
+  }
+}
