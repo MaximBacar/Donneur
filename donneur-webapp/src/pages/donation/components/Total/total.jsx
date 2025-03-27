@@ -1,12 +1,10 @@
 export default function Total({total}){
-
     const formatTotal = (input) => {
-        
         let total_decimal = parseFloat(input);
         if (isNaN(total_decimal)){
-            if (input == '.') return '0.00';
+            if (input === '.') return '0.00';
             return '0'
-        }else{
+        } else {
             if (input.includes('.')){
                 return total_decimal.toFixed(2)
             }
@@ -15,9 +13,16 @@ export default function Total({total}){
     };
 
     return (
-        <div className="flex flex-col items-center justify-between w-[300px]">
-            <h1 className="text-[90px] font-[400] m-0 p-0 leading-none text-center">${formatTotal(total)}</h1>
-            {/* <h2 className="text-center leading-none">will be sent</h2> */}
+        <div className="flex flex-col items-center justify-center w-full py-3">
+            <div className="relative flex items-center justify-center">
+                <div className="text-4xl font-semibold text-blue-500 mr-1">$</div>
+                <div className="text-6xl font-bold tracking-tight">
+                    {formatTotal(total)}
+                </div>
+            </div>
+            <div className="mt-2 text-gray-500 text-sm font-medium">
+                Enter donation amount
+            </div>
         </div>
     )
 }
